@@ -1,0 +1,9 @@
+[init]
+	defaultBranch = main
+[user]
+	email = razahasan24@gmail.com
+	name = Hasan Raza
+[core]
+	autocrlf = input
+	excludesfile = /Users/hasan/dev/.gitignore_global
+	editor = vim
