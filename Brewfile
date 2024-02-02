@@ -90,6 +90,8 @@ brew "zsh-syntax-highlighting"
 brew "koekeishiya/formulae/skhd"
 # A tiling window manager for macOS based on binary space partitioning.
 brew "koekeishiya/formulae/yabai"
+# GPU-accelerated terminal emulator
+cask "alacritty"
 # Audio utility
 cask "background-music"
 # Developer targeted fonts with a high number of glyphs

@@ -1,0 +1,60 @@
+import = [
+  "~/.config/alacritty/catppuccin-mocha.toml"
+]
+live_config_reload = true
+
+[env]
+TERM = "alacritty"
+
+[font]
+size = 14.0
+
+[font.bold]
+family = "JetBrainsMono Nerd Font Mono"
+style = "Bold"
+
+[font.bold_italic]
+family = "JetBrainsMono Nerd Font Mono"
+style = "Italic"
+
+[font.glyph_offset]
+x = 0
+y = 7
+
+[font.italic]
+family = "JetBrainsMono Nerd Font Mono"
+style = "Italic"
+
+[font.normal]
+family = "JetBrainsMono Nerd Font Mono"
+style = "Regular"
+
+[font.offset]
+x = 0
+y = 14
+
+[[keyboard.bindings]]
+chars = '\p'
+key = "LBracket"
+mods = "Command"
+
+[[keyboard.bindings]]
+chars = '\n'
+key = "RBracket"
+mods = "Command"
+
+[[keyboard.bindings]]
+chars = "\u001E"
+key = "Key6"
+mods = "Control"
+
+[selection]
+save_to_clipboard = true
+semantic_escape_chars = ",│`|:\"' ()[]{}<>\t"
+
+[window]
+padding = { x = 10, y = 10 }
+opacity = 0.5
+decorations = "None"
+dynamic_padding = true
+startup_mode = "Maximized"
