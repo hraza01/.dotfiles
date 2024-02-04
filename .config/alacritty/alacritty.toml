@@ -33,28 +33,45 @@ style = "Regular"
 x = 0
 y = 14
 
-[[keyboard.bindings]]
-chars = '\p'
-key = "LBracket"
-mods = "Command"
+[keyboard]
+bindings = [
+    # MacOS Specific Actions
+    { chars = "\f", key = "K", mode = "~Vi", mods = "Command" },
+    { action = "ResetFontSize", key = "Key0",mods = "Command" },
+    { action = "IncreaseFontSize", key = "Equals", mods = "Command" },
+    { action = "IncreaseFontSize", key = "Plus", mods = "Command" },
+    { action = "DecreaseFontSize", key = "Minus", mods = "Command" },
+    { action = "ClearHistory", key = "K", mods = "Command" },
+    { action = "Paste", key = "V", mods = "Command" },
+    { action = "Copy", key = "C", mods = "Command" },
+    { action = "ClearSelection", key = "C", mode = "Vi", mods = "Command" },
+    { action = "Hide", key = "H", mods = "Command" },
+    { action = "Quit", key = "Q", mods = "Command" },
+    { action = "ToggleFullscreen", key = "F", mods = "Command|Control" },
+    { action = "SearchForward", key = "F", mods = "Command" },
+    { action = "SearchBackward", key = "B", mods = "Command" },
 
-[[keyboard.bindings]]
-chars = '\n'
-key = "RBracket"
-mods = "Command"
-
-[[keyboard.bindings]]
-chars = "\u001E"
-key = "Key6"
-mods = "Control"
+    # Custom 
+    { chars = " ", key = "Space", mods = "Alt" },
+    { chars = "\u0015", key = "Back", mods = "Super" },
+    { chars = "\u001Bb", key = "Left", mods = "Alt" },
+    { chars = "\u001Bf", key = "Right", mods = "Alt" },
+    { chars = "\u001BOH", key = "Left", mode = "AppCursor", mods = "Command" },
+    { chars = "\u001BOF", key = "Right", mode = "AppCursor", mods = "Command" }
+]
 
 [selection]
 save_to_clipboard = true
 semantic_escape_chars = ",│`|:\"' ()[]{}<>\t"
 
 [window]
-padding = { x = 10, y = 10 }
-opacity = 0.5
+padding = { x = 10, y = 5 }
+opacity = 0.6
 decorations = "None"
 dynamic_padding = true
 startup_mode = "Maximized"
+
+[shell]
+program = "/opt/homebrew/bin/tmux"
+args = ["attach"]
+

@@ -32,6 +32,12 @@ brew bundle --file ~/.dotfiles/Brewfile
 cd ~/.dotfiles && brew bundle
 ```
 
+# Install tmux plugin manager
+```zsh
+git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
+```
+
+
 4. Create symlinks in the Home directory to the real files in the repo.
 
 ```zsh
