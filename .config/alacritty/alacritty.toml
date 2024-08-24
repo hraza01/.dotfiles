@@ -65,8 +65,8 @@ save_to_clipboard = true
 semantic_escape_chars = ",│`|:\"' ()[]{}<>\t"
 
 [window]
-padding = { x = 10, y = 5 }
-opacity = 0.6
+padding = { x = 10, y = 2 }
+opacity = 0.8
 decorations = "None"
 dynamic_padding = true
 startup_mode = "Maximized"
