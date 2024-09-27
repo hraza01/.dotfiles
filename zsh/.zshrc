@@ -73,18 +73,18 @@ alias v="fd --type f --hidden --exclude .git | fzf-tmux -p --reverse | xargs nvi
 
 # Shell integrations
 
+# Golang Config
+export PATH="/usr/local/go/bin:$PATH"
 
 # Pyenv Config
 export PYENV_ROOT="$HOME/.pyenv"
 [[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"
 eval "$(pyenv init -)"
 
-
 # NVM Config
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
-
 
 # Google Cloud SDK
 export GCLOUD_DIR="$HOME/.gcloud"
@@ -92,7 +92,7 @@ if [ -f "$GCLOUD_DIR/google-cloud-sdk/path.zsh.inc" ]; then . "$GCLOUD_DIR/googl
 if [ -f "$GCLOUD_DIR/google-cloud-sdk/completion.zsh.inc" ]; then . "$GCLOUD_DIR/google-cloud-sdk/completion.zsh.inc"; fi
 
 
-# PATH Variables
+# PATH Variable
 export PATH="$GCLOUD_DIR/google-cloud-sdk/bin:$PATH"
 export PATH="$HOME/.local/bin:$PATH"
 
