@@ -32,11 +32,6 @@ autoload -Uz compinit && compinit
 
 zinit cdreplay -q
 
-# Theme
-if [ "$TERM_PROGRAM" != "Apple_Terminal" ]; then
-   eval "$(oh-my-posh init zsh --config $HOME/.config/oh-my-posh/oh-my-posh.toml)"
-fi
-
 # Keybindings
 bindkey -e
 bindkey '^p' history-search-backward
@@ -69,20 +64,39 @@ alias c='clear'
 alias v="fd --type f --hidden --exclude .git | fzf-tmux -p --reverse | xargs nvim"
 
 # Shell integrations
-#
+
 
 # PATH MacOS Specific
 export PATH="/opt/homebrew/opt/fzf/bin:$PATH"
 export PATH="/opt/homebrew/opt/jpeg/bin:$PATH"
 export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
 export PATH="/opt/homebrew/opt/libiodbc/bin:$PATH"
+
+# Golang Config
 export PATH="/usr/local/go/bin:$PATH"
 
-# NVM
+# Pyenv Config
+export PYENV_ROOT="$HOME/.pyenv"
+[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"
+eval "$(pyenv init -)"
+
+# NVM Config
 export NVM_DIR="$HOME/.nvm"
-[ -s "/opt/homebrew/opt/nvm/nvm.sh" ] && \. "/opt/homebrew/opt/nvm/nvm.sh"
-[ -s "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm" ] && \. "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
 
 # Google Cloud SDK
-if [ -f "$HOME/dev/google-cloud-sdk/path.zsh.inc" ]; then . "$HOME/dev/google-cloud-sdk/path.zsh.inc"; fi
-if [ -f "$HOME/dev/google-cloud-sdk/completion.zsh.inc" ]; then . "$HOME/dev/google-cloud-sdk/completion.zsh.inc"; fi
+export GCLOUD_DIR="$HOME/.gcloud"
+if [ -f "$GCLOUD_DIR/google-cloud-sdk/path.zsh.inc" ]; then . "$GCLOUD_DIR/google-cloud-sdk/path.zsh.inc"; fi
+if [ -f "$GCLOUD_DIR/google-cloud-sdk/completion.zsh.inc" ]; then . "$GCLOUD_DIR/google-cloud-sdk/completion.zsh.inc"; fi
+
+
+# PATH Variable
+export PATH="$GCLOUD_DIR/google-cloud-sdk/bin:$PATH"
+export PATH="$HOME/.local/bin:$PATH"
+
+
+# Theme
+if [ "$TERM_PROGRAM" != "Apple_Terminal" ]; then
+   eval "$(oh-my-posh init zsh --config $HOME/.config/oh-my-posh/oh-my-posh.toml)"
+fi
