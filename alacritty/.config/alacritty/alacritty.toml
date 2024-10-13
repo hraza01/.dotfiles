@@ -22,3 +22,7 @@ bindings = [
   { key = "Right", mods = "Alt", chars = "\u001BF" },
   { key = "Left",  mods = "Alt", chars = "\u001BB" },
 ]
+
+[cursor]
+style.shape = "Underline"
+style.blinking = "On"

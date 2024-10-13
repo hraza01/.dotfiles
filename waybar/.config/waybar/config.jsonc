@@ -12,11 +12,11 @@
         "sway/scratchpad"
     ],
     "modules-center": [
-        "sway/window"
+        "sway/window",
     ],
     "modules-right": [
         "idle_inhibitor",
-        // "cpu",
+        "cpu",
         "memory",
         // "temperature",
         // "backlight",
@@ -45,6 +45,9 @@
     //         "default": ""
     //     }
     // },
+    "sway/window": {
+        "format": "{app_id}",
+    },
     "keyboard-state": {
         "numlock": true,
         "capslock": true,
@@ -135,7 +138,7 @@
         },
         "format": "{capacity}% {icon} ",
         "format-full": "{capacity}% {icon}",
-        "format-charging": "{capacity}% ",
+        "format-charging": "{capacity}% ",
         "format-plugged": "{capacity}% ",
         "format-alt": "{time} {icon}",
         // "format-good": "", // An empty format will hide the module

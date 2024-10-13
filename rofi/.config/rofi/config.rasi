@@ -1,7 +1,10 @@
 configuration {
   modes: "window,drun,run,ssh";
-  font: "JetBrainsMono NF 14";
-  drun-display-format: "{name}";
+  font: "Roboto 14";
+  display-drun: "";
+  display-combi: "";
+  show-icons: true;
+  drun-display-format: "{icon} {name}";
 }
 
 * {
