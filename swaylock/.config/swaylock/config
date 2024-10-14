@@ -1,22 +1,19 @@
 color=#000000
-font-size=40
 font=JetBrains Mono
-scaling=solid_color
+scaling=fill
 
-indicator-x-position=965
-indicator-y-position=540
-indicator-radius=150
-indicator-thickness=20
+indicator-radius=100
+indicator-thickness=10
 
 bs-hl-color=#ffa066
 
 caps-lock-bs-hl-color=#ffa066
 caps-lock-key-hl-color=#957fbb
 
-inside-color=#1f1f28
+inside-color=#000000
 inside-clear-color=#1f1f28
 inside-caps-lock-color=#1f1f28
-inside-ver-color=#1f1f28
+inside-ver-color=#000000
 inside-wrong-color=#1f1f28
 
 key-hl-color=#00ffff

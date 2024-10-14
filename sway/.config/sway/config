@@ -32,7 +32,10 @@ set $menu $rofi_cmd -show combi -combi-modes "drun,ssh" -modes combi
 # set $menu tofi-drun | xargs swaymsg exec --
 
 ### Output configuration
-#
+output "Dell Inc. DELL U3223QE J4MZ4P3" mode 3840x2160@60hz position 0 0 scale 1.25 scale_filter smart subpixel rgb
+output "Dell Inc. DELL U3223QE 44MZ4P3" mode 3840x2160@60hz position 0 1728 scale 1.25 scale_filter smart subpixel rgb
+output eDP-1 mode 1920x1080@60hz position 3072 2160 scale 1.00 scale_filter smart subpixel bgr
+
 # Default wallpaper (more resolutions are available in /usr/share/backgrounds/sway/)
 # Requires: desktop-backgrounds-compat, swaybg
 output * bg #000000 solid_color
@@ -109,9 +112,10 @@ exec swayidle -w \
     bindsym $mod+Shift+q exec 'swaylock \
                         --ignore-empty-password \
                         --daemonize \
+                        --indicator-idle-visible \
                         --indicator-caps-lock \
                         --show-failed-attempts \
-                        --indicator-idle-visible \'
+                        --indicator-idle-visible '
 
     # Exit sway (logs you out of your Wayland session)
     bindsym $mod+Shift+e exec swaynag -t warning -m 'You pressed the exit shortcut. Do you really want to exit sway? This will end your Wayland session.' -B 'Yes, exit sway' 'swaymsg exit'
