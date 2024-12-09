@@ -8,6 +8,13 @@ console_title_template = '{{ .Shell }} in {{ .Folder }}'
   newline = true
 
   [[blocks.segments]]
+    type = 'python'
+    style = 'plain'
+    background = 'transparent'
+    foreground = 'white'
+    template = '{{ if .Venv }}({{ .Venv }}){{ end }} '
+
+  [[blocks.segments]]
     type = 'path'
     style = 'plain'
     background = 'transparent'
@@ -56,7 +63,7 @@ console_title_template = '{{ .Shell }} in {{ .Folder }}'
       "{{if eq .Code 0}}cyan{{end}}",
     ]
     background = 'transparent'
-    template = '❯'
+    template = '󰁕'
 
 [transient_prompt]
   foreground_templates = [
@@ -64,9 +71,9 @@ console_title_template = '{{ .Shell }} in {{ .Folder }}'
     "{{if eq .Code 0}}cyan{{end}}",
   ]
   background = 'transparent'
-  template = '❯ '
+  template = '󰁕 '
 
 [secondary_prompt]
   foreground = 'cyan'
   background = 'transparent'
-  template = '❯❯ '
+  template = '󰦺 '
