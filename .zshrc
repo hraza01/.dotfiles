@@ -16,16 +16,19 @@ fi
 source "${ZINIT_HOME}/zinit.zsh"
 
 # Add in zsh plugins
-zinit light zsh-users/zsh-syntax-highlighting
 zinit light zsh-users/zsh-completions
-zinit light zsh-users/zsh-autosuggestions
-zinit light Aloxaf/fzf-tab
+
+zinit wait lucid for \
+ zsh-users/zsh-autosuggestions \
+ Aloxaf/fzf-tab \
+ zsh-users/zsh-syntax-highlighting
 
 # Add in snippets
-zinit snippet OMZP::git
-zinit snippet OMZP::sudo
-zinit snippet OMZP::kubectl
-zinit snippet OMZP::command-not-found
+zinit wait lucid for \
+ OMZP::git \
+ OMZP::sudo \
+ OMZP::kubectl \
+ OMZP::command-not-found
 
 # Load completions
 autoload -Uz compinit && compinit
@@ -39,7 +42,7 @@ bindkey '^n' history-search-forward
 bindkey '^[w' kill-region
 
 # History
-HISTSIZE=5000
+HISTSIZE=25000
 HISTFILE=~/.zsh_history
 SAVEHIST=$HISTSIZE
 HISTDUP=erase
@@ -64,7 +67,7 @@ alias c='clear'
 alias v="fd --type f --hidden --exclude .git | fzf-tmux -p --reverse | xargs nvim"
 
 # Shell integrations
-
+unset MAILCHECK
 
 # PATH MacOS Specific
 export PATH="/opt/homebrew/opt/fzf/bin:$PATH"
@@ -75,15 +78,20 @@ export PATH="/opt/homebrew/opt/libiodbc/bin:$PATH"
 # Golang Config
 export PATH="/usr/local/go/bin:$PATH"
 
-# Pyenv Config
-export PYENV_ROOT="$HOME/.pyenv"
-[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"
-eval "$(pyenv init -)"
-
 # NVM Config
 export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+# Manually add default node version to PATH for instant access
+export PATH="$HOME/.nvm/versions/node/v24.12.0/bin:$PATH"
+
+lazy_load_nvm() {
+  # Unset function placeholders
+  unset -f nvm lazy_load_nvm
+  # Load NVM
+  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+  [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+}
+
+nvm() { lazy_load_nvm; nvm "$@" }
 
 # Google Cloud SDK
 export GCLOUD_DIR="$HOME/.gcloud"
@@ -94,9 +102,17 @@ if [ -f "$GCLOUD_DIR/google-cloud-sdk/completion.zsh.inc" ]; then . "$GCLOUD_DIR
 # PATH Variable
 export PATH="$GCLOUD_DIR/google-cloud-sdk/bin:$PATH"
 export PATH="$HOME/.local/bin:$PATH"
+export PATH="/opt/homebrew/opt/openjdk/bin:$PATH"
 
+# Java Config
+export JAVA_HOME="/opt/homebrew/opt/openjdk"
 
 # Theme
 if [ "$TERM_PROGRAM" != "Apple_Terminal" ]; then
    eval "$(oh-my-posh init zsh --config $HOME/.config/oh-my-posh/oh-my-posh.toml)"
 fi
+
+export DOCKER_HOST="unix://$HOME/.colima/docker.sock"
+
+# Added by Antigravity
+export PATH="/Users/hasan/.antigravity/antigravity/bin:$PATH"
