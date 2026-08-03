@@ -1,0 +1,18 @@
+{
+  "lastChangelogVersion": "0.80.10",
+  "theme": "dark-tweaked",
+  "defaultProvider": "opencode",
+  "defaultModel": "deepseek-v4-pro",
+  "defaultThinkingLevel": "high",
+  "editorPaddingX": 1,
+  "compaction": {
+    "enabled": true
+  },
+  "hideThinkingBlock": false,
+  "quietStartup": true,
+  "packages": [],
+  "images": {
+    "blockImages": true
+  },
+  "enableInstallTelemetry": false
+}
