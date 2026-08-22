@@ -13,9 +13,4 @@ Thumbs.db
 .Spotlight-V100
 .Trashes
 
-# Pi credentials & machine-local state (safety net)
-.pi/agent/auth.json
-.pi/agent/sessions/
-.pi/agent/trust.json
-.pi/agent/models-store.json
 node_modules/

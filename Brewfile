@@ -68,12 +68,8 @@ brew "nvm"
 brew "openh264"
 # Manage compile and link flags for libraries
 brew "pkg-config"
-# Python version management
-brew "pyenv"
 # Organize software neatly under a single directory tree (e.g. /usr/local)
 brew "stow"
-# Terminal multiplexer
-brew "tmux"
 # Display directories as trees (with optional color/HTML output)
 brew "tree"
 # Internet file retriever
@@ -94,8 +90,10 @@ cask "font-hack-nerd-font"
 cask "font-jetbrains-mono-nerd-font"
 # Set of tools to manage resources and applications hosted on Google Cloud
 cask "google-cloud-sdk"
-# Terminal emulator as alternative to Apple's Terminal app
-cask "iterm2"
+# GPU-accelerated terminal emulator
+cask "wezterm"
+# Automation tool for macOS (double-tap Control to toggle WezTerm)
+cask "hammerspoon"
 # ODBC administrator
 cask "odbc-manager"
 # HTML to PDF renderer

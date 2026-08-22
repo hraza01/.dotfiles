@@ -37,27 +37,38 @@ cd ~/.dotfiles && brew bundle
    Link **everything** (overwrites local `.zshrc`, `.gitconfig`, etc.):
 
    ```zsh
-   cd ~/.dotfiles && stow .
+   cd ~/.dotfiles && stow ./*
+   ```
+
+   `stow ./*` stows each top-level entry as a separate package. It requires
+   `setopt globdots` so dotfiles (`.config`, `.zshrc`, etc.) are included in the
+   glob — add it to your `.zshrc` or run it inline before stowing:
+
+   ```zsh
+   setopt globdots && cd ~/.dotfiles && stow ./*
    ```
 
    Or link **only specific items** on machines where you want to keep local
    versions of some files (e.g. a work `.zshrc`):
 
    ```zsh
-   cd ~/.dotfiles && stow .gitconfig .tmux.conf   # pick what you want
+   cd ~/.dotfiles && stow .config .gitconfig .hammerspoon
    ```
 
    Skip this step entirely on a loaner if you don't want to touch shell config.
 
-5. Set up pi (coding agent) config. This is **independent of stow** — it
-   symlinks your pi settings, system prompt, extensions, themes, and custom
-   skills from this repo into `~/.pi/agent/` without touching anything else.
+5. Set up Hammerspoon (double-tap Control to toggle WezTerm). After stowing,
+   launch Hammerspoon and grant it Accessibility permission in System Settings
+   > Privacy & Security > Accessibility. It auto-launches at login and
+   pre-launches WezTerm hidden so the first toggle is instant.
 
-```zsh
-~/.dotfiles/pi/setup-pi.sh
-```
+## Configs
 
-   Add `--with-pi-skills` to also install the pi-skills submodule (150 MB+).
-
-6. Authenticate pi: run `pi`, then `/login` (or set a provider API key env var,
-   e.g. `OPENROUTER_API_KEY`). Refresh model catalogs with `pi update --models`.
+| Path | Description |
+|---|---|
+| `.zshrc` | Shell config (aliases, path, plugins) |
+| `.gitconfig` | Git defaults |
+| `.config/wezterm/wezterm.lua` | WezTerm: font, transparency, tab bar, splits, keybinds |
+| `.hammerspoon/init.lua` | Hammerspoon: double-tap Control to toggle WezTerm |
+| `.config/opencode` | opencode: config, agents, themes, plugins |
+| `.config/oh-my-posh` | Prompt theme |

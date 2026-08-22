@@ -1,14 +1,18 @@
 // @ts-nocheck
 /** @jsxImportSource @opentui/solid */
-import type { TuiPlugin, TuiPluginModule } from "@opencode-ai/plugin/tui"
+import type { TuiPlugin, TuiPluginModule } from "@opencode-ai/plugin/tui";
 
-const id = "stealth"
+const id = "stealth";
 
 const tui: TuiPlugin = async (api) => {
-  api.theme.set("system")
+  api.theme.set("system");
 
-  try { await api.plugins.deactivate("internal:home-tips") } catch {}
-  try { await api.plugins.deactivate("internal:sidebar-context") } catch {}
+  try {
+    await api.plugins.deactivate("internal:home-tips");
+  } catch {}
+  try {
+    await api.plugins.deactivate("internal:sidebar-context");
+  } catch {}
 
   api.slots.register({
     slots: {
@@ -21,13 +25,17 @@ const tui: TuiPlugin = async (api) => {
       sidebar_footer: () => <box height={0} />,
       app_bottom: () => <box height={0} />,
     },
-  })
+  });
 
   api.lifecycle.onDispose(async () => {
-    try { await api.plugins.activate("internal:home-tips") } catch {}
-    try { await api.plugins.activate("internal:sidebar-context") } catch {}
-  })
-}
+    try {
+      await api.plugins.activate("internal:home-tips");
+    } catch {}
+    try {
+      await api.plugins.activate("internal:sidebar-context");
+    } catch {}
+  });
+};
 
-const plugin: TuiPluginModule & { id: string } = { id, tui }
-export default plugin
+const plugin: TuiPluginModule & { id: string } = { id, tui };
+export default plugin;
