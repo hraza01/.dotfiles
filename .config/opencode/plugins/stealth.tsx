@@ -5,8 +5,6 @@ import type { TuiPlugin, TuiPluginModule } from "@opencode-ai/plugin/tui";
 const id = "stealth";
 
 const tui: TuiPlugin = async (api) => {
-  api.theme.set("system");
-
   try {
     await api.plugins.deactivate("internal:home-tips");
   } catch {}
@@ -23,7 +21,6 @@ const tui: TuiPlugin = async (api) => {
       session_prompt_right: () => <box height={0} />,
       sidebar_title: () => <box height={0} />,
       sidebar_footer: () => <box height={0} />,
-      app_bottom: () => <box height={0} />,
     },
   });
 
