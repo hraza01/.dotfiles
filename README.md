@@ -7,55 +7,55 @@ xcode-select --install
 ```
 
 
-2. Clone repo into new hidden directory.
+2. Clone the repo into `~/.dotfiles`.
 
 ```zsh
-# Use SSH (if set up)...
-git clone git@github.com:hraza01/.dotfiles.git ~/.dotfiles
-
-# ...or use HTTPS and switch remotes later.
-git clone https://github.com/hraza01/.dotfiles.git ~/.dotfiles
+git clone git@github.com:hraza01/.dotfiles.git ~/.dotfiles   # SSH
+git clone https://github.com/hraza01/.dotfiles.git ~/.dotfiles # or HTTPS
 ```
 
-3. Install Homebrew, followed by the software listed in the Brewfile.
+3. Install Homebrew and the software listed in the Brewfile.
 
 ```zsh
-# These could also be in an install script.
-
-# Install Homebrew
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-
-# Then pass in the Brewfile location...
 brew bundle --file ~/.dotfiles/Brewfile
-
-# ...or move to the directory first.
-cd ~/.dotfiles && brew bundle
 ```
 
-4. (Optional) Symlink dotfiles into your home directory.
+4. (Optional) Symlink the dotfiles into your home directory with GNU Stow.
 
-   Link **everything** (overwrites local `.zshrc`, `.gitconfig`, etc.):
+   The repo is laid out as one stow package per app: `zsh/`, `git/`,
+   `hammerspoon/`, `wezterm/`, `opencode/`, `oh-my-posh/`. Stow mirrors each
+   package's contents into `$HOME`, so `zsh/.zshrc` becomes `~/.zshrc`,
+   `wezterm/.config/wezterm/` becomes `~/.config/wezterm/`, etc. The repo's own
+   `.git/`, `.gitignore`, `Brewfile`, and `README.md` are not packages and are
+   never stowed.
 
-   ```zsh
-   cd ~/.dotfiles && stow ./*
-   ```
-
-   `stow ./*` stows each top-level entry as a separate package. It requires
-   `setopt globdots` so dotfiles (`.config`, `.zshrc`, etc.) are included in the
-   glob — add it to your `.zshrc` or run it inline before stowing:
-
-   ```zsh
-   setopt globdots && cd ~/.dotfiles && stow ./*
-   ```
-
-   Or link **only specific items** on machines where you want to keep local
-   versions of some files (e.g. a work `.zshrc`):
+   Link **everything**:
 
    ```zsh
-   cd ~/.dotfiles && stow .config .gitconfig .hammerspoon
+   stow -d ~/.dotfiles -t ~ zsh git hammerspoon wezterm opencode oh-my-posh
    ```
 
-   Skip this step entirely on a loaner if you don't want to touch shell config.
+   Or link **only specific packages** on a machine where you want to keep
+   local versions of some files (e.g. a work `.zshrc` — drop `zsh`):
+
+   ```zsh
+   stow -d ~/.dotfiles -t ~ git hammerspoon wezterm opencode oh-my-posh
+   ```
+
+   If real files already exist at the targets (`~/.zshrc`, etc.), stow refuses
+   to overwrite them. Back them up and remove them first, or pass `--adopt` to
+   let stow take them over:
+
+   ```zsh
+   stow --adopt -d ~/.dotfiles -t ~ zsh git hammerspoon wezterm opencode oh-my-posh
+   ```
+
+   To unlink everything later:
+
+   ```zsh
+   stow -D -d ~/.dotfiles -t ~ zsh git hammerspoon wezterm opencode oh-my-posh
+   ```
 
 5. Set up Hammerspoon (double-tap Control to toggle WezTerm). After stowing,
    launch Hammerspoon and grant it Accessibility permission in System Settings
