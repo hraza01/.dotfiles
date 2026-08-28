@@ -14,11 +14,10 @@ git clone git@github.com:hraza01/.dotfiles.git ~/.dotfiles   # SSH
 git clone https://github.com/hraza01/.dotfiles.git ~/.dotfiles # or HTTPS
 ```
 
-3. Install Homebrew and the software listed in the Brewfile.
+3. Install Homebrew, the Brewfile, and NVM.
 
 ```zsh
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-brew bundle --file ~/.dotfiles/Brewfile
+sh ~/.dotfiles/install.sh
 ```
 
 4. (Optional) Symlink the dotfiles into your home directory with GNU Stow.
