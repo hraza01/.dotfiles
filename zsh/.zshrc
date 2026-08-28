@@ -4,11 +4,6 @@ export ZSH_CACHE_DIR="$HOME/.cache/zsh"
 mkdir -p "$ZSH_CACHE_DIR"
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
-  if [[ ! -f "/opt/homebrew/bin/brew" && ! -f "/usr/local/bin/brew" ]]; then
-    echo "Homebrew not found. Installing..."
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-  fi
-
   # Cache `brew shellenv` to avoid recomputing it on every shell.
   if [[ -f "/opt/homebrew/bin/brew" ]]; then
     BREW_ENV_CACHE="$ZSH_CACHE_DIR/brew_env.zsh"
@@ -29,7 +24,6 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
     if ! command -v oh-my-posh >/dev/null; then missing_packages+=("oh-my-posh"); fi
     if ! command -v fzf >/dev/null; then missing_packages+=("fzf"); fi
     if ! command -v fd >/dev/null; then missing_packages+=("fd"); fi
-    if ! command -v nvim >/dev/null; then missing_packages+=("neovim"); fi
 
     if (( ${#missing_packages[@]} > 0 )); then
       echo "Installing missing brew dependencies: ${missing_packages[*]}..."
@@ -122,7 +116,6 @@ export PATH="/opt/homebrew/opt/jpeg/bin:$PATH"
 export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
 export PATH="/opt/homebrew/opt/libiodbc/bin:$PATH"
 export PATH="/opt/homebrew/opt/openjdk/bin:$PATH"
-export PATH="$HOME/.bun/bin:$PATH"
 
 export PATH="/usr/local/go/bin:$PATH"
 
