@@ -19,25 +19,17 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
     source "$BREW_ENV_CACHE"
   fi
 
-  if command -v brew >/dev/null; then
-    missing_packages=()
-    if ! command -v oh-my-posh >/dev/null; then missing_packages+=("oh-my-posh"); fi
-    if ! command -v fzf >/dev/null; then missing_packages+=("fzf"); fi
-    if ! command -v fd >/dev/null; then missing_packages+=("fd"); fi
-
-    if (( ${#missing_packages[@]} > 0 )); then
-      echo "Installing missing brew dependencies: ${missing_packages[*]}..."
-      brew install "${missing_packages[@]}"
-      rm -f "$ZSH_CACHE_DIR/oh-my-posh-init.zsh"
-    fi
+  # Warn about missing tools (install via ~/.dotfiles/install.sh).
+  if [[ -o interactive ]]; then
+    missing=()
+    for tool in oh-my-posh fzf fd; do
+      command -v "$tool" >/dev/null 2>&1 || missing+=("$tool")
+    done
+    (( ${#missing[@]} )) && echo "warning: missing ${missing[*]}; run ~/.dotfiles/install.sh" >&2
   fi
 fi
 
 export NVM_DIR="$HOME/.nvm"
-if [[ ! -d "$NVM_DIR" ]]; then
-  echo "NVM not found. Installing..."
-  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
-fi
 
 
 # 2. Zinit & plugins
@@ -149,8 +141,14 @@ export PATH="$HOME/.nvm/versions/node/v24.12.0/bin:$PATH"
 
 lazy_load_nvm() {
   unset -f nvm lazy_load_nvm
-  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-  [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+  # nvm.sh lives at $NVM_DIR/nvm.sh (curl installer) or under Homebrew's nvm.
+  local sh
+  for sh in "$NVM_DIR/nvm.sh" /opt/homebrew/opt/nvm/nvm.sh /usr/local/opt/nvm/nvm.sh; do
+    [ -s "$sh" ] && \. "$sh" && break
+  done
+  for sh in "$NVM_DIR/bash_completion" /opt/homebrew/opt/nvm/etc/bash_completion.d/nvm /usr/local/opt/nvm/etc/bash_completion.d/nvm; do
+    [ -s "$sh" ] && \. "$sh" && break
+  done
 }
 
 nvm() { lazy_load_nvm; nvm "$@" }

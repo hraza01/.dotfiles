@@ -64,6 +64,8 @@ brew "make"
 brew "neovim"
 # Manage multiple Node.js versions
 brew "nvm"
+# Prompt theme engine
+brew "oh-my-posh"
 # H.264 codec from Cisco
 brew "openh264"
 # Manage compile and link flags for libraries
