@@ -28,19 +28,19 @@ return {
   window_decorations = 'RESIZE',
   window_padding = { left = 15, right = 15, top = 15, bottom = 15 },
   window_background_opacity = 0.83,
-  macos_window_background_blur_radius = 2,
+  macos_window_background_blur = 2,
 
   -- tab bar
   tab_bar_at_bottom = true,
   use_fancy_tab_bar = false,
 
   -- cursor
-  default_cursor = 'SteadyBlock',
+  default_cursor_style = 'SteadyBlock',
 
   -- colors (overrides on top of the default scheme)
   colors = {
     background = 'black',
-    cursor = '#BCB8B4',
+    cursor_bg = '#BCB8B4',
     split = '#555555',
     tab_bar = { background = 'rgba(0,0,0,0)' },
   },
