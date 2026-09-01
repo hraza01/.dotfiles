@@ -1,10 +1,7 @@
--- double-tap Control to toggle WezTerm (launch / focus / hide)
+-- ctrl+enter to toggle WezTerm (launch / focus / hide)
 -- requires Accessibility permission for Hammerspoon
 
 local wezterm = 'com.github.wez.wezterm'
-local double_tap_sec = 0.3
-
-local last_ctrl = 0
 
 local function toggle_wezterm()
   local app = hs.application.find(wezterm)
@@ -41,18 +38,6 @@ local function launch_wezterm_hidden()
   end)
 end
 
-ctrl_tap = hs.eventtap.new({ hs.eventtap.event.types.flagsChanged }, function(event)
-  if event:getFlags().ctrl then
-    local now = hs.timer.secondsSinceEpoch()
-    if now - last_ctrl < double_tap_sec then
-      last_ctrl = 0
-      toggle_wezterm()
-    else
-      last_ctrl = now
-    end
-  end
-  return false
-end)
-ctrl_tap:start()
+hs.hotkey.bind({ 'ctrl' }, 'return', toggle_wezterm)
 
 launch_wezterm_hidden()
