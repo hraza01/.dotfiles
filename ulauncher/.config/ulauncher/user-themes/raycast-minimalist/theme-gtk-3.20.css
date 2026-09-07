@@ -1,0 +1,9 @@
+@import url("theme.css");
+
+/* GTK 3.20+ specific overrides */
+.input {
+    caret-color: @caret_color;
+}
+.selected.item-box {
+    border: none;
+}

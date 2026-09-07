@@ -1,0 +1,242 @@
+# Default config for sway
+# Read `man 5 sway` for a complete reference.
+
+### General
+font pango:Inter 12
+default_border pixel 2
+gaps inner 1
+gaps outer 1
+
+# Migrate workspaces off the laptop screen when the lid closes;
+# sway auto-moves them to the next available output (DP-4).
+bindswitch lid:on  output eDP-1 disable
+bindswitch lid:off output eDP-1 enable
+
+### Variables
+# Logo key. Use Mod1 for Alt.
+set $mod Mod4
+# Home row direction keys, like vim
+set $left h
+set $down j
+set $up k
+set $right l
+
+# Terminal
+set $term wezterm
+
+# Application launcher (ulauncher, toggled via Alt+Space).
+# Requires: ulauncher
+
+### Output configuration
+# Display mode/position/scale are managed by kanshi (see ~/.config/kanshi/config).
+# These lines only set properties kanshi does not manage (subpixel, scale_filter).
+output "Dell Inc. DELL U3223QE J4MZ4P3" scale_filter smart subpixel rgb
+output "Dell Inc. DELL U3223QE 44MZ4P3" scale_filter smart subpixel rgb
+output eDP-1 scale_filter smart subpixel bgr
+
+# Default wallpaper (more resolutions are available in /usr/share/backgrounds/sway/)
+# Requires: desktop-backgrounds-compat, swaybg
+output * bg #000000 solid_color
+
+### Idle configuration
+# Lock after 5 min idle, display off after 10 min, lock before sleep.
+exec swayidle -w \
+         timeout 300 'gtklock -d -s "$HOME/.config/gtklock/style.css" -x "$HOME/.config/gtklock/layout.xml"' \
+         timeout 600 'swaymsg "output * power off"' resume 'swaymsg "output * power on"' \
+         before-sleep 'gtklock -d -s "$HOME/.config/gtklock/style.css" -x "$HOME/.config/gtklock/layout.xml"'
+
+### Input configuration
+# Caps Lock -> Escape (real Escape key still works). Applies to all keyboards.
+  input "type:keyboard" {
+      xkb_layout us
+      xkb_options caps:escape
+  }
+
+  input "type:touchpad" {
+      dwt enabled
+      tap enabled
+      natural_scroll enabled
+      middle_emulation enabled
+  }
+
+# Cursor theme (seat config for sway's own cursor).
+  seat "seat0" xcursor_theme Bibata-Original-Classic 24
+
+### Key bindings
+#
+# Basics:
+#
+    # Start a terminal
+    bindsym $mod+Return exec $term
+
+    # Kill focused window
+    bindsym Mod1+w kill
+
+    # Launcher (ulauncher)
+    bindsym Mod1+space exec ulauncher toggle
+
+    # File manager (Nautilus)
+    bindsym $mod+Shift+f exec nautilus
+
+    # Drag floating windows by holding $mod and left mouse button.
+    # Resize with right mouse button + $mod.
+    # Also works for non-floating windows.
+    # Change normal to inverse to swap left/right mouse button roles.
+    floating_modifier $mod normal
+
+    # Window-specific rules
+    for_window [app_id="ulauncher"] floating enable, border none, move position center
+
+    # Reload the configuration file
+    bindsym $mod+Shift+c reload
+
+    # Lock screen
+    bindsym $mod+Shift+q exec 'gtklock -d -s "$HOME/.config/gtklock/style.css" -x "$HOME/.config/gtklock/layout.xml"'
+
+    # Exit sway: enter confirm mode, then press e to exit or Esc to cancel
+    bindsym $mod+Shift+e mode "exit"
+#
+# Moving around:
+#
+    # Move focus around
+    bindsym $mod+$left focus left
+    bindsym $mod+$down focus down
+    bindsym $mod+$up focus up
+    bindsym $mod+$right focus right
+    # Or use $mod+[up|down|left|right]
+    bindsym $mod+Left focus left
+    bindsym $mod+Down focus down
+    bindsym $mod+Up focus up
+    bindsym $mod+Right focus right
+
+    # Move the focused window with the same, but add Shift
+    bindsym $mod+Shift+$left move left
+    bindsym $mod+Shift+$down move down
+    bindsym $mod+Shift+$up move up
+    bindsym $mod+Shift+$right move right
+    # Same, with arrow keys
+    bindsym $mod+Shift+Left move left
+    bindsym $mod+Shift+Down move down
+    bindsym $mod+Shift+Up move up
+    bindsym $mod+Shift+Right move right
+#
+# Workspaces:
+#
+    # Switch to workspace (Alt)
+    bindsym Mod1+1 workspace number 1
+    bindsym Mod1+2 workspace number 2
+    bindsym Mod1+3 workspace number 3
+    bindsym Mod1+4 workspace number 4
+    bindsym Mod1+5 workspace number 5
+    bindsym Mod1+6 workspace number 6
+    bindsym Mod1+7 workspace number 7
+    bindsym Mod1+8 workspace number 8
+    bindsym Mod1+9 workspace number 9
+    bindsym Mod1+0 workspace number 10
+
+    # Move focused container to workspace
+    bindsym Mod1+Shift+1 move container to workspace number 1
+    bindsym Mod1+Shift+2 move container to workspace number 2
+    bindsym Mod1+Shift+3 move container to workspace number 3
+    bindsym Mod1+Shift+4 move container to workspace number 4
+    bindsym Mod1+Shift+5 move container to workspace number 5
+    bindsym Mod1+Shift+6 move container to workspace number 6
+    bindsym Mod1+Shift+7 move container to workspace number 7
+    bindsym Mod1+Shift+8 move container to workspace number 8
+    bindsym Mod1+Shift+9 move container to workspace number 9
+    bindsym Mod1+Shift+0 move container to workspace number 10
+#
+# Layout stuff:
+#
+    # Split the focused container horizontally ($mod+b) or vertically ($mod+v)
+    bindsym $mod+b splith
+    bindsym $mod+v splitv
+
+    # Switch the current container between different layout styles
+    bindsym $mod+s layout stacking
+    bindsym $mod+t layout tabbed
+    bindsym $mod+e layout toggle split
+
+    # Make the current focus fullscreen
+    bindsym $mod+f fullscreen
+
+    # Toggle the current focus between tiling and floating mode
+    bindsym $mod+Shift+space floating toggle
+
+    # Swap focus between the tiling area and the floating area
+
+    # Move focus to the parent container
+    bindsym $mod+a focus parent
+#
+# Scratchpad:
+#
+    # Scratchpad: hidden window storage. Send windows there and recall later.
+
+    # Move focused window to scratchpad
+    bindsym $mod+Shift+minus move scratchpad
+
+    # Cycle through scratchpad windows
+    bindsym $mod+minus scratchpad show
+#
+# Screenshots:
+#
+    bindsym {
+        # Capture the currently active output to clipboard
+        Shift+Print exec grimshot copy output
+
+        # Capture the currently active window
+        Mod1+p exec grimshot save active
+        # Capture the currently active window to clipboard
+        Shift+Mod1+p exec grimshot copy active
+
+        # Select and capture a custom rectangular area
+        $mod+Shift+s exec grimshot save area
+        # Select and capture a custom rectangular area to clipboard
+        $mod+Shift+Ctrl+s exec grimshot copy area
+    }
+
+#
+# Resizing containers:
+#
+mode "resize" {
+    # left/right shrink/grow width, up/down shrink/grow height
+    bindsym $left resize shrink width 10px
+    bindsym $down resize grow height 10px
+    bindsym $up resize shrink height 10px
+    bindsym $right resize grow width 10px
+
+    # Same, with arrow keys
+    bindsym Left resize shrink width 10px
+    bindsym Down resize grow height 10px
+    bindsym Up resize shrink height 10px
+    bindsym Right resize grow width 10px
+
+    # Return to default mode
+    bindsym Return mode "default"
+    bindsym Escape mode "default"
+}
+bindsym $mod+r mode "resize"
+
+# Exit confirmation mode: press e to exit, Esc/Return to cancel
+mode "exit" {
+    bindsym e exec swaymsg exit
+    bindsym Escape mode "default"
+    bindsym Return mode "default"
+    bindsym $mod+Shift+e mode "default"
+}
+
+### Desktop settings (gsettings, autotiling, kanshi)
+set $gnome-schema org.gnome.desktop.interface
+exec_always {
+    gsettings set org.gnome.desktop.wm.preferences theme 'adw-gtk3-dark'
+    gsettings set $gnome-schema gtk-theme 'adw-gtk3-dark'
+    gsettings set $gnome-schema icon-theme 'Adwaita'
+    gsettings set $gnome-schema color-scheme 'prefer-dark'
+    autotiling -w 1 3 5 7 9
+    # Re-apply kanshi profiles on reload: kanshi only auto-reacts
+    # to hotplug events, not `sway reload`, so scale/position would
+    # otherwise revert to sway defaults (scale 1.0).
+    pkill -SIGHUP kanshi
+}
+
+include '$(/usr/libexec/sway/layered-include "/usr/share/sway/config.d/*.conf" "/etc/sway/config.d/*.conf" "${XDG_CONFIG_HOME:-$HOME/.config}/sway/config.d/*.conf")'

@@ -1,0 +1,144 @@
+// -*- mode: jsonc -*-
+{
+  "height": 31,
+  "spacing": 2,
+  "modules-left": [
+    "idle_inhibitor",
+    "sway/workspaces",
+    "sway/mode",
+    "sway/scratchpad",
+  ],
+  "modules-center": [],
+  "modules-right": [
+    "cpu",
+    "memory",
+    "pulseaudio",
+    "network",
+    "bluetooth",
+    "custom/power-profile",
+    "custom/clock",
+  ],
+
+  // sway/workspaces \u2014 default format, scroll enabled.
+  "sway/window": {
+    "format": "{app_id}",
+  },
+  "sway/mode": {
+    "format": "<span style=\"italic\">{}</span>",
+  },
+  "sway/scratchpad": {
+    "format": "{icon} {count}",
+    "show-empty": false,
+    "format-icons": ["\uf073", "\uf24d"],
+    "tooltip": true,
+    "tooltip-format": "{app}: {title}",
+  },
+
+  // idle inhibitor \u2014 click to toggle presentation mode (disables idle).
+  "idle_inhibitor": {
+    "format": "{icon}",
+    "format-icons": {
+      "activated": "\uf06e",
+      "deactivated": "\uf070",
+    },
+  },
+
+  // clock: disabled (custom/clock below provides a calendar tooltip)
+  "clock": {
+    "format": "",
+    "tooltip": false,
+  },
+  "custom/clock": {
+    // Time in the bar; hover shows a calendar (JetBrains Mono grid,
+    // today highlighted). Click opens gnome-calendar.
+    "exec": "$HOME/.config/waybar/scripts/clock.sh",
+    "return-type": "json",
+    "format": "{}",
+    "tooltip": true,
+    "interval": 30,
+  },
+
+  "cpu": {
+    // Icon only; per-core usage shown on hover.
+    "format": "\uf2db",
+    "tooltip": true,
+    "tooltip-format": "CPU: {usage}%\n{load} load\n{temp}\u00b0C",
+  },
+  "memory": {
+    // Icon only; memory breakdown shown on hover.
+    "format": "\uf0c9",
+    "tooltip": true,
+    "tooltip-format": "Memory: {percentage}%\n{used}GiB / {total}GiB",
+  },
+  "battery": {
+    "states": {
+      "warning": 30,
+      "critical": 15,
+    },
+    "format": "{icon} ",
+    "format-full": "{icon}",
+    "format-charging": "\uf0e7",
+    "format-plugged": "\uf1e6",
+    "format-alt": "{icon}",
+    "tooltip-format": "{capacity}% {status}\n{time}",
+    "format-icons": ["\uf244", "\uf243", "\uf242", "\uf241", "\uf240"],
+  },
+
+  // power-profiles-daemon: disabled (custom/power below adds battery data)
+  "power-profiles-daemon": {
+    "format": "",
+    "tooltip": false,
+  },
+  "custom/power-profile": {
+    // Icon in the bar; hover shows profile + driver + battery %.
+    // Click cycles: performance -> balanced -> power-saver.
+    "exec": "$HOME/.config/waybar/scripts/power.sh",
+    "return-type": "json",
+    "format": "{}",
+    "tooltip": true,
+    "interval": 30,
+    "on-click": "$HOME/.config/waybar/scripts/power-cycle.sh",
+    "exec-on-event": true,
+  },
+
+  "network": {
+    "tooltip": true,
+    "format-wifi": "\uf1eb",
+    "format-ethernet": "{ipaddr}/{cidr} \uf796",
+    "tooltip-format": "{essid} ({signalStrength}%) | {ifname} via {gwaddr}",
+    "format-linked": "{ifname} (No IP) \uf796",
+    "format-disconnected": "Disconnected \u26a0",
+    "format-alt": "{ifname}: {ipaddr}/{cidr}",
+    "on-click": "nm-connection-editor",
+  },
+  "bluetooth": {
+    // Icon only; connected device shown on hover.
+    "format": "\uf293",
+    "format-disabled": "\uf293",
+    "format-off": "\uf293",
+    "tooltip-format": "{status} | {num_connections} connected",
+    "tooltip-format-connected": "{device_enumerate}",
+    "tooltip-format-enumerate-connected": "{device_alias} ({device_address})",
+    "on-click": "blueman-manager",
+  },
+  "pulseaudio": {
+    // Icon only; volume + source shown on hover.
+    "format": "{icon}",
+    "format-bluetooth": "{icon}",
+    "format-bluetooth-muted": "\uf6a9 {icon}",
+    "format-muted": "\uf6a9",
+    "format-source": "\uf3cd",
+    "format-source-muted": "\uf131",
+    "tooltip-format": "Volume: {volume}%\nSource: {format_source}",
+    "format-icons": {
+      "headphone": "\uf025",
+      "hands-free": "\uf025",
+      "headset": "\uf025",
+      "phone": "\uf3cd",
+      "portable": "\uf3cd",
+      "car": "\uf1b9",
+      "default": ["\uf026", "\uf027", "\uf028"],
+    },
+    "on-click": "pavucontrol",
+  },
+}

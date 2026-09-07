@@ -1,0 +1,6 @@
+# Environment variables sourced by start-sway before launching sway.
+# These are inherited by all child processes (GTK apps, waybar, wezterm, etc.)
+
+# Cursor theme (Bibata Original Classic v2.0.7 — sharp edges)
+XCURSOR_THEME=Bibata-Original-Classic
+XCURSOR_SIZE=24

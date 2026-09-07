@@ -1,0 +1,188 @@
+* {
+    /* Inter for UI text; Font Awesome fallback renders the icon glyphs
+       (wifi U+F1EB, bluetooth U+F293, etc.) that Inter doesn't carry. */
+    font-family: 'Inter', 'Font Awesome 6 Free', 'Font Awesome 6 Brands', sans-serif;
+    font-size: 15px;
+}
+
+window#waybar {
+    background-color: rgba(0, 0, 0, 1);
+    border-bottom: 2px solid rgba(100, 114, 125, 0.5);
+    color: #ffffff;
+    transition-property: background-color;
+    transition-duration: .5s;
+}
+
+window#waybar.hidden {
+    opacity: 0.2;
+}
+
+button {
+    /* Use box-shadow instead of border so the text isn't offset. */
+    box-shadow: inset 0 -3px transparent;
+    border: none;
+    border-radius: 0;
+}
+
+/* https://github.com/Alexays/Waybar/wiki/FAQ#the-workspace-buttons-have-a-strange-hover-effect */
+button:hover {
+    background: inherit;
+    box-shadow: inset 0 -3px #ffffff;
+}
+
+#pulseaudio:hover {
+    background-color: #1FBDD2;
+}
+
+#workspaces button {
+    padding: 0 0.4em;
+    background-color: transparent;
+    color: #ffffff;
+}
+
+#workspaces button:hover {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+#workspaces button.focused {
+    background-color: #64727D;
+    box-shadow: inset 0 -2px #ffffff;
+}
+
+#workspaces button.urgent {
+    background-color: #eb4d4b;
+}
+
+#mode {
+    background-color: #64727D;
+    box-shadow: inset 0 -3px #ffffff;
+}
+
+/* Active modules — shared padding/margin. */
+#battery,
+#cpu,
+#memory,
+#network,
+#bluetooth,
+#pulseaudio,
+#custom-clock,
+#custom-power-profile,
+#mode,
+#idle_inhibitor,
+#scratchpad {
+    padding: 0 6px;
+    margin: 4px 0;
+    color: #ffffff;
+}
+
+#window,
+#workspaces {
+    margin: 0 4px;
+}
+
+/* If workspaces is the leftmost module, omit left margin. */
+.modules-left > widget:first-child > #workspaces {
+    margin-left: 0;
+}
+
+/* If workspaces is the rightmost module, omit right margin. */
+.modules-right > widget:last-child > #workspaces {
+    margin-right: 0;
+}
+
+/* custom-clock — time text, bumped +1px over the bar default, bold. */
+#custom-clock {
+    font-size: 16px;
+    font-weight: bold;
+}
+
+/* battery — icon-only; background stripped, color hints state. */
+#battery {
+    background-color: #000000;
+}
+
+#battery.charging,
+#battery.plugged {
+    color: #26A65B;
+}
+
+#battery.critical:not(.charging) {
+    /* Low battery: red background to draw attention. */
+    background-color: #f53c3c;
+    color: #ffffff;
+}
+
+/* custom-power-profile — icon-only; color hints the active profile. */
+#custom-power-profile {
+    background-color: #000000;
+    color: #ffffff;
+}
+
+#custom-power-profile.performance {
+    color: #f53c3c;
+}
+
+#custom-power-profile.balanced {
+    color: #2980b9;
+}
+
+#custom-power-profile.power-saver {
+    color: #2ecc71;
+}
+
+#cpu {
+    background-color: #000000;
+    color: #ffffff;
+}
+
+#memory {
+    background-color: #000000;
+}
+
+#network {
+    background-color: #000000;
+}
+
+#network.disconnected {
+    color: #f53c3c;
+}
+
+#bluetooth {
+    background-color: #000000;
+    color: #ffffff;
+}
+
+#bluetooth.off {
+    color: #808080;
+}
+
+#pulseaudio {
+    background-color: #000000;
+    color: #ffffff;
+}
+
+#pulseaudio.muted {
+    background-color: #90b1b1;
+    color: #2a5c45;
+}
+
+#idle_inhibitor {
+    background-color: #000000;
+}
+
+#idle_inhibitor.activated {
+    background-color: #ecf0f1;
+    color: #2d3436;
+}
+
+#scratchpad {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+#scratchpad.empty {
+    background-color: transparent;
+}
+
+label:focus {
+    background-color: #000000;
+}

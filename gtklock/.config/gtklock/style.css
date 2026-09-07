@@ -1,0 +1,88 @@
+/**
+ * gtklock style — minimalist black lock screen.
+ * Palette matches raycast-minimalist: pure black bg, white text.
+ */
+
+/* --- Window: solid black, no image --- */
+window {
+    background-color: #000000;
+    background-image: none;
+}
+
+/* --- Clock: 11pt Inter, top-right corner --- */
+#clock-label {
+    font: 11pt Inter, sans-serif;
+    color: #ffffff;
+    opacity: 0.7;
+}
+
+/* Override gtklock defaults (96pt unfocused, 32pt focused) */
+window #clock-label {
+    font-size: 11pt;
+}
+window.focused:not(.hidden) #clock-label {
+    font-size: 11pt;
+}
+
+/* --- Date label: hidden --- */
+#date-label {
+    opacity: 0;
+}
+
+/* --- Input field: minimalist gray border, slightly rounded --- */
+#input-field {
+    font: 14px Inter, sans-serif;
+    color: #ffffff;
+    background: transparent;
+    background-image: none;
+    border: 2px solid #333333;
+    border-radius: 4px;
+    padding: 8px 12px;
+    caret-color: #888888;
+    /* Override GTK default focus ring (blue) */
+    outline: none;
+    box-shadow: none;
+}
+
+#input-field:focus {
+    border-color: #555555;
+    outline: none;
+    box-shadow: none;
+}
+
+/* Override GTK default entry focus styling */
+#input-field image,
+#input-field selection {
+    outline: none;
+    box-shadow: none;
+}
+
+/* Placeholder text */
+#input-field placeholder {
+    color: #555555;
+    opacity: 0.6;
+}
+
+/* --- Password label: hidden (using placeholder instead) --- */
+#input-label {
+    opacity: 0;
+}
+
+/* --- Unlock button: hidden (Enter key submits) --- */
+#unlock-button {
+    opacity: 0;
+}
+
+/* --- Error label: subtle red --- */
+#error-label {
+    color: #ff5555;
+    font: 11px Inter, sans-serif;
+    opacity: 0.8;
+}
+
+/* --- Warning label (caps lock): subtle orange --- */
+#warning-label {
+    color: #ffa066;
+    font: 11px Inter, sans-serif;
+    opacity: 0.8;
+}

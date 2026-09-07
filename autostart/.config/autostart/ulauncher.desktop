@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Ulauncher
+Comment=Application launcher
+TryExec=/usr/bin/ulauncher
+Exec=ulauncher --hide-window
+Icon=ulauncher
+Terminal=false
