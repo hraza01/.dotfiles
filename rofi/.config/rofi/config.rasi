@@ -20,86 +20,84 @@ configuration {
     steal-focus: false;
 }
 
-@theme {
-    --bg: #0d0d0d;
-    --bg-surface: #141414;
-    --border: #333333;
-    --accent: #4c7899;
-    --accent-dim: rgba(76, 120, 153, 0.16);
-    --fg: #ffffff;
-    --fg-dim: #888888;
-    --fg-faint: #555555;
+* {
+    bg: #0d0d0d;
+    accent: #4c7899;
+    accent-dim: rgba(76, 120, 153, 0.16);
+    fg: #ffffff;
+    fg-dim: #888888;
+    border-color: #333333;
 
-    window {
-        width: 560px;
-        background-color: var(--bg);
-        border: 2px solid var(--border);
-        border-radius: 12px;
-        padding: 6px;
-        transparency: "real";
-    }
+    background-color: var(bg);
+    text-color: var(fg);
+    border: 2px solid var(border-color);
+    border-radius: 12px;
+    padding: 6px;
+    spacing: 8px;
+}
 
-    mainbox {
-        spacing: 8px;
-        padding: 8px;
-    }
+window {
+    width: 560px;
+    transparency: "real";
+}
 
-    inputbar {
-        children: [ "entry" ];
-        padding: 6px 12px;
-        spacing: 8px;
-        background-color: transparent;
-        border: none;
-        border-radius: 6px;
-    }
+inputbar {
+    children: [ "entry" ];
+    padding: 6px 12px;
+    spacing: 8px;
+    background-color: transparent;
+    border: 0;
+    border-radius: 6px;
+}
 
-    entry {
-        placeholder: "Search";
-        placeholder-color: var(--fg-dim);
-        text-color: var(--fg);
-        cursor: primary;
-    }
+entry {
+    placeholder: "Search";
+    placeholder-color: var(fg-dim);
+    text-color: var(fg);
+}
 
-    listview {
-        lines: 10;
-        columns: 1;
-        cycle: true;
-        dynamic: true;
-        scrollbar: false;
-        layout: vertical;
-        padding: 0;
-        spacing: 2px;
-        background-color: transparent;
-    }
+listview {
+    lines: 10;
+    columns: 1;
+    cycle: true;
+    dynamic: true;
+    scrollbar: false;
+    layout: vertical;
+    padding: 0;
+    spacing: 2px;
+    background-color: transparent;
+}
 
-    element {
-        orientation: horizontal;
-        padding: 8px 12px;
-        spacing: 10px;
-        border-radius: 6px;
-        cursor: pointer;
-    }
+element {
+    padding: 8px 12px;
+    spacing: 10px;
+    border-radius: 6px;
+    background-color: transparent;
+    text-color: var(fg);
+    border: 0;
+}
 
-    element-icon {
-        size: 28px;
-        margin: 0;
-    }
+element-icon {
+    size: 28px;
+    margin: 0;
+}
 
-    element-text {
-        vertical-align: 0.5;
-        horizontal-align: 0.0;
-        text-color: var(--fg);
-    }
+element-text {
+    vertical-align: 0.5;
+    horizontal-align: 0.0;
+    text-color: inherit;
+}
 
-    element selected {
-        background-color: var(--accent-dim);
-        border-left: 2px solid var(--accent);
-        border-radius: 6px;
-    }
+element selected {
+    background-color: var(accent-dim);
+    border: 0 0 0 2px solid var(accent);
+    border-radius: 6px;
+}
 
-    element selected element-text {
-        text-color: var(--fg);
-    }
+element selected element-text {
+    text-color: var(fg);
+}
 
-    scrollbar { width: 0; }
+scrollbar {
+    width: 0;
 }
