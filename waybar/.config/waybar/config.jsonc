@@ -110,6 +110,7 @@
   },
   "pulseaudio": {
     // Icon only; volume + source shown on hover. Scroll to adjust volume.
+    // Works with PipeWire via pipewire-pulse; pwvucontrol for the full mixer.
     "format": "{icon}",
     "format-bluetooth": "{icon}",
     "format-bluetooth-muted": "\uf6a9 {icon}",
@@ -127,6 +128,6 @@
       "car": "\uf1b9",
       "default": ["\uf026", "\uf027", "\uf028"],
     },
-    "on-click": "pavucontrol",
+    "on-click": "pwvucontrol",
   },
 }

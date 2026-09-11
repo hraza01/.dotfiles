@@ -1,8 +1,0 @@
-[Desktop Entry]
-Type=Application
-Name=Blueman Applet
-# Override the system autostart (blueman.desktop) — we use waybar's
-# bluetooth module instead, so the tray icon is redundant.
-# bluetoothd still runs at the system level; click the waybar bluetooth
-# icon to open blueman-manager for pairing/connecting.
-Hidden=true
