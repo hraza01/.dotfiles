@@ -20,12 +20,19 @@ end)
 
 return {
   -- fonts
-  font = wezterm.font 'JetBrains Mono',
+  -- JetBrains Mono for text; Nerd Font Mono variant as fallback for
+  -- icon glyphs used by oh-my-posh (e.g. the prompt arrow, U+F0055)
+  -- that plain JetBrains Mono doesn't carry. "Mono" variant keeps
+  -- icons at a consistent monospace cell width.
+  font = wezterm.font_with_fallback({ 'JetBrains Mono', 'JetBrainsMono Nerd Font Mono' }),
   font_size = 15.0,
   harfbuzz_features = { 'calt=0', 'liga=0' },
 
   -- window
-  window_decorations = 'RESIZE',
+  -- On this Wayland backend RESIZE alone draws SCTK's blank close-button frame.
+  -- Under Sway, request server-side decorations; Sway's pixel borders decide
+  -- their appearance. Takes effect in new windows; keep RESIZE elsewhere.
+  window_decorations = os.getenv('SWAYSOCK') and 'TITLE | RESIZE' or 'RESIZE',
   window_padding = { left = 15, right = 15, top = 15, bottom = 15 },
   window_background_opacity = 0.83,
 

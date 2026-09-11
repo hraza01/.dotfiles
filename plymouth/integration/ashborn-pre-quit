@@ -1,0 +1,25 @@
+#!/bin/sh
+# Run only against an existing daemon; never start, show, reactivate, or quit it.
+# The systemd unit supplies a clean, fixed PATH and the overall timeout.
+# Keeping command lookup ordinary allows unprivileged, offline PATH-stub tests.
+
+[ "$#" -le 1 ] || exit 0
+case "${1:-boot}" in
+    boot) message=ashborn:reveal; wait=3 ;;
+    shutdown) message=ashborn:shutdown; wait=1 ;;
+    *) exit 0 ;;
+esac
+
+plymouth --ping >/dev/null 2>&1 || exit 0
+
+# No arguments: the installed chooser only reads the configured default theme.
+theme=$(plymouth-set-default-theme 2>/dev/null) || exit 0
+[ "$theme" = ashborn ] || exit 0
+
+# SetDisplayMessageFunction handles this sentinel while refresh ticks still run.
+plymouth display-message --text="$message" >/dev/null 2>&1 || exit 0
+
+# Boot: 0.4s glitch + 0.5s reveal + 0.8s hold + 0.6s fade, plus slack.
+# Shutdown: only a 0.6s fade, already running from theme initialization.
+sleep "$wait" >/dev/null 2>&1 || :
+exit 0

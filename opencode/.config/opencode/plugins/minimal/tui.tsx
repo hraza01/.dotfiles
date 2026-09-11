@@ -1,4 +1,3 @@
-// @ts-nocheck
 /** @jsxImportSource @opentui/solid */
 import type { TuiPlugin, TuiPluginModule } from "@opencode-ai/plugin/tui";
 
@@ -6,13 +5,6 @@ const id = "minimal";
 
 const tui: TuiPlugin = async (api) => {
   api.theme.set("system");
-
-  try {
-    await api.plugins.deactivate("internal:home-tips");
-  } catch {}
-  try {
-    await api.plugins.deactivate("internal:sidebar-context");
-  } catch {}
 
   api.slots.register({
     slots: {
@@ -26,16 +18,7 @@ const tui: TuiPlugin = async (api) => {
       app_bottom: () => <box height={0} />,
     },
   });
-
-  api.lifecycle.onDispose(async () => {
-    try {
-      await api.plugins.activate("internal:home-tips");
-    } catch {}
-    try {
-      await api.plugins.activate("internal:sidebar-context");
-    } catch {}
-  });
 };
 
-const plugin: TuiPluginModule & { id: string } = { id, tui };
+const plugin: TuiPluginModule = { id, tui };
 export default plugin;

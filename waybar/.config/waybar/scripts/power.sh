@@ -9,57 +9,89 @@
 
 set -euo pipefail
 
-# --- Active power profile + driver (via D-Bus) ---
-profile=$(gdbus call --system \
-    --dest net.hadess.PowerProfiles \
-    --object-path /net/hadess/PowerProfiles \
-    --method org.freedesktop.DBus.Properties.Get \
-    net.hadess.PowerProfiles ActiveProfile 2>/dev/null \
-    | sed -E "s/^\(<'([^']*)'>,\)$/\1/" || echo "unknown")
+exec python3 - <<'PY'
+import html
+import json
+import os
+from pathlib import Path
+import subprocess
 
-# Driver: find the entry matching the active profile in the Profiles array.
-driver="unknown"
-profiles_raw=$(gdbus call --system \
-    --dest net.hadess.PowerProfiles \
-    --object-path /net/hadess/PowerProfiles \
-    --method org.freedesktop.DBus.Properties.Get \
-    net.hadess.PowerProfiles Profiles 2>/dev/null || echo "")
-# Extract the Driver value that follows the matching Profile.
-driver=$(printf '%s' "$profiles_raw" | grep -oE "\{'Profile': <'$profile'>, 'Driver': <'[^']*'>\}" | grep -oE "'Driver': <'[^']*'" | sed -E "s/'Driver': <'([^']*)'/\1/")
-[ -z "$driver" ] && driver="unknown"
 
-# --- Battery (from sysfs) ---
-bat_path=""
-for d in /sys/class/power_supply/BAT*; do
-    [ -e "$d" ] && bat_path="$d" && break
-done
-if [ -n "$bat_path" ]; then
-    capacity=$(cat "$bat_path/capacity" 2>/dev/null || echo "?")
-    status=$(cat "$bat_path/status" 2>/dev/null || echo "unknown")
-else
-    capacity="?"
-    status="no battery"
-fi
+# Font Awesome: bolt, balance-scale, leaf.
+ICONS = {"performance": "\uf0e7", "balanced": "\uf24e", "power-saver": "\uf06c"}
 
-# --- Icon (Font Awesome) based on profile ---
-# performance: fa-bolt (U+F0E7) ; balanced: fa-balance-scale (U+F24E) ; power-saver: fa-leaf (U+F06C)
-case "$profile" in
-    performance) icon=$'\uf0e7' ;;
-    balanced)   icon=$'\uf24e' ;;
-    power-saver) icon=$'\uf06c' ;;
-    *)          icon=$'\uf0e7' ;;
-esac
 
-# --- Tooltip ---
-tooltip=$(printf 'Power profile: %s\nDriver: %s\nBattery: %s%% (%s)' \
-    "$profile" "$driver" "$capacity" "$status")
+def variant(value, signature, data_type):
+    """Unwrap busctl's typed JSON without relying on dictionary order."""
+    if (not isinstance(value, dict) or value.get("type") != signature
+            or not isinstance(value.get("data"), data_type)):
+        raise ValueError("Malformed D-Bus value")
+    return value["data"]
 
-# --- Emit JSON ---
-python3 -c '
-import json, sys
+
+def active_profile():
+    # One read-only snapshot; the outer timeout also bounds a stalled busctl.
+    result = subprocess.run(
+        ["busctl", "--system", "--timeout=2s", "--json=short", "call",
+         "net.hadess.PowerProfiles", "/net/hadess/PowerProfiles",
+         "org.freedesktop.DBus.Properties", "GetAll", "s", "net.hadess.PowerProfiles"],
+        stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True,
+        check=True, timeout=3,
+    )
+    data = variant(json.loads(result.stdout), "a{sv}", list)
+    if len(data) != 1 or not isinstance(data[0], dict):
+        raise ValueError("Malformed D-Bus properties")
+    properties = data[0]
+    profile = variant(properties.get("ActiveProfile"), "s", str)
+    profiles = variant(properties.get("Profiles"), "aa{sv}", list)
+    if profile not in ICONS:
+        return "unknown", "unknown"
+
+    for entry in profiles:
+        if not isinstance(entry, dict):
+            raise ValueError("Malformed profile entry")
+        if variant(entry.get("Profile"), "s", str) != profile:
+            continue
+        if "Driver" in entry:
+            driver = variant(entry["Driver"], "s", str)
+            if driver:
+                return profile, driver
+        drivers = []
+        for field, label in (("CpuDriver", "CPU"), ("PlatformDriver", "Platform")):
+            if field in entry:
+                driver = variant(entry[field], "s", str)
+                if driver:
+                    drivers.append(f"{label}: {driver}")
+        return profile, ", ".join(drivers) or "unknown"
+    return profile, "unknown"
+
+
+def read_battery_value(path, fallback):
+    try:
+        return path.read_text().strip() or fallback
+    except (OSError, UnicodeError):
+        return fallback
+
+
+try:
+    profile, driver = active_profile()
+except (OSError, subprocess.SubprocessError, ValueError):
+    # A missing daemon, unsupported JSON, or timeout must not hide the module.
+    profile, driver = "unknown", "unknown"
+
+# Keep the first existing BAT* supply; the override permits isolated fixtures.
+supplies = Path(os.environ.get("POWER_SUPPLY_PATH") or "/sys/class/power_supply")
+try:
+    battery = next((path for path in sorted(supplies.glob("BAT*")) if path.exists()), None)
+except OSError:
+    battery = None
+capacity = read_battery_value(battery / "capacity", "?") if battery else "?"
+status = read_battery_value(battery / "status", "unknown") if battery else "no battery"
+
+tooltip = f"Power profile: {profile}\nDriver: {driver}\nBattery: {capacity}% ({status})"
 print(json.dumps({
-    "text": sys.argv[1],
-    "tooltip": sys.argv[2],
-    "class": "power-profiles-daemon " + sys.argv[3]
+    "text": ICONS.get(profile, "\uf0e7"),
+    "tooltip": html.escape(tooltip, quote=False),
+    "class": ["power-profiles-daemon", profile],
 }))
-' "$icon" "$tooltip" "$profile"
+PY

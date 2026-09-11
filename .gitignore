@@ -1,5 +1,9 @@
 # Compiled Python files
 *.pyc
+__pycache__/
+
+# Validation belongs outside this repository.
+/tests/
 
 # Folder view configuration files
 .DS_Store
@@ -19,3 +23,8 @@ Thumbs.db
 # Sway runtime files (machine-specific)
 sway/.config/sway/outputs
 sway/.config/sway/workspaces
+
+# Application-generated state
+**/.config/dconf/
+ulauncher/.config/ulauncher/extensions.json
+ulauncher/.config/ulauncher/user-themes/raycast-minimalist/generated.css

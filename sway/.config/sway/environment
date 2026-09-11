@@ -1,6 +1,7 @@
-# Environment variables sourced by start-sway before launching sway.
-# These are inherited by all child processes (GTK apps, waybar, wezterm, etc.)
+# Loaded by .zprofile before SDDM starts Sway.
 
-# Cursor theme (Bibata Original Classic v2.0.7 — sharp edges)
-XCURSOR_THEME=Bibata-Original-Classic
-XCURSOR_SIZE=24
+export XCURSOR_THEME=Bibata-Original-Classic
+export XCURSOR_SIZE=24
+
+# Default terminal for tools that honor TERMINAL.
+export TERMINAL=wezterm

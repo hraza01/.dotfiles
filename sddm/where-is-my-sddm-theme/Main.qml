@@ -240,9 +240,13 @@ Rectangle {
             passwordCharacter: config.stringValue("passwordCharacter") || "*"
             cursorVisible: config.boolValue("passwordInputCursorVisible")
             onAccepted: {
-                if (text != "" || config.boolValue("passwordAllowEmpty")) {
-                    sddm.login(userModel.data(userModel.index(currentUsersIndex, 0), usernameRole)
- || "123test", text, currentSessionsIndex);
+                if (currentUsersIndex < 0 || currentUsersIndex >= userModel.count ||
+                    currentSessionsIndex < 0 || currentSessionsIndex >= sessionModel.rowCount()) {
+                    return;
+                }
+                var username = userModel.data(userModel.index(currentUsersIndex, 0), usernameRole);
+                if (username && (text != "" || config.boolValue("passwordAllowEmpty"))) {
+                    sddm.login(username, text, currentSessionsIndex);
                 }
             }
             Rectangle {

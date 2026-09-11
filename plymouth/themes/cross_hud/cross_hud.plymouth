@@ -1,8 +1,0 @@
-[Plymouth Theme]
-Name=cross_hud
-Description=Cross HUD boot splash
-ModuleName=script
-
-[script]
-ImageDir=/usr/share/plymouth/themes/cross_hud
-ScriptFile=/usr/share/plymouth/themes/cross_hud/cross_hud.script

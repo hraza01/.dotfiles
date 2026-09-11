@@ -1,0 +1,20 @@
+[Unit]
+Description=Allow Ashborn's short shutdown fade to finish
+DefaultDependencies=no
+ConditionPathExists=!/etc/initrd-release
+After=plymouth-reboot.service plymouth-poweroff.service plymouth-halt.service
+Before=systemd-reboot.service systemd-poweroff.service systemd-halt.service plymouth-switch-root-initramfs.service
+
+[Service]
+Type=oneshot
+ExecStart=-/usr/bin/env -i PATH=/usr/bin:/bin LC_ALL=C /usr/local/libexec/ashborn-pre-quit shutdown
+TimeoutStartSec=2s
+TimeoutStartFailureMode=kill
+TimeoutStopSec=1s
+KillMode=control-group
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+
+[Install]
+WantedBy=plymouth-reboot.service plymouth-poweroff.service plymouth-halt.service

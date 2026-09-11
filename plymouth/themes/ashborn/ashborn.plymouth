@@ -1,0 +1,11 @@
+# ashborn.plymouth
+[Plymouth Theme]
+Name=ashborn
+Description=Arch mark guarded by the Shadow Monarch, digital-glitch corruption motif
+ModuleName=script
+
+[script]
+Font=JetBrainsMono Nerd Font 18
+MonospaceFont=JetBrainsMono Nerd Font 18
+ImageDir=/usr/share/plymouth/themes/ashborn
+ScriptFile=/usr/share/plymouth/themes/ashborn/ashborn.script
