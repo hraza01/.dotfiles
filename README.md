@@ -74,7 +74,7 @@ with a deliberate reboot after checking locked/docked lid behavior.
 | `dunst` | `~/.config/dunst/` |
 | `wezterm` | `~/.config/wezterm/` |
 | `kanshi` | `~/.config/kanshi/` |
-| `ulauncher` | `~/.config/ulauncher/` |
+| `rofi` | `~/.config/rofi/` |
 | `fontconfig` | `~/.config/fontconfig/` |
 | `gtk` | GTK2/GTK3 settings |
 | `autostart` | `~/.config/autostart/` |

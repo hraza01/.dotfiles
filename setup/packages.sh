@@ -340,7 +340,7 @@ group_gui() {
   require_commands python3 sha256sum sudo systemctl
   python3 -c 'import hashlib, lzma, tarfile' || die "GUI setup requires Python's hashing and tar/xz standard-library modules"
   local source
-  local stow_groups=(sway gtklock waybar dunst wezterm kanshi ulauncher fontconfig gtk autostart opencode)
+  local stow_groups=(sway gtklock waybar dunst wezterm kanshi rofi fontconfig gtk autostart opencode)
   check_stow_packages "${stow_groups[@]}"
   declare -F install_ui_font >/dev/null || die "Source setup/fonts.sh before installing the GUI group"
   declare -F install_sddm_theme >/dev/null || die "Source setup/sddm.sh before installing the GUI group"
@@ -364,6 +364,7 @@ group_gui() {
         kanshi nwg-displays \
         grim swappy \
         wezterm \
+        rofi \
         dmenu \
         curl fontconfig ttf-jetbrains-mono ttf-jetbrains-mono-nerd otf-font-awesome \
         nautilus gnome-calendar \
@@ -387,9 +388,9 @@ group_gui() {
 
       ensure_user_socket wob.socket
 
-      # AUR-only packages (ulauncher, grimshot, adw-gtk3-dark theme,
+      # AUR-only packages (grimshot, adw-gtk3-dark theme,
       # google-chrome).
-      aur_group_install ulauncher sway-contrib-git adw-gtk-theme-git google-chrome pwvucontrol
+      aur_group_install sway-contrib-git adw-gtk-theme-git google-chrome pwvucontrol
 
       install_sway_contrib_links
 
@@ -400,7 +401,7 @@ group_gui() {
         sway swayidle swaylock swaybg \
         gtklock gtk-session-lock \
         waybar dunst \
-        kanshi ulauncher \
+        kanshi rofi \
         grim grimshot \
         wezterm \
         dmenu \
@@ -418,7 +419,7 @@ group_gui() {
         sway swayidle swaylock swaybg \
         gtklock \
         waybar dunst \
-        kanshi ulauncher \
+        kanshi rofi \
         grim grimshot \
         wezterm \
         dmenu \

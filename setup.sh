@@ -22,14 +22,14 @@ ${C_CYAN}Available groups:${C_RESET}
           Stows: zsh, oh-my-posh
 
   ${C_BOLD}gui${C_RESET}     sway, waybar, kanshi, nwg-displays (Arch),
-          ulauncher, dunst, gtklock, wezterm,
+          rofi, dunst, gtklock, wezterm,
           fonts (Titillium Web, JetBrains Mono, Font Awesome),
           Bibata cursor theme, grimshot, autotiling,
           adw-gtk3-dark, gnome-calendar, nautilus, sddm theme,
           plymouth, GRUB tooling, networking/bluetooth/audio/portals,
           GPU driver (runtime-detected), brightness/volume controls
           Stows: sway, gtklock, waybar, dunst, wezterm, kanshi,
-                 ulauncher, fontconfig, gtk, autostart, opencode
+                  rofi, fontconfig, gtk, autostart, opencode
 
   ${C_BOLD}dev${C_RESET}     uv, nvm/Node LTS, Go, Google Cloud SDK,
           Yazi and rootless Docker (Arch)

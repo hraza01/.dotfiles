@@ -1,0 +1,105 @@
+configuration {
+    modi: "drun,window,run";
+    font: "Titillium Web SemiBold 12";
+    show: "drun";
+    dpi: 0;
+    terminal: "wezterm";
+    icon-theme: "Adwaita";
+    display-drun: "Applications";
+    display-window: "Windows";
+    display-run: "Commands";
+    drun-display-format: "{name}";
+    window-format: "{w}  {t}";
+    scroll-method: 0;
+    cycle: true;
+    sidebar-mode: false;
+    show-icons: true;
+    matching: "fuzzy";
+    sort: true;
+    sorting-method: "fzf";
+    steal-focus: false;
+}
+
+@theme {
+    --bg: #0d0d0d;
+    --bg-surface: #141414;
+    --border: #333333;
+    --accent: #4c7899;
+    --accent-dim: rgba(76, 120, 153, 0.16);
+    --fg: #ffffff;
+    --fg-dim: #888888;
+    --fg-faint: #555555;
+
+    window {
+        width: 560px;
+        background-color: var(--bg);
+        border: 2px solid var(--border);
+        border-radius: 12px;
+        padding: 6px;
+        transparency: "real";
+    }
+
+    mainbox {
+        spacing: 8px;
+        padding: 8px;
+    }
+
+    inputbar {
+        children: [ "entry" ];
+        padding: 6px 12px;
+        spacing: 8px;
+        background-color: transparent;
+        border: none;
+        border-radius: 6px;
+    }
+
+    entry {
+        placeholder: "Search";
+        placeholder-color: var(--fg-dim);
+        text-color: var(--fg);
+        cursor: primary;
+    }
+
+    listview {
+        lines: 10;
+        columns: 1;
+        cycle: true;
+        dynamic: true;
+        scrollbar: false;
+        layout: vertical;
+        padding: 0;
+        spacing: 2px;
+        background-color: transparent;
+    }
+
+    element {
+        orientation: horizontal;
+        padding: 8px 12px;
+        spacing: 10px;
+        border-radius: 6px;
+        cursor: pointer;
+    }
+
+    element-icon {
+        size: 28px;
+        margin: 0;
+    }
+
+    element-text {
+        vertical-align: 0.5;
+        horizontal-align: 0.0;
+        text-color: var(--fg);
+    }
+
+    element selected {
+        background-color: var(--accent-dim);
+        border-left: 2px solid var(--accent);
+        border-radius: 6px;
+    }
+
+    element selected element-text {
+        text-color: var(--fg);
+    }
+
+    scrollbar { width: 0; }
+}

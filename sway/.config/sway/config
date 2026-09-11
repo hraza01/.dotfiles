@@ -40,7 +40,6 @@ exec dbus-update-activation-environment --systemd WAYLAND_DISPLAY SWAYSOCK XDG_C
 # Dunst is D-Bus-activated; polkit's GNOME-only autostart needs an explicit exec.
 exec waybar
 exec kanshi
-exec ulauncher --hide-window
 exec /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1
 # Tray applets for quick network/bluetooth access from Waybar's tray.
 exec nm-applet
@@ -78,13 +77,13 @@ exec swayidle -w \
 # Basics:
 #
     # Start a terminal
-    bindsym $mod+Return exec $term
+    bindsym Ctrl+Return exec $term
 
     # Kill focused window
-    bindsym Mod1+w kill
+    bindsym $mod+w kill
 
-    # Launcher (ulauncher)
-    bindsym Mod1+space exec ulauncher toggle
+    # Launcher (rofi)
+    bindsym Mod1+space exec rofi -show drun
 
     # File manager (Nautilus)
     bindsym $mod+Shift+f exec nautilus
@@ -96,7 +95,7 @@ exec swayidle -w \
     floating_modifier $mod normal
 
     # Window-specific rules
-    for_window [app_id="ulauncher"] floating enable, border none, move position center
+    for_window [app_id="rofi"] floating enable, border none
 
     # Reload Sway and the current user's Waybar (WezTerm uses Alt+Z).
     bindsym $mod+Shift+c reload, exec pkill -USR2 -u "$(id -u)" -x waybar
