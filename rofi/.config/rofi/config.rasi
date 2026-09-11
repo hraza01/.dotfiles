@@ -1,13 +1,10 @@
 configuration {
     modi: "drun,window,run";
-    font: "Titillium Web SemiBold 12";
     show: "drun";
-    dpi: 0;
+    font: "Titillium Web 10";
+    dpi: 96;
     terminal: "wezterm";
     icon-theme: "Adwaita";
-    display-drun: "Applications";
-    display-window: "Windows";
-    display-run: "Commands";
     drun-display-format: "{name}";
     window-format: "{w}  {t}";
     scroll-method: 0;
@@ -20,86 +17,5 @@ configuration {
     steal-focus: false;
 }
 
-* {
-    bg: #0d0d0d;
-    accent: #4c7899;
-    accent-dim: rgba(76, 120, 153, 0.16);
-    fg: #ffffff;
-    fg-dim: #888888;
-    border-color: #333333;
-
-    background-color: var(bg);
-    text-color: var(fg);
-    border-width: 2px;
-    border-color: var(border-color);
-    border-radius: 12px;
-    padding: 6px;
-    spacing: 8px;
-}
-
-window {
-    width: 560px;
-    transparency: "real";
-}
-
-inputbar {
-    children: [ "entry" ];
-    padding: 6px 12px;
-    spacing: 8px;
-    background-color: transparent;
-    border-width: 0;
-    border-radius: 6px;
-}
-
-entry {
-    placeholder: "Search";
-    placeholder-color: var(fg-dim);
-    text-color: var(fg);
-}
-
-listview {
-    lines: 10;
-    columns: 1;
-    cycle: true;
-    dynamic: true;
-    scrollbar: false;
-    layout: vertical;
-    padding: 0;
-    spacing: 2px;
-    background-color: transparent;
-}
-
-element {
-    padding: 8px 12px;
-    spacing: 10px;
-    border-radius: 6px;
-    background-color: transparent;
-    text-color: var(fg);
-    border: 0;
-}
-
-element-icon {
-    size: 28px;
-    margin: 0;
-}
-
-element-text {
-    vertical-align: 0.5;
-    horizontal-align: 0.0;
-    text-color: inherit;
-}
-
-element selected {
-    background-color: var(accent-dim);
-    border-width: 0 0 0 2px;
-    border-color: var(accent);
-    border-radius: 6px;
-}
-
-element selected element-text {
-    text-color: var(fg);
-}
-
-scrollbar {
-    width: 0;
-}
+// Replace the default theme, including its light row-state colors.
+@theme "theme.rasi"
