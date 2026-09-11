@@ -38,7 +38,7 @@
 
 .input {
     color: @input_color;
-    font: 17px Inter, sans-serif;
+    font: 600 12pt "Titillium Web", sans-serif;
     padding: 6px 12px;
     border: none;
     border-radius: 6px;
@@ -53,11 +53,11 @@
 
 .item-text {
     color: @item_text;
-    font: 12px Inter, sans-serif;
+    font: 600 12pt "Titillium Web", sans-serif;
 }
 .item-name {
     color: @item_name;
-    font: 16px Inter, sans-serif;
+    font: 600 12pt "Titillium Web", sans-serif;
     /* Offset the 28px-tall icon: push the name down so it visually
        centers with the icon and shortcut in the row. */
     margin-top: 8px;
@@ -92,7 +92,7 @@
 .item-shortcut {
     color: @item_shortcut_color;
     text-shadow: none;
-    font: bold 13px Inter, sans-serif;
+    font: 600 12pt "Titillium Web", sans-serif;
     opacity: 0.5;
     margin-right: 4px;
 }

@@ -1,27 +1,42 @@
 # XDG_CONFIG
 export XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
 
+# Make local tools available before bootstrap and completion checks.
+export GCLOUD_DIR="$HOME/.gcloud"
+typeset -U path
+path=("$HOME/.opencode/bin" "$HOME/.local/bin"
+      "${PIPX_BIN_DIR:-$HOME/.local/bin}"
+      "$GCLOUD_DIR/google-cloud-sdk/bin" /usr/local/go/bin $path)
+export PATH
+
 # zinit directory
 ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
 
 # Download zinit if not present
 if [ ! -d "$ZINIT_HOME" ]; then
-   mkdir -p "$(dirname $ZINIT_HOME)"
-   git clone https://github.com/zdharma-continuum/zinit.git "$ZINIT_HOME"
+   if ! { mkdir -p "${ZINIT_HOME:h}" &&
+          git clone https://github.com/zdharma-continuum/zinit.git "$ZINIT_HOME"; }; then
+      print -u2 'zinit bootstrap failed; continuing without plugins.'
+   fi
 fi
 
-# Load zinit
-source "${ZINIT_HOME}/zinit.zsh"
-
-# Plugins
-zinit light zsh-users/zsh-syntax-highlighting
-zinit light zsh-users/zsh-completions
-zinit light zsh-users/zsh-autosuggestions
-zinit light Aloxaf/fzf-tab
+# Keep a usable shell if bootstrap is incomplete or initialization fails.
+_zinit_loaded=0
+if [[ -r "$ZINIT_HOME/zinit.zsh" ]] && source "$ZINIT_HOME/zinit.zsh" &&
+   (( $+functions[zinit] )); then
+   _zinit_loaded=1
+   zinit light zsh-users/zsh-syntax-highlighting
+   zinit light zsh-users/zsh-completions
+   zinit light zsh-users/zsh-autosuggestions
+   zinit light Aloxaf/fzf-tab
+else
+   print -u2 "zinit unavailable: $ZINIT_HOME/zinit.zsh"
+fi
 
 # Completions
 autoload -Uz compinit && compinit
-zinit cdreplay -q
+(( _zinit_loaded )) && zinit cdreplay -q
+unset _zinit_loaded
 
 # Keybindings
 bindkey -e
@@ -33,7 +48,6 @@ bindkey '^[w' kill-region
 HISTSIZE=5000
 HISTFILE=~/.zsh_history
 SAVEHIST=$HISTSIZE
-HISTDUP=erase
 setopt appendhistory
 setopt sharehistory
 setopt hist_ignore_space
@@ -52,34 +66,57 @@ zstyle ':fzf-tab:complete:cd:*' fzf-preview 'ls --color $realpath'
 alias ls='ls --color'
 alias vim='nvim'
 alias c='clear'
-alias v="fd --type f --hidden --exclude .git | fzf --reverse | xargs nvim"
-alias f='cd $(find ~/dev -mindepth 1 -maxdepth 1 -type d | fzf --reverse)'
 alias oc='opencode'
+
+# NUL delimiters preserve spaces/newlines; cancellation leaves the shell alone.
+unalias f v 2>/dev/null || true
+v() {
+  emulate -L zsh
+  local selected
+  # Use fzf's status: early selection may close the producer pipe successfully.
+  selected=$(fd --type f --hidden --exclude .git --print0 |
+    fzf --reverse --read0 --print0 --no-multi) || return
+  selected=${selected%$'\0'}
+  [[ -n "$selected" ]] || return
+  nvim -- "$selected"
+}
+
+f() {
+  emulate -L zsh
+  local selected
+  selected=$(find "$HOME/dev" -mindepth 1 -maxdepth 1 -type d -print0 |
+    fzf --reverse --read0 --print0 --no-multi) || return
+  selected=${selected%$'\0'}
+  [[ -n "$selected" ]] || return
+  builtin cd -- "$selected"
+}
 
 # uv (Python package manager)
 if command -v uv &>/dev/null; then
   eval "$(uv generate-shell-completion zsh)"
 fi
 
-# Golang
-export PATH="/usr/local/go/bin:$PATH"
-
 # NVM
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+if [[ -z "${NVM_DIR:-}" ]]; then
+  if [[ -e "$HOME/.nvm" && -e "$XDG_CONFIG_HOME/nvm" ]]; then
+    print -u2 'Both legacy and XDG nvm directories exist; set NVM_DIR explicitly.'
+  elif [[ -e "$HOME/.nvm" ]]; then
+    export NVM_DIR="$HOME/.nvm"
+  else
+    export NVM_DIR="$XDG_CONFIG_HOME/nvm"
+  fi
+fi
+if [[ -n "${NVM_DIR:-}" ]]; then
+  export NVM_DIR
+  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+  [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+fi
 
 # Google Cloud SDK
-export GCLOUD_DIR="$HOME/.gcloud"
 if [ -f "$GCLOUD_DIR/google-cloud-sdk/path.zsh.inc" ]; then . "$GCLOUD_DIR/google-cloud-sdk/path.zsh.inc"; fi
 if [ -f "$GCLOUD_DIR/google-cloud-sdk/completion.zsh.inc" ]; then . "$GCLOUD_DIR/google-cloud-sdk/completion.zsh.inc"; fi
 
-# PATH
-export PATH="$GCLOUD_DIR/google-cloud-sdk/bin:$PATH"
-export PATH="$HOME/.local/bin:$PATH"
-
-# opencode
-export PATH="$HOME/.opencode/bin:$PATH"
-
 # Theme
-eval "$(oh-my-posh init zsh --config $HOME/.config/oh-my-posh/oh-my-posh.toml)"
+if command -v oh-my-posh &>/dev/null; then
+  eval "$(oh-my-posh init zsh --config "$HOME/.config/oh-my-posh/oh-my-posh.toml")"
+fi

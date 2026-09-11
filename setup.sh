@@ -1,23 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# ============================================================
-#  Dotfiles setup script
-#
-#  Usage:
-#    ./setup.sh              # show available groups
-#    ./setup.sh shell        # shell tools only
-#    ./setup.sh gui          # GUI/window manager tools
-#    ./setup.sh dev          # development tools
-#    ./setup.sh boot         # GRUB + Plymouth boot configuration
-#    ./setup.sh all          # everything (shell + gui + dev + boot)
-#    ./setup.sh shell dev    # combine groups
-# ============================================================
-
 SETUP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/setup"
 
 # Source shared helpers and modules
 source "$SETUP_DIR/common.sh"
+source "$SETUP_DIR/fonts.sh"
 source "$SETUP_DIR/sddm.sh"
 source "$SETUP_DIR/packages.sh"
 source "$SETUP_DIR/grub.sh"
@@ -33,25 +21,30 @@ ${C_CYAN}Available groups:${C_RESET}
   ${C_BOLD}shell${C_RESET}   zsh, fzf, fd, stow, git, oh-my-posh
           Stows: zsh, oh-my-posh
 
-  ${C_BOLD}gui${C_RESET}     sway, waybar, kanshi, ulauncher, dunst, gtklock,
-          wezterm, fonts (Inter, JetBrains Mono, Font Awesome 6),
+  ${C_BOLD}gui${C_RESET}     sway, waybar, kanshi, nwg-displays (Arch),
+          ulauncher, dunst, gtklock, wezterm,
+          fonts (Titillium Web, JetBrains Mono, Font Awesome),
           Bibata cursor theme, grimshot, autotiling,
           adw-gtk3-dark, gnome-calendar, nautilus, sddm theme,
-          plymouth, grub2-tools
+          plymouth, GRUB tooling, networking/bluetooth/audio/portals,
+          GPU driver (runtime-detected), brightness/volume controls
           Stows: sway, gtklock, waybar, dunst, wezterm, kanshi,
                  ulauncher, fontconfig, gtk, autostart, opencode
 
-  ${C_BOLD}dev${C_RESET}     uv, nvm, golang, google cloud sdk
-          (no system packages, all user-level installs)
+  ${C_BOLD}dev${C_RESET}     uv, nvm/Node LTS, Go, Google Cloud SDK,
+          Yazi and rootless Docker (Arch)
+          Fresh Go requires GO_VERSION and official archive GO_SHA256.
+          Go installs under /usr/local; other standalone tools are per-user.
 
-  ${C_BOLD}boot${C_RESET}    GRUB + Plymouth configuration: hidden
-          menu, kernel pin, cross_hud boot splash, grubenv fix
+  ${C_BOLD}boot${C_RESET}    GRUB + Plymouth configuration (Arch only): hidden
+          menu, hook validation, Ashborn boot splash and boot/shutdown fades
+          Requires an already bootable, reviewed LVM-inside-LUKS configuration.
 
   ${C_BOLD}all${C_RESET}     shell + gui + dev + boot
 
 ${C_CYAN}Examples:${C_RESET}
   ./setup.sh shell         # cloud shell / server
-  ./setup.sh all           # fresh desktop
+  ./setup.sh shell gui     # desktop tools, without boot changes
   ./setup.sh shell dev     # dev server without GUI
   ./setup.sh boot          # reconfigure GRUB/Plymouth only
 EOF
@@ -68,6 +61,15 @@ main() {
     exit 0
   fi
 
+  # Validate the whole request before any group changes the system.
+  local group
+  for group in "$@"; do
+    case "$group" in
+      shell|gui|dev|boot|all) ;;
+      *) die "Unknown group: '$group'. Run ./setup.sh for help." ;;
+    esac
+  done
+  require_regular_user
   log "Detected distro: ${C_BOLD}$DISTRO${C_RESET}"
 
   for group in "$@"; do

@@ -1,0 +1,374 @@
+# Ashborn revision 2: approved first-boot study, Plymouth 26.134.222.
+# One centered 1920x1080 shared canvas, uniformly scaled at startup only.
+# Monarch (including ghosts) BEHIND Arch. Bottom alpha fade is baked once.
+# 30Hz: GLITCH 12 + REVEAL 15 + HOLD 24 + FADE_OUT 18 = 69 frames / 2.3s.
+# Quiet password/wait states. Prompts pause and hide all decorative effects.
+# Quit cannot be deferred; bounded root-filesystem helpers provide grace time.
+
+fun pixel_size(value) { return Math.Max(1, Math.Int(local.value * global.scale + 0.5)); }
+fun canvas_x(value) { return Math.Int(global.origin_x + local.value * global.scale + 0.5); }
+fun canvas_y(value) { return Math.Int(global.origin_y + local.value * global.scale + 0.5); }
+fun smooth_step(value)
+{
+    local.t = Math.Clamp(local.value, 0, 1);
+    return local.t * local.t * (3 - 2 * local.t);
+}
+fun load_image(name)
+{
+    local.image = Image("assets/" + local.name + ".png");
+    if (global.scale == 1) return local.image;
+    return local.image.Scale(pixel_size(local.image.GetWidth()), pixel_size(local.image.GetHeight()));
+}
+fun hidden_sprite(image, x, y, z)
+{
+    local.sprite = Sprite(local.image);
+    local.sprite.SetPosition(canvas_x(local.x), canvas_y(local.y), local.z);
+    local.sprite.SetOpacity(0);
+    return local.sprite;
+}
+
+fun initialize()
+{
+    global.scale = Math.Min(Window.GetWidth() / 1920, Window.GetHeight() / 1080);
+    global.origin_x = Window.GetX() + (Window.GetWidth() - 1920 * global.scale) / 2;
+    global.origin_y = Window.GetY() + (Window.GetHeight() - 1080 * global.scale) / 2;
+    Window.SetBackgroundTopColor(0, 0, 0);
+    Window.SetBackgroundBottomColor(0, 0, 0);
+    global.mode = Plymouth.GetMode();
+    global.logo_white = load_image("logo-mark");
+    global.logo_grey = load_image("logo-grey");
+    global.background = hidden_sprite(load_image("background"), 0, 0, 0);
+    global.monarch = hidden_sprite(load_image("monarch-silhouette"), 842, 343, 20);
+    global.logo = hidden_sprite(global.logo_white, 902, 576, 30);
+    global.ghosts = [];
+    global.glitches = [];
+    global.offsets = [[[-6, 0], [2, 1], [6, -1]],
+                      [[4, -1], [-5, 0], [1, 2]],
+                      [[-3, 1], [5, -1], [-7, 0]]];
+    local.channels = ["r", "g", "b"];
+    for (local.i = 0; local.i < 3; local.i++)
+    {
+        global.ghosts[local.i] = hidden_sprite(load_image("monarch-" + local.channels[local.i]), 842, 343, 17 + local.i);
+        global.ghosts[local.i + 3] = hidden_sprite(load_image("logo-" + local.channels[local.i]), 902, 576, 27 + local.i);
+        global.glitches[local.i] = hidden_sprite(load_image("glitch-burst-" + local.i), 800, 390, 10);
+    }
+    global.burst_index = -1;
+    global.bullet_image = load_image("lock-bullet");
+    global.password_label = load_image("password-label");
+    global.dialog = [];
+    global.dialog.panel = hidden_sprite(load_image("prompt-panel"), 780, 758, 1000);
+    global.dialog.prompt_sprite = hidden_sprite(NULL, 600, 723, 1001);
+    global.dialog.entry_sprite = hidden_sprite(NULL, 792, 760, 1001);
+    global.dialog.overflow_sprite = hidden_sprite(NULL, 1092, 760, 1001);
+    global.dialog.bullets = [];
+    for (local.i = 0; local.i < 24; local.i++)
+        global.dialog.bullets[local.i] = hidden_sprite(global.bullet_image, 792, 771, 1001);
+    global.dialog.active = 0;
+    global.dialog.mode = "normal";
+    global.dialog.prompt_text = NULL;
+    global.dialog.source_prompt = NULL;
+    global.dialog.entry_text = NULL;
+    global.dialog.overflow_count = NULL;
+    global.dialog.bullet_count = 0;
+    global.message_sprite = hidden_sprite(NULL, 100, 810, 900);
+    global.message_text = NULL;
+    global.state = "INIT";
+    if (global.mode == "reboot" || global.mode == "shutdown") global.state = "SHUTDOWN_FADE";
+    global.state_frame = 0;
+    global.loop_frame = 0;
+    global.scene_opacity = 0;
+    global.reveal_requested = 0;
+    global.reveal_started = 0;
+    global.did_quit = 0;
+    global.boot_duration = 0;
+    global.boot_progress = 0;
+}
+
+fun hide_glitches()
+{
+    global.burst_index = -1;
+    for (local.i = 0; local.i < 3; local.i++) global.glitches[local.i].SetOpacity(0);
+    for (local.i = 0; local.i < 6; local.i++) global.ghosts[local.i].SetOpacity(0);
+}
+fun paint_burst(index)
+{
+    global.burst_index = local.index;
+    if (local.index < 0) return;
+    global.glitches[local.index].SetOpacity(1);
+    global.monarch.SetOpacity(0.55);
+    for (local.i = 0; local.i < 3; local.i++)
+    {
+        local.dx = global.offsets[local.index][local.i][0];
+        local.dy = global.offsets[local.index][local.i][1];
+        global.ghosts[local.i].SetPosition(canvas_x(842 - local.dx), canvas_y(343 + local.dy), 17 + local.i);
+        global.ghosts[local.i].SetOpacity(0.55);
+        global.ghosts[local.i + 3].SetPosition(canvas_x(902 + local.dx), canvas_y(576 + local.dy), 27 + local.i);
+        global.ghosts[local.i + 3].SetOpacity(1);
+    }
+}
+
+# Paint current state without advancing it: also used for prompt pause/resume.
+fun paint_scene()
+{
+    hide_glitches();
+    global.monarch.SetOpacity(0);
+    global.scene_opacity = 1;
+    if (global.dialog.active)
+    {
+        global.logo.SetImage(global.logo_grey);
+        global.background.SetOpacity(1);
+        global.logo.SetOpacity(1);
+        return;
+    }
+    global.logo.SetImage(global.logo_white);
+    if (global.state == "INIT" || global.state == "BLACK") global.scene_opacity = 0;
+    else if (global.state == "LOGO_AWAKEN")
+    {
+        local.remaining = 1 - Math.Clamp(global.state_frame / 33, 0, 1);
+        global.scene_opacity = 1 - local.remaining * local.remaining * local.remaining;
+    }
+    else if (global.state == "GLITCH")
+    {
+        if (global.state_frame < 2) paint_burst(0);
+        else if (global.state_frame == 4) paint_burst(1);
+        else if (global.state_frame >= 8 && global.state_frame < 10) paint_burst(2);
+    }
+    else if (global.state == "REVEAL") global.monarch.SetOpacity(smooth_step(global.state_frame / 15));
+    else if (global.state == "HOLD") global.monarch.SetOpacity(1);
+    else if (global.state == "FADE_OUT" || global.state == "SHUTDOWN_FADE")
+    {
+        global.scene_opacity = 1 - smooth_step(global.state_frame / 18);
+        if (global.state == "FADE_OUT") global.monarch.SetOpacity(global.scene_opacity);
+        if (global.message_text != NULL) global.message_sprite.SetOpacity(global.scene_opacity);
+    }
+    global.background.SetOpacity(global.scene_opacity);
+    global.logo.SetOpacity(global.scene_opacity);
+}
+
+# Native dynamic text: explicit pixel size supported by Pango AND FreeType.
+# The descriptor packages JetBrains regular/monospace for the initramfs fallback.
+# Cache callers; never rasterize text during refresh. Crop huge multiline/error
+# strings rather than shrinking them into unreadable type. Keep newest entries.
+fun update_text_sprite(sprite, text, width, height, keep_end)
+{
+    local.sprite.SetOpacity(0);
+    if (local.text == NULL || local.text == "") return;
+    local.image = Image.Text(local.text, 177 / 255, 177 / 255, 187 / 255, 1, "JetBrainsMono Nerd Font 18px", "left");
+    if (!local.image) return;
+    local.w = local.image.GetWidth();
+    local.h = local.image.GetHeight();
+    if (local.w < 1 || local.h < 1) return;
+    local.max_w = pixel_size(local.width);
+    local.max_h = pixel_size(local.height);
+    local.fit = Math.Min(global.scale, Math.Min(local.max_w / local.w, local.max_h / local.h));
+    local.fit = Math.Max(global.scale * 0.7, local.fit);
+    local.w = Math.Max(1, Math.Int(local.w * local.fit + 0.5));
+    local.h = Math.Max(1, Math.Int(local.h * local.fit + 0.5));
+    local.image = local.image.Scale(local.w, local.h);
+    if (local.w > local.max_w || local.h > local.max_h)
+    {
+        local.x = 0;
+        if (local.keep_end) local.x = Math.Max(0, local.w - local.max_w);
+        local.image = local.image.Crop(local.x, 0, Math.Min(local.w, local.max_w), Math.Min(local.h, local.max_h));
+    }
+    local.sprite.SetImage(local.image);
+    local.sprite.SetOpacity(1);
+}
+fun center_text(sprite, y)
+{
+    local.image = local.sprite.GetImage();
+    if (local.image)
+        local.sprite.SetPosition(Math.Int(canvas_x(960) - local.image.GetWidth() / 2 + 0.5), canvas_y(local.y), 1001);
+}
+fun entry_y(sprite)
+{
+    return Math.Int(canvas_y(773) - local.sprite.GetImage().GetHeight() / 2 + 0.5);
+}
+fun hide_dialog()
+{
+    global.dialog.panel.SetOpacity(0);
+    global.dialog.prompt_sprite.SetOpacity(0);
+    global.dialog.entry_sprite.SetOpacity(0);
+    global.dialog.overflow_sprite.SetOpacity(0);
+    for (local.i = 0; local.i < 24; local.i++) global.dialog.bullets[local.i].SetOpacity(0);
+    global.dialog.active = 0;
+    global.dialog.mode = "normal";
+    global.dialog.prompt_text = NULL;
+    global.dialog.source_prompt = NULL;
+    global.dialog.entry_text = NULL;
+    global.dialog.overflow_count = NULL;
+    global.dialog.bullet_count = 0;
+}
+fun clear_all()
+{
+    global.state = "BLACK";
+    global.state_frame = 0;
+    hide_dialog();
+    paint_scene();
+    global.message_sprite.SetOpacity(0);
+    global.message_text = NULL;
+}
+fun begin_reveal()
+{
+    if (global.did_quit || global.reveal_started || global.dialog.active || global.mode != "boot") return;
+    global.reveal_started = 1;
+    global.state = "GLITCH";
+    global.state_frame = 0;
+    paint_scene();
+}
+fun refresh_callback()
+{
+    if (global.did_quit || global.dialog.active || global.state == "BLACK") return;
+    if (global.state == "INIT") { global.state = "LOGO_AWAKEN"; global.state_frame = 0; }
+    global.state_frame++;
+    if (global.state == "LOGO_AWAKEN" && global.state_frame >= 33) { global.state = "LOOP"; global.state_frame = 0; }
+    else if (global.state == "LOOP") global.loop_frame++;
+    else if (global.state == "GLITCH" && global.state_frame >= 12) { global.state = "REVEAL"; global.state_frame = 0; }
+    else if (global.state == "REVEAL" && global.state_frame >= 15) { global.state = "HOLD"; global.state_frame = 0; }
+    else if (global.state == "HOLD" && global.state_frame >= 24) { global.state = "FADE_OUT"; global.state_frame = 0; }
+    else if ((global.state == "FADE_OUT" || global.state == "SHUTDOWN_FADE") && global.state_frame >= 18)
+    { clear_all(); return; }
+    paint_scene();
+}
+
+fun show_prompt(prompt, mode)
+{
+    global.dialog.active = 1;
+    global.dialog.mode = local.mode;
+    global.dialog.source_prompt = local.prompt;
+    global.dialog.panel.SetOpacity(1);
+    if (global.message_text != NULL) global.message_sprite.SetOpacity(1);
+    paint_scene();
+    local.text = local.prompt;
+    if (local.mode == "password") local.text = "Disk Encrypted | Password Required";
+    else if (local.text == NULL || local.text == "") local.text = "Enter response:";
+    if (local.text != global.dialog.prompt_text)
+    {
+        if (local.mode == "password")
+        {
+            global.dialog.prompt_sprite.SetImage(global.password_label);
+            global.dialog.prompt_sprite.SetOpacity(1);
+        }
+        else update_text_sprite(global.dialog.prompt_sprite, local.text, 720, 30, 0);
+        center_text(global.dialog.prompt_sprite, 723);
+        global.dialog.prompt_text = local.text;
+    }
+}
+fun display_password_callback(prompt, bullets)
+{
+    if (global.did_quit) return;
+    show_prompt(local.prompt, "password");
+    global.dialog.entry_sprite.SetOpacity(0);
+    global.dialog.entry_text = NULL;
+    global.dialog.entry_sprite.SetImage(global.bullet_image);
+    local.count = 0;
+    if (local.bullets != NULL && local.bullets > 0) local.count = Math.Int(local.bullets);
+    global.dialog.bullet_count = local.count;
+    local.visible = Math.Min(24, local.count);
+    local.overflow = Math.Max(0, local.count - 24);
+    if (local.overflow != global.dialog.overflow_count)
+    {
+        if (local.overflow > 0) update_text_sprite(global.dialog.overflow_sprite, "+" + local.overflow, 40, 24, 0);
+        else global.dialog.overflow_sprite.SetOpacity(0);
+        global.dialog.overflow_count = local.overflow;
+    }
+    local.span = Math.Max(0, (local.visible - 1) * 12 + 5) * global.scale;
+    if (local.overflow > 0) local.span += 12 * global.scale + global.dialog.overflow_sprite.GetImage().GetWidth();
+    local.start = canvas_x(960) - local.span / 2;
+    for (local.i = 0; local.i < 24; local.i++)
+    {
+        global.dialog.bullets[local.i].SetPosition(Math.Int(local.start + local.i * 12 * global.scale + 0.5), canvas_y(771), 1001);
+        if (local.i < local.visible) global.dialog.bullets[local.i].SetOpacity(1);
+        else global.dialog.bullets[local.i].SetOpacity(0);
+    }
+    if (local.overflow > 0)
+        global.dialog.overflow_sprite.SetPosition(Math.Int(local.start + ((local.visible - 1) * 12 + 17) * global.scale + 0.5), entry_y(global.dialog.overflow_sprite), 1001);
+}
+fun display_question_callback(prompt, entry)
+{
+    if (global.did_quit) return;
+    show_prompt(local.prompt, "question");
+    for (local.i = 0; local.i < 24; local.i++) global.dialog.bullets[local.i].SetOpacity(0);
+    global.dialog.bullet_count = 0;
+    global.dialog.overflow_sprite.SetOpacity(0);
+    global.dialog.overflow_count = NULL;
+    local.text = local.entry;
+    if (local.text == NULL) local.text = "";
+    if (local.text != global.dialog.entry_text)
+    {
+        update_text_sprite(global.dialog.entry_sprite, local.text, 336, 24, 1);
+        if (local.text != "") global.dialog.entry_sprite.SetPosition(canvas_x(792), entry_y(global.dialog.entry_sprite), 1001);
+        global.dialog.entry_text = local.text;
+    }
+}
+# Legacy callback receives an authoritative numeric count. The generic secret
+# fallback only counts bytes, never retains/rasterizes plaintext (UTF-8 may
+# overcount there). Do not add password logging or input validation here.
+fun display_prompt_callback(prompt, entry, is_secret)
+{
+    if (global.did_quit) return;
+    if (local.is_secret)
+    {
+        local.count = 0;
+        if (local.entry != NULL) local.count = String(local.entry).Length();
+        display_password_callback(local.prompt, local.count);
+    }
+    else display_question_callback(local.prompt, local.entry);
+}
+fun display_normal_callback()
+{
+    local.was_prompt = global.dialog.active;
+    hide_dialog();
+    if (global.did_quit) return;
+    # Unlock turns the grey Arch white immediately, without black/awaken replay.
+    if (local.was_prompt && (global.state == "INIT" || global.state == "LOGO_AWAKEN"))
+    { global.state = "LOOP"; global.state_frame = 0; }
+    if (global.reveal_requested && !global.reveal_started) begin_reveal();
+    paint_scene();
+}
+fun display_message_callback(text)
+{
+    if (global.did_quit) return;
+    if (local.text == "ashborn:shutdown") return; # Mode-specific fade already runs; never restart it.
+    if (local.text == "ashborn:reveal")
+    {
+        if (global.mode != "boot" || global.reveal_requested) return;
+        global.reveal_requested = 1;
+        if (!global.dialog.active) begin_reveal();
+        return;
+    }
+    if (local.text == NULL || local.text == "") return;
+    if (local.text != global.message_text)
+    {
+        update_text_sprite(global.message_sprite, local.text, 1720, 112, 0);
+        global.message_text = local.text;
+    }
+    # Error/retry messages remain readable even after decorative animation ends.
+    global.message_sprite.SetOpacity(1);
+}
+fun hide_message_callback(text)
+{
+    if (local.text == "ashborn:reveal" || local.text == "ashborn:shutdown") return;
+    if (local.text == global.message_text)
+    { global.message_sprite.SetOpacity(0); global.message_text = NULL; }
+}
+fun boot_progress_callback(duration, progress)
+{
+    global.boot_duration = local.duration;
+    global.boot_progress = Math.Clamp(local.progress, 0, 1);
+    # Progress is not a completion signal.
+}
+fun quit_callback() { global.did_quit = 1; clear_all(); }
+
+initialize();
+paint_scene();
+Plymouth.SetRefreshRate(30);
+Plymouth.SetRefreshFunction(refresh_callback);
+Plymouth.SetBootProgressFunction(boot_progress_callback);
+Plymouth.SetDisplayPasswordFunction(display_password_callback);
+Plymouth.SetDisplayQuestionFunction(display_question_callback);
+Plymouth.SetDisplayPromptFunction(display_prompt_callback);
+Plymouth.SetDisplayNormalFunction(display_normal_callback);
+Plymouth.SetDisplayMessageFunction(display_message_callback);
+Plymouth.SetHideMessageFunction(hide_message_callback);
+Plymouth.SetQuitFunction(quit_callback);

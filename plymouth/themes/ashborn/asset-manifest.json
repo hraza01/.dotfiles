@@ -1,0 +1,218 @@
+{
+  "revision": 2,
+  "design_size": [
+    1920,
+    1080
+  ],
+  "logo": {
+    "size": [
+      116,
+      111
+    ],
+    "position": [
+      902,
+      576,
+      30
+    ]
+  },
+  "monarch": {
+    "size": [
+      281,
+      255
+    ],
+    "position": [
+      842,
+      343,
+      20
+    ],
+    "crest_x": 118
+  },
+  "overlap_px": 22,
+  "arch_baseline": 687,
+  "title_top": 723,
+  "field": [
+    780,
+    758,
+    1140,
+    788
+  ],
+  "approved_preview_sha256": {
+    "layout": "263d443a0d313a3a4cf059a792ec579bd5060429859c1f5dfd96d79a38fbb8e7",
+    "password": "f37bf6003f610934128f553e52afc2438ba0d80c096d93aa250dc9ddffc279d6"
+  },
+  "font_sha256": "0ec29a68b539ece7078fc714cebff0c0accb2f4948f8f7963d9f5e86633b12d9",
+  "password_label_bounds": [
+    774,
+    723,
+    1146,
+    741
+  ],
+  "fragment_counts": {
+    "violet": 15,
+    "cyan": 4,
+    "red": 1
+  },
+  "peak_fragments": 7,
+  "burst_cluster_position": [
+    800,
+    390
+  ],
+  "rgb_offsets": [
+    [
+      [
+        -6,
+        0
+      ],
+      [
+        2,
+        1
+      ],
+      [
+        6,
+        -1
+      ]
+    ],
+    [
+      [
+        4,
+        -1
+      ],
+      [
+        -5,
+        0
+      ],
+      [
+        1,
+        2
+      ]
+    ],
+    [
+      [
+        -3,
+        1
+      ],
+      [
+        5,
+        -1
+      ],
+      [
+        -7,
+        0
+      ]
+    ]
+  ],
+  "assets": {
+    "logo-mark.png": {
+      "size": [
+        116,
+        111
+      ],
+      "sha256": "5b4bb4fc22df352f45e20dc189da844fe201548a6317f8a779d93fcfb7544ddf"
+    },
+    "logo-grey.png": {
+      "size": [
+        116,
+        111
+      ],
+      "sha256": "f632a78bc94f074424592d85be149c1f33d4349efa7bc1937ac3fea7812685e0"
+    },
+    "monarch-silhouette.png": {
+      "size": [
+        281,
+        255
+      ],
+      "sha256": "31a75245c4172afe50dd4e529300f9696139feec4c330d6ddb4022633ffd168a"
+    },
+    "background.png": {
+      "size": [
+        1920,
+        1080
+      ],
+      "sha256": "badb064973dbfab830b8c955372d56a7cfa4e7eac1785aa4fa7f0effdfebd05b"
+    },
+    "logo-r.png": {
+      "size": [
+        116,
+        111
+      ],
+      "sha256": "5f0c46836da6249322b479a881c578dffeb90ec1ddea67f55a1d7d38516a975b"
+    },
+    "logo-g.png": {
+      "size": [
+        116,
+        111
+      ],
+      "sha256": "554151151bf74f48f2bbf8690a237a43d6d2fc98ffe06ca2d429d37890a2d6b9"
+    },
+    "logo-b.png": {
+      "size": [
+        116,
+        111
+      ],
+      "sha256": "49f788f545c9121355e20bf472753d9c0ca828719daee3293daad7f6820ee436"
+    },
+    "monarch-r.png": {
+      "size": [
+        281,
+        255
+      ],
+      "sha256": "5e3e5ff040741eda0775c6229a7f20981402e29080cbee0bbc8da30d8469c277"
+    },
+    "monarch-g.png": {
+      "size": [
+        281,
+        255
+      ],
+      "sha256": "3fced2e77bbaa865b96ce4f35762744dc041338ba0081ac988952bfc0bef59fe"
+    },
+    "monarch-b.png": {
+      "size": [
+        281,
+        255
+      ],
+      "sha256": "2d10a01dcdd36dc65cc4d12fef5f6e980560b2c6f90e24bfbe73d517a083d57b"
+    },
+    "glitch-burst-0.png": {
+      "size": [
+        360,
+        320
+      ],
+      "sha256": "c0d3383bea8b1ecef27839240d88c3370cd70a2334e4004a4e2c8b6318f2cf14"
+    },
+    "glitch-burst-1.png": {
+      "size": [
+        360,
+        320
+      ],
+      "sha256": "fb2c85aa45e19261a45a6e17f8f821e851cbcfda2615903245e118fb4e46ddb3"
+    },
+    "glitch-burst-2.png": {
+      "size": [
+        360,
+        320
+      ],
+      "sha256": "6614f36ebba6316b6b906f2e29fec69bb77eb5a3cbdbe70e0a0bee2c6151bfbe"
+    },
+    "prompt-panel.png": {
+      "size": [
+        360,
+        30
+      ],
+      "sha256": "5654d150b38af285eb656a90f2dbc7c11f5819ec984fbecb2b047347c208fba6"
+    },
+    "lock-bullet.png": {
+      "size": [
+        5,
+        5
+      ],
+      "sha256": "12e1cc59d44f226a113cae903f680cde8fdb915c3fa4c9f60634bac86bd60799"
+    },
+    "password-label.png": {
+      "size": [
+        372,
+        18
+      ],
+      "sha256": "457ea8149a98ef7130722a256f7e7fbe49febb3b3929a612bfc4dbb02905f838"
+    }
+  }
+}

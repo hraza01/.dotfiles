@@ -1,48 +1,91 @@
-## Dotfiles
+# Dotfiles
 
-Personal Linux desktop configuration, managed with [GNU Stow](https://www.gnu.org/software/stow/).
+Personal **Arch Linux + Sway** configuration managed with GNU Stow. The `linux`
+branch preserves the Fedora setup. Retained Fedora/Debian installer branches
+are not validated for this desktop configuration.
 
-### Clone
+## Setup
 
-```zsh
-git clone git@github.com:hraza01/.dotfiles.git ~/.dotfiles
+```sh
+git clone -b arch git@github.com:hraza01/.dotfiles.git ~/.dotfiles
+cd ~/.dotfiles
+./setup.sh               # list groups
+./setup.sh shell gui     # desktop tools and configuration
+./setup.sh dev           # development tools and rootless Docker
 ```
 
-### Setup
+Run as the installing user, not root or through `sudo ./setup.sh`. Use a working
+Arch installation with networking, sudo, Bash, Python 3, curl, GNU coreutils and
+an initialized systemd user session. Bootstrap `paru` before AUR-dependent groups.
+Setup refuses Stow conflicts and invalid existing tool installations rather than
+adopting or deleting them. Inspect conflicting files before retrying.
 
-```zsh
-./setup.sh              # show available groups
-./setup.sh all          # full desktop (shell + gui + dev + boot)
-./setup.sh shell        # shell tools only (cloud / server)
-./setup.sh boot         # GRUB + Plymouth configuration only
-```
+The shell group selects zsh. SDDM's zsh login loads `.zprofile`, which exports
+local executable paths and the Sway environment before the compositor starts.
+Custom session launchers must provide equivalent environment loading. Log out
+and back in normally to activate login-environment changes. Restart OpenCode
+after changing its configuration; saved plugin-manager preferences override the
+declarative defaults.
 
-### Structure
+Rootless Docker requires valid, nonoverlapping subordinate-ID ranges prepared
+in `/etc/subuid` and `/etc/subgid`. Setup verifies the user socket and context;
+it does not renumber storage or enable rootful Docker.
 
-```
-setup.sh              # entry point — sources modules and runs groups
-setup/
-  common.sh           # shared: colors, log/ok/warn/die, distro detection, stow
-  packages.sh          # group_shell, group_gui, group_dev + user-level installers
-  grub.sh              # configure_grub: GRUB, Plymouth, kernel pin, grubenv fix
-  sddm.sh              # install_sddm_theme: SDDM theme + config
-```
+Existing working Go installations are retained. A fresh Go installation requires
+`GO_VERSION` (for example, `go1.<minor>.<patch>`) and the official archive
+`GO_SHA256` for the machine's architecture. Review the current
+[supported releases](https://go.dev/doc/devel/release) before choosing a version.
+Other standalone upstream installers remain HTTPS-trusted; optional checksum
+variables are documented in `setup/packages.sh`. They are not all revision-pinned.
 
-### Stow packages
+## Boot and login
 
-| Package   | Symlinks                                              |
-|-----------|-------------------------------------------------------|
-| zsh       | `~/.zshrc`                                            |
-| oh-my-posh| `~/.config/oh-my-posh/`                               |
-| sway      | `~/.config/sway/config`, `~/.config/sway/environment` |
-| gtklock  | `~/.config/gtklock/` (config, CSS, layout)            |
-| waybar    | `~/.config/waybar/` (config, CSS, scripts)            |
-| dunst     | `~/.config/dunst/dunstrc`                             |
-| wezterm   | `~/.config/wezterm/wezterm.lua`                        |
-| kanshi    | `~/.config/kanshi/config`                              |
-| ulauncher | `~/.config/ulauncher/` (settings, shortcuts, theme)   |
-| fontconfig| `~/.config/fontconfig/fonts.conf`                    |
-| gtk       | `~/.config/gtk-3.0/settings.ini`, `~/.gtkrc-2.0`       |
-| autostart | `~/.config/autostart/` (nm-applet, blueman, ulauncher)|
-| opencode  | `~/.config/opencode/`                                 |
-| sddm      | SDDM theme + config (installed to `/usr/share/sddm/`) |
+`./setup.sh boot` changes GRUB, Plymouth and initramfs images; `all` includes it.
+Use it only after reviewing the [boot prerequisites and recovery procedure](plymouth/integration/README.md).
+The supported layout is LVM inside LUKS, btrfs root and an ESP mounted at `/boot`,
+with `linux` and optionally `linux-lts`. Unknown boot configurations fail closed.
+Hooks and encryption identifiers must already be configured; setup does not
+infer them. Recovery backups are retained outside this repository.
+
+SDDM files are installed to `/etc/sddm.conf.d` and `/usr/share/sddm/themes`, not
+Stowed. Updates retain previous managed files and do not restart SDDM. The GUI
+group installs logind's Sway lid policy without restarting logind; activate it
+with a deliberate reboot after checking locked/docked lid behavior.
+
+## Desktop
+
+- [Titillium Web installation and typography](setup/fonts/README.md)
+- [Monitor ownership and nwg-displays](setup/displays.md)
+- Autotiling chooses split orientation on workspaces 1, 3, 5, 7 and 9. It does
+  not rebalance a whole workspace or change floating, stacked, tabbed or
+  fullscreen containers. It starts once per session.
+- Monitor identities, output scaling and subpixel settings require review on
+  new hardware. Do not assume the current internal panel's BGR layout applies.
+
+## Stow packages
+
+| Package | Destination |
+|---|---|
+| `zsh` | `~/.zshrc`, `~/.zprofile` |
+| `oh-my-posh` | `~/.config/oh-my-posh/` |
+| `sway` | `~/.config/sway/` |
+| `gtklock` | `~/.config/gtklock/` |
+| `waybar` | `~/.config/waybar/` |
+| `dunst` | `~/.config/dunst/` |
+| `wezterm` | `~/.config/wezterm/` |
+| `kanshi` | `~/.config/kanshi/` |
+| `ulauncher` | `~/.config/ulauncher/` |
+| `fontconfig` | `~/.config/fontconfig/` |
+| `gtk` | GTK2/GTK3 settings |
+| `autostart` | `~/.config/autostart/` |
+| `opencode` | `~/.config/opencode/` |
+
+Keep validation suites, screenshots, deployment logs and recovery snapshots
+outside this repository. Generated application and monitor state is ignored.
+
+## Licenses
+
+Ashborn's original code and supplied artwork use the [MIT License](plymouth/themes/ashborn/LICENSE).
+The vendored SDDM theme retains its [upstream MIT notice](sddm/where-is-my-sddm-theme/LICENSE).
+Titillium Web retains OFL 1.1; its license is downloaded and installed with the
+fonts. Third-party licenses and trademark rights are not replaced by Ashborn's license.

@@ -1,8 +1,8 @@
 * {
-    /* Inter for UI text; Font Awesome fallback renders the icon glyphs
-       (wifi U+F1EB, bluetooth U+F293, etc.) that Inter doesn't carry. */
-    font-family: 'Inter', 'Font Awesome 6 Free', 'Font Awesome 6 Brands', sans-serif;
-    font-size: 15px;
+    /* Font Awesome's family names include the major version; match the package. */
+    font-family: 'Titillium Web', 'Font Awesome 7 Free', 'Font Awesome 7 Brands', sans-serif;
+    font-size: 12pt;
+    font-weight: 600;
 }
 
 window#waybar {
@@ -59,12 +59,13 @@ button:hover {
 }
 
 /* Active modules — shared padding/margin. */
-#battery,
 #cpu,
 #memory,
+#backlight,
 #network,
 #bluetooth,
 #pulseaudio,
+#custom-arch,
 #custom-clock,
 #custom-power-profile,
 #mode,
@@ -75,41 +76,36 @@ button:hover {
     color: #ffffff;
 }
 
-#window,
 #workspaces {
     margin: 0 4px;
 }
 
-/* If workspaces is the leftmost module, omit left margin. */
-.modules-left > widget:first-child > #workspaces {
-    margin-left: 0;
+/* Icon-only labels retain their previous size/weight. Text and tooltips use
+   the shared 12pt SemiBold above; mixed text/icon formats mark just the glyph. */
+#custom-arch,
+#idle_inhibitor,
+#cpu,
+#memory,
+#backlight,
+#pulseaudio,
+#bluetooth,
+#custom-power-profile,
+#network.wifi {
+    font-size: 15px;
+    font-weight: normal;
 }
 
-/* If workspaces is the rightmost module, omit right margin. */
-.modules-right > widget:last-child > #workspaces {
-    margin-right: 0;
+#custom-arch {
+    font-family: 'Font Awesome 7 Brands';
 }
 
-/* custom-clock — time text, bumped +1px over the bar default, bold. */
-#custom-clock {
-    font-size: 16px;
-    font-weight: bold;
-}
-
-/* battery — icon-only; background stripped, color hints state. */
-#battery {
-    background-color: #000000;
-}
-
-#battery.charging,
-#battery.plugged {
-    color: #26A65B;
-}
-
-#battery.critical:not(.charging) {
-    /* Low battery: red background to draw attention. */
-    background-color: #f53c3c;
-    color: #ffffff;
+/* Leave room for the 12pt text line box inside the existing 31px bar.
+   Icon-only labels retain their original margins above. */
+#custom-clock,
+#mode,
+#scratchpad,
+#network:not(.wifi) {
+    margin: 1px 0;
 }
 
 /* custom-power-profile — icon-only; color hints the active profile. */
@@ -168,6 +164,9 @@ button:hover {
 
 #idle_inhibitor {
     background-color: #000000;
+    /* Keep the glyph size, but inset its active background so the
+       bar's bottom border remains visible. */
+    margin: 2px 0;
 }
 
 #idle_inhibitor.activated {

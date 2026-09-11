@@ -1,4 +1,4 @@
 # GTK2 theme — dark mode for any remaining GTK2 apps.
 gtk-theme-name = "adw-gtk3-dark"
 gtk-icon-theme-name = "Adwaita"
-gtk-font-name = "Inter 11"
+gtk-font-name = "Titillium Web SemiBold 12"

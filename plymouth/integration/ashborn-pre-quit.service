@@ -1,0 +1,20 @@
+[Unit]
+Description=Play Ashborn reveal before Plymouth quits
+After=rc-local.service plymouth-start.service systemd-user-sessions.service
+Before=plymouth-quit.service plymouth-quit-wait.service display-manager.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+# env -i also removes the theme chooser's PLYMOUTH_* overrides and shell hooks.
+ExecStart=-/usr/bin/env -i PATH=/usr/bin:/bin LC_ALL=C /usr/local/libexec/ashborn-pre-quit
+TimeoutStartSec=4s
+TimeoutStartFailureMode=kill
+TimeoutStopSec=1s
+KillMode=control-group
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+
+[Install]
+WantedBy=plymouth-quit.service
