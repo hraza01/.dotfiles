@@ -26,5 +26,3 @@ sway/.config/sway/workspaces
 
 # Application-generated state
 **/.config/dconf/
-ulauncher/.config/ulauncher/extensions.json
-ulauncher/.config/ulauncher/user-themes/raycast-minimalist/generated.css
