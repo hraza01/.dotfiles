@@ -37,7 +37,12 @@ fun initialize()
     global.mode = Plymouth.GetMode();
     global.logo_white = load_image("logo-mark");
     global.logo_grey = load_image("logo-grey");
-    global.background = hidden_sprite(load_image("background"), 0, 0, 0);
+    # Background fills the entire window, not just the 1920x1080 canvas.
+    local.bg = Image("assets/background.png");
+    global.background_full = Sprite(local.bg.Scale(Window.GetWidth(), Window.GetHeight()));
+    global.background_full.SetPosition(Window.GetX(), Window.GetY(), 0);
+    global.background_full.SetOpacity(0);
+    global.background = global.background_full;
     global.monarch = hidden_sprite(load_image("monarch-silhouette"), 842, 343, 20);
     global.logo = hidden_sprite(global.logo_white, 902, 576, 30);
     global.ghosts = [];

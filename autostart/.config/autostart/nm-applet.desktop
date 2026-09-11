@@ -1,6 +1,0 @@
-[Desktop Entry]
-Type=Application
-Name=NetworkManager Applet
-# Override the system autostart (nm-applet.desktop) — we use waybar's
-# network module instead, so the blue tray wifi icon is redundant.
-Hidden=true

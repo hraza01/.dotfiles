@@ -367,7 +367,6 @@ group_gui() {
         dmenu \
         curl fontconfig ttf-jetbrains-mono ttf-jetbrains-mono-nerd otf-font-awesome \
         nautilus gnome-calendar \
-        pavucontrol \
         libnotify \
         plymouth grub \
         networkmanager network-manager-applet \
@@ -390,7 +389,7 @@ group_gui() {
 
       # AUR-only packages (ulauncher, grimshot, adw-gtk3-dark theme,
       # google-chrome).
-      aur_group_install ulauncher sway-contrib-git adw-gtk-theme-git google-chrome
+      aur_group_install ulauncher sway-contrib-git adw-gtk-theme-git google-chrome pwvucontrol
 
       install_sway_contrib_links
 
