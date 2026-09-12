@@ -428,7 +428,7 @@ group_gui() {
   require_commands python3 sha256sum sudo systemctl
   python3 -c 'import hashlib, lzma, tarfile' || die "GUI setup requires Python's hashing and tar/xz standard-library modules"
   local source
-  local stow_groups=(sway gtklock quickshell waybar dunst wezterm kanshi rofi fontconfig gtk opencode)
+  local stow_groups=(sway gtklock quickshell wezterm kanshi fontconfig gtk opencode)
   check_stow_packages "${stow_groups[@]}"
   declare -F install_ui_font >/dev/null || die "Source setup/fonts.sh before installing the GUI group"
   declare -F install_sddm_theme >/dev/null || die "Source setup/sddm.sh before installing the GUI group"
@@ -449,11 +449,9 @@ group_gui() {
         sway swayidle swaylock swaybg \
         gtklock gtk-session-lock \
         quickshell \
-        waybar dunst \
         kanshi nwg-displays \
         grim swappy \
         wezterm \
-        rofi \
         dmenu \
         curl fontconfig ttf-jetbrains-mono ttf-jetbrains-mono-nerd otf-font-awesome \
         nautilus gnome-calendar \
@@ -466,7 +464,7 @@ group_gui() {
         xdg-desktop-portal xdg-desktop-portal-wlr xdg-desktop-portal-gtk \
         polkit polkit-gnome \
         neovim sof-firmware \
-        brightnessctl wob pciutils \
+        brightnessctl pciutils \
         gimp opencode
 
       install_gpu_drivers
@@ -475,8 +473,8 @@ group_gui() {
       sudo systemctl enable bluetooth.service power-profiles-daemon.service || die "Cannot enable desktop services"
       ok "Services enabled"
 
-      # Quickshell provides OSD. Preserve existing wob state; do not newly
-      # enable/start the legacy socket as a side effect of package installation.
+      # Quickshell provides OSD. Package installation does not change existing
+      # notification/OSD lifecycle state; use the separate ownership handoff.
 
       # AUR-only packages (grimshot, adw-gtk3-dark theme,
       # google-chrome).

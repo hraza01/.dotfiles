@@ -21,15 +21,15 @@ ${C_CYAN}Available groups:${C_RESET}
   ${C_BOLD}shell${C_RESET}   zsh, fzf, fd, stow, git, oh-my-posh
           Stows: zsh, oh-my-posh
 
-  ${C_BOLD}gui${C_RESET}     sway, waybar, kanshi, nwg-displays (Arch),
-          rofi, dunst, gtklock, wezterm,
+  ${C_BOLD}gui${C_RESET}     sway, quickshell, kanshi, nwg-displays (Arch only),
+          gtklock, wezterm,
           fonts (Titillium Web, JetBrains Mono, Font Awesome),
           Bibata cursor theme, grimshot, autotiling,
           adw-gtk3-dark, gnome-calendar, nautilus, sddm theme,
           plymouth, GRUB tooling, networking/bluetooth/audio/portals,
           GPU driver (runtime-detected), brightness/volume controls
-          Stows: sway, gtklock, waybar, dunst, wezterm, kanshi,
-                  rofi, fontconfig, gtk, autostart, opencode
+          Stows: sway, gtklock, quickshell, wezterm, kanshi,
+                  fontconfig, gtk, opencode
 
   ${C_BOLD}dev${C_RESET}     uv, nvm/Node LTS, Go, Google Cloud SDK,
           Yazi and rootless Docker (Arch)
@@ -42,9 +42,16 @@ ${C_CYAN}Available groups:${C_RESET}
 
   ${C_BOLD}all${C_RESET}     shell + gui + dev + boot
 
+GUI ownership preflight (also required by all):
+  Set DOTFILES_NOTIFICATION_OWNER=quickshell. If Quickshell already owns
+  notifications, also set DOTFILES_QUICKSHELL_PID to its verified PID.
+  Read quickshell/README.md before migration or updating legacy Stow links.
+  Setup does not stop services or uninstall the retired desktop packages.
+
 ${C_CYAN}Examples:${C_RESET}
   ./setup.sh shell         # cloud shell / server
-  ./setup.sh shell gui     # desktop tools, without boot changes
+  DOTFILES_NOTIFICATION_OWNER=quickshell ./setup.sh shell gui
+                          # desktop tools; existing owner also requires its PID
   ./setup.sh shell dev     # dev server without GUI
   ./setup.sh boot          # reconfigure GRUB/Plymouth only
 EOF

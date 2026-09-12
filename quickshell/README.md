@@ -1,9 +1,11 @@
 # Quickshell on Arch/Sway
 
-Quickshell replaces the active Waybar, Rofi, Dunst and wob display paths. Sway,
-GTKlock/swayidle, kanshi, NetworkManager, BlueZ and their applets remain the
-authorities. The legacy packages/configurations are retained for recovery,
-not started alongside Quickshell.
+Quickshell provides the panel, application/run launcher, notifications and hardware
+OSD, replacing Waybar, Rofi, Dunst and wob. Sway, GTKlock/swayidle, kanshi,
+NetworkManager, BlueZ and their applets remain the
+authorities. The legacy configurations are no longer bundled and the Arch GUI
+group no longer installs those four packages. Existing packages and services are
+not removed or stopped by setup; recovery uses saved snapshots or historical source.
 
 ## Runtime and controls
 
@@ -90,6 +92,8 @@ For an initial migration:
 1. Preserve the old tracked **and untracked** source, live symlinks, Sway config,
    activation overrides, and active/enabled/masked state of Dunst and wob. A bus can
    be shared by graphical sessions; identify the notification owner before acting.
+   If upgrading a legacy checkout, follow the Stow-link procedure below before
+   removing its source directories.
 2. In a separately approved handoff, stop the old lifecycle owners. When Dunst is
    systemd/D-Bus activated, mask its user unit to prevent reactivation; disable and
    stop wob's socket/service. Preserve any pre-existing overrides/masks. Do not edit
@@ -99,14 +103,17 @@ For an initial migration:
    Wayland, Sway socket, login-session and activation environment.
 4. Verify one panel per output, one intended shell, the actual Notifications bus
    owner, and actual launcher/menu/hardware interactions. The installer deliberately
-   does not newly enable wob or remove the legacy packages.
+   does not manage the old services or uninstall already-installed legacy packages.
 
 `setup/packages.sh` contains the bounded preflight and detailed handoff notes.
 Do not run that installer against a private test bus to evade an ownership conflict.
 
 ## Update and recovery
 
-Back up local modifications before syncing. Load a candidate configuration with
+Back up tracked and untracked local modifications before syncing; reconcile them
+before pulling rather than overwriting a deployed working tree. For checkouts with
+legacy Stow links, complete the procedure below while their source still exists.
+Load a candidate configuration with
 `QS_REPAIR_CANDIDATE=1` to prevent it from claiming the production notification
 name. Use a distinct config path and stop that exact candidate afterward. Candidate
 bars are previews, not evidence that all live interactions passed.
@@ -117,6 +124,39 @@ or the shell is hung, identify the exact instance with `qs list`, stop only that
 instance (`qs kill --pid "$verified_pid"`), then use Sway to start `quickshell -n`.
 The bar/launcher/notifications briefly disappear; open client applications survive.
 Do not use a blanket `pkill`, run two lifecycle owners, or restart SDDM to recover UI.
+
+### Retiring legacy Stow links
+
+This is a separate, deliberate change on an existing desktop, not an automatic
+installer action. First confirm Quickshell owns the active panel, launcher,
+notifications and OSD; complete the ownership handoff if it does not. Preserve the
+legacy source, custom files, link targets and service state outside the repository.
+
+**Before pulling the cleanup into a checkout that still contains the old packages**,
+preview removal of its managed links:
+
+```sh
+stow --simulate --delete --dir="$HOME/.dotfiles" --target="$HOME" waybar rofi dunst
+```
+
+After reviewing the preview, run the same command without `--simulate` to unstow
+only those retired packages, then update the checkout. This removes Stow-managed
+links, not installed packages or unrelated user files. Do not run setup or switch
+services just to clean these links.
+
+If the sources are already gone, inspect `~/.config/waybar`, `~/.config/rofi` and
+`~/.config/dunst` for dangling links. Remove only links verified to point into the
+retired trees; preserve real directories, custom files and links owned elsewhere.
+Do not use recursive deletion on those configuration paths. Package uninstalling
+and service changes require a separate review of activation and dependency state.
+
+### Recovery sources and service state
+
+Keep a known-good coherent snapshot outside the repository. The pre-Quickshell
+revision [`a87ce49`](https://github.com/hraza01/.dotfiles/tree/a87ce49a9dc53bc1749e6faa413eaf7d117d4d4f)
+also records the former desktop stack; inspect it in a separate checkout if needed.
+Git history does not preserve installed package versions, untracked overrides or
+the machine's service state, so a historical checkout alone is not a live rollback.
 
 Rollback restores the saved coherent Sway/helpers and the **prior** service state:
 stop the exact replacement shell; restore the old launcher/bar/OSD configuration;

@@ -1,8 +1,8 @@
 # Dotfiles
 
-Personal **Arch Linux + Sway** configuration managed with GNU Stow. The `linux`
-branch preserves the Fedora setup. Retained Fedora/Debian installer branches
-are not validated for this desktop configuration.
+Personal **Arch Linux + Sway + Quickshell** configuration managed with GNU Stow
+on the `arch` branch. The `linux` branch preserves the Fedora setup. Retained
+Fedora/Debian installer branches are not validated for this desktop configuration.
 
 ## Setup
 
@@ -56,6 +56,13 @@ with a deliberate reboot after checking locked/docked lid behavior.
 
 ## Desktop
 
+Quickshell provides the panel, application/run launcher, notifications and hardware
+OSD. Waybar, Rofi and Dunst configs are no longer bundled, and the Arch GUI group
+no longer installs those packages or wob. Existing installations are not uninstalled
+or stopped automatically; see the [legacy checkout update notes](quickshell/README.md#retiring-legacy-stow-links)
+before updating an older checkout. Sway, GTKlock/swayidle, kanshi and the
+NetworkManager/Bluetooth applets remain part of the desktop.
+
 - [Quickshell ownership, controls, update and recovery](quickshell/README.md)
 - [Titillium Web installation and typography](setup/fonts/README.md)
 - [Monitor ownership and nwg-displays](setup/displays.md)
@@ -74,11 +81,8 @@ with a deliberate reboot after checking locked/docked lid behavior.
 | `sway` | `~/.config/sway/` |
 | `gtklock` | `~/.config/gtklock/` |
 | `quickshell` | `~/.config/quickshell/` |
-| `waybar` | `~/.config/waybar/` |
-| `dunst` | `~/.config/dunst/` |
 | `wezterm` | `~/.config/wezterm/` |
 | `kanshi` | `~/.config/kanshi/` |
-| `rofi` | `~/.config/rofi/` |
 | `fontconfig` | `~/.config/fontconfig/` |
 | `gtk` | GTK2/GTK3 settings |
 | `opencode` | `~/.config/opencode/` |
