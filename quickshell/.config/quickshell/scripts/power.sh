@@ -88,9 +88,11 @@ capacity = read_battery_value(battery / "capacity", "?") if battery else "?"
 status = read_battery_value(battery / "status", "unknown") if battery else "no battery"
 
 tooltip = f"Power profile: {profile}\nDriver: {driver}\nBattery: {capacity}% ({status})"
+battery_pct = int(capacity) if capacity.isdigit() else None
 print(json.dumps({
     "text": ICONS.get(profile, "\uf0e7"),
     "tooltip": html.escape(tooltip, quote=False),
     "class": ["power-profiles-daemon", profile],
+    "battery": battery_pct,
 }))
 PY

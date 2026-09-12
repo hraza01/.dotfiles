@@ -9,7 +9,7 @@ QtObject {
     readonly property bool powered: Bluetooth.adapters.values.some(adapter => adapter.enabled)
     readonly property var connectedDevices: Bluetooth.devices.values.filter(device => device.connected)
     readonly property int connectedCount: connectedDevices.length
-    readonly property string icon: ""
+    readonly property string icon: "B"
     readonly property string lastError: available ? "" : "Bluetooth adapter/backend unavailable"
     readonly property string tooltip: {
         if (!available) return lastError;
