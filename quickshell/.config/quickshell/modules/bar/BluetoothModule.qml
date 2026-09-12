@@ -13,8 +13,9 @@ Rectangle {
         id: btIcon
         anchors.centerIn: parent
         text: BluetoothService.icon
-        font.family: Theme.fontFamilyIconFree
-        font.pixelSize: Theme.panelIconSizePx
+        font.family: Theme.fontFamily
+        font.pixelSize: Theme.panelFontSizePt
+        font.weight: Font.Bold
         color: Theme.fg
     }
     AppletMenu { id: menu; appletId: "blueman"; anchorItem: root }

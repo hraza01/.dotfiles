@@ -9,6 +9,7 @@ QtObject {
 
     property string profile: "unknown"
     property string icon: "\uf24e"
+    property int batteryPercent: -1
     property bool available: false
     property string statusTooltip: "Power status pending"
     property string lastError: ""
@@ -50,6 +51,7 @@ QtObject {
                 if (code !== 0 || status !== 0) throw new Error("Power helper failed");
                 let d = JSON.parse(powerOutput.text);
                 root.icon = d.text || "\uf24e";
+                root.batteryPercent = (typeof d.battery === "number" && d.battery >= 0) ? d.battery : -1;
                 // The inherited helper returns HTML-escaped Waybar text.
                 // TooltipPopup is plain text, so decode only those entities.
                 root.statusTooltip = (d.tooltip || "Power status unavailable")
@@ -69,7 +71,8 @@ QtObject {
             statusWatchdog.stop();
             root.refreshing = false;
             root.available = false;
-            root.profile = "unknown";
+            root.profile = "unknown"
+            root.batteryPercent = -1
             root.statusTooltip = "Power status helper could not start";
         }
     }
@@ -80,7 +83,8 @@ QtObject {
             powerProc.signal(9);
             root.refreshing = false;
             root.available = false;
-            root.profile = "unknown";
+            root.profile = "unknown"
+            root.batteryPercent = -1
             root.statusTooltip = "Power status helper timed out";
         }
     }
