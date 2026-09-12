@@ -60,8 +60,8 @@ def read_keys(path):
             active = line == "[Desktop Entry]"
         elif active:
             key, sep, value = line.partition("=")
-            if not sep or key.strip() in keys:
-                raise DesktopError("Invalid or duplicate desktop key")
+            if not sep:
+                raise DesktopError("Invalid desktop key (no '=')")
             keys[key.strip()] = value.strip()
     return keys
 
