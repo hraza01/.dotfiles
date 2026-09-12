@@ -335,12 +335,100 @@ group_shell() {
 }
 
 # --- Group: gui --------------------------------------------------
+
+# Explicit ownership policy for the Quickshell GUI migration:
+#   DOTFILES_NOTIFICATION_OWNER=quickshell ./setup.sh gui
+# This consents to publishing a notification-server configuration, NOT to
+# stopping/masking services. A live competitor fails preflight. Run from the
+# installing user's real session bus, never a private dbus-run-session bus.
+# If Quickshell already owns the name, also supply DOTFILES_QUICKSHELL_PID from
+# the scoped shell lifecycle owner; the bus PID and executable are checked.
+#
+# Operator handoff (separate from package installation):
+# 1. Record `systemctl --user show dunst.service wob.socket wob.service` and
+#    `systemctl --user is-enabled ...`, plus the old Sway config and shell
+#    lifecycle command. Preserve pre-existing masks/overrides verbatim.
+# 2. Explicitly stop/disable the old notification/OSD lifecycle owner. For a
+#    systemd-owned Dunst: `systemctl --user mask --now dunst.service`; for wob:
+#    `systemctl --user disable --now wob.socket wob.service`. Do not kill a
+#    foreign bus owner or remove unrelated autostarts. Rerun preflight.
+# 3. Start exactly one scoped Quickshell instance using the reviewed lifecycle
+#    command; rerun preflight with its PID to verify actual bus ownership.
+# 4. Rollback: stop that exact shell instance, restore the saved config and
+#    prior enablement/mask/active states (unmask only masks created in step 2),
+#    then verify the restored notification owner's bus PID. Never use blanket
+#    pkill, unconditional unmask/enable, or logout as an ownership operation.
+# This installer deliberately performs none of those live handoff commands.
+preflight_quickshell_gui() {
+  [ "$DISTRO" = arch ] || die "Quickshell GUI installation is supported only on Arch; no GUI changes made"
+  [ "${DOTFILES_NOTIFICATION_OWNER:-}" = quickshell ] ||
+    die "GUI setup requires explicit DOTFILES_NOTIFICATION_OWNER=quickshell; read the ownership handoff in setup/packages.sh"
+  require_commands python3 busctl
+  python3 -B - <<'PY'
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+
+def call(method, signature, argument, expected_type):
+    result = subprocess.run(
+        ['busctl', '--user', '--timeout=2s', '--json=short', 'call',
+         'org.freedesktop.DBus', '/org/freedesktop/DBus', 'org.freedesktop.DBus',
+         method, signature, argument], capture_output=True, text=True, check=True, timeout=3)
+    value = json.loads(result.stdout)
+    if value.get('type') != expected_type or not isinstance(value.get('data'), list) or len(value['data']) != 1:
+        raise ValueError('Invalid busctl ownership response')
+    return value['data'][0]
+
+try:
+    present = call('NameHasOwner', 's', 'org.freedesktop.Notifications', 'b')
+    if type(present) is not bool:
+        raise ValueError('Invalid ownership boolean')
+    if present:
+        owner = call('GetNameOwner', 's', 'org.freedesktop.Notifications', 's')
+        if not isinstance(owner, str) or not owner.startswith(':'):
+            raise ValueError('Invalid unique bus owner')
+        pid = call('GetConnectionUnixProcessID', 's', owner, 'u')
+        if type(pid) is not int or pid <= 0:
+            raise ValueError('Invalid bus owner PID')
+        if str(pid) != os.environ.get('DOTFILES_QUICKSHELL_PID'):
+            raise ValueError(f'Notifications owned by {owner}, PID {pid}; explicit scoped handoff required')
+        process = Path('/proc') / str(pid)
+        if process.stat().st_uid != os.getuid() or (process / 'exe').resolve(strict=True).name not in ('qs', 'quickshell'):
+            raise ValueError('Expected PID is not this user\'s Quickshell executable')
+        if call('GetNameOwner', 's', 'org.freedesktop.Notifications', 's') != owner:
+            raise ValueError('Notification owner changed during preflight; retry')
+        print(f'Notification owner verified: {owner}, Quickshell PID {pid}')
+    else:
+        if os.environ.get('DOTFILES_QUICKSHELL_PID'):
+            raise ValueError('Expected Quickshell instance does not own Notifications')
+        print('Notification name is unowned; verify Quickshell ownership after explicit startup')
+except (OSError, subprocess.SubprocessError, ValueError) as error:
+    print(f'Notification ownership preflight failed: {error}', file=sys.stderr)
+    sys.exit(1)
+PY
+  [ "$?" = 0 ] || die "Resolve notification ownership before GUI installation"
+}
+
+# setup.sh sources this module before executing ANY group. Checking the full
+# request here also prevents `shell gui` and `all` from partially mutating an
+# unsupported machine before group_gui is reached.
+preflight_quickshell_request() {
+  local requested
+  case "${1:-}" in --help|-h) return ;; esac
+  for requested in "$@"; do
+    case "$requested" in gui|all) preflight_quickshell_gui; return ;; esac
+  done
+}
+
 group_gui() {
+  preflight_quickshell_gui
   require_regular_user
   require_commands python3 sha256sum sudo systemctl
   python3 -c 'import hashlib, lzma, tarfile' || die "GUI setup requires Python's hashing and tar/xz standard-library modules"
   local source
-  local stow_groups=(sway gtklock waybar dunst wezterm kanshi rofi fontconfig gtk autostart opencode)
+  local stow_groups=(sway gtklock quickshell waybar dunst wezterm kanshi rofi fontconfig gtk opencode)
   check_stow_packages "${stow_groups[@]}"
   declare -F install_ui_font >/dev/null || die "Source setup/fonts.sh before installing the GUI group"
   declare -F install_sddm_theme >/dev/null || die "Source setup/sddm.sh before installing the GUI group"
@@ -360,6 +448,7 @@ group_gui() {
       pkg_group_install \
         sway swayidle swaylock swaybg \
         gtklock gtk-session-lock \
+        quickshell \
         waybar dunst \
         kanshi nwg-displays \
         grim swappy \
@@ -386,7 +475,8 @@ group_gui() {
       sudo systemctl enable bluetooth.service power-profiles-daemon.service || die "Cannot enable desktop services"
       ok "Services enabled"
 
-      ensure_user_socket wob.socket
+      # Quickshell provides OSD. Preserve existing wob state; do not newly
+      # enable/start the legacy socket as a side effect of package installation.
 
       # AUR-only packages (grimshot, adw-gtk3-dark theme,
       # google-chrome).
@@ -445,6 +535,7 @@ group_gui() {
   install_cursor_theme
   install_sddm_theme
 
+  preflight_quickshell_gui
   stow_packages "${stow_groups[@]}"
 
   ok "GUI group complete"
@@ -551,3 +642,7 @@ group_dev() {
 
   ok "Dev group complete"
 }
+
+case "${BASH_SOURCE[1]:-}" in
+  setup.sh|*/setup.sh) preflight_quickshell_request "$@" ;;
+esac

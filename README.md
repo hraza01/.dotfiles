@@ -10,7 +10,9 @@ are not validated for this desktop configuration.
 git clone -b arch git@github.com:hraza01/.dotfiles.git ~/.dotfiles
 cd ~/.dotfiles
 ./setup.sh               # list groups
-./setup.sh shell gui     # desktop tools and configuration
+./setup.sh shell         # shell tools and configuration
+# GUI requires the notification-ownership preflight described below.
+DOTFILES_NOTIFICATION_OWNER=quickshell ./setup.sh gui
 ./setup.sh dev           # development tools and rootless Docker
 ```
 
@@ -54,6 +56,7 @@ with a deliberate reboot after checking locked/docked lid behavior.
 
 ## Desktop
 
+- [Quickshell ownership, controls, update and recovery](quickshell/README.md)
 - [Titillium Web installation and typography](setup/fonts/README.md)
 - [Monitor ownership and nwg-displays](setup/displays.md)
 - Autotiling chooses split orientation on workspaces 1, 3, 5, 7 and 9. It does
@@ -70,6 +73,7 @@ with a deliberate reboot after checking locked/docked lid behavior.
 | `oh-my-posh` | `~/.config/oh-my-posh/` |
 | `sway` | `~/.config/sway/` |
 | `gtklock` | `~/.config/gtklock/` |
+| `quickshell` | `~/.config/quickshell/` |
 | `waybar` | `~/.config/waybar/` |
 | `dunst` | `~/.config/dunst/` |
 | `wezterm` | `~/.config/wezterm/` |
@@ -77,7 +81,6 @@ with a deliberate reboot after checking locked/docked lid behavior.
 | `rofi` | `~/.config/rofi/` |
 | `fontconfig` | `~/.config/fontconfig/` |
 | `gtk` | GTK2/GTK3 settings |
-| `autostart` | `~/.config/autostart/` |
 | `opencode` | `~/.config/opencode/` |
 
 Keep validation suites, screenshots, deployment logs and recovery snapshots

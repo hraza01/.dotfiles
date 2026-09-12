@@ -1,15 +1,11 @@
 #!/usr/bin/env bash
-# Adjust volume (wpctl) and report the new percentage to wob's socket.
+# Adjust volume independently of Quickshell; feedback has a 250ms deadline.
 # Usage: volume.sh up | down | mute
 set -euo pipefail
 
 case "${1:-}" in
-  up)   wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+ ;;
-  down) wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%- ;;
-  mute) wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle ;;
+  up|down|mute) ;;
   *) printf 'Usage: %s up | down | mute\n' "$0" >&2; exit 2 ;;
 esac
 
-LC_ALL=C wpctl get-volume @DEFAULT_AUDIO_SINK@ \
-  | awk '/^Volume:/ {print /\[MUTED\]/ ? 0 : int($2*100+0.5)}' \
-  > "${WOBSOCK:-$XDG_RUNTIME_DIR/wob.sock}"
+exec python3 -B "${BASH_SOURCE[0]%/*}/hardware.py" volume "$1" --osd
