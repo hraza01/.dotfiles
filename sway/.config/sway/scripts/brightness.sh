@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
-# Adjust brightness and report the new percentage to wob's socket.
+# Adjust brightness independently of Quickshell; feedback has a 250ms deadline.
 # Usage: brightness.sh 5%+ | 5%-
 set -euo pipefail
 
-brightnessctl -m set "$1" | cut -d, -f4 | tr -d '%' \
-  > "${WOBSOCK:-$XDG_RUNTIME_DIR/wob.sock}"
+case "${1:-}" in
+  5%+|5%-) ;;
+  *) printf 'Usage: %s 5%%+ | 5%%-\n' "$0" >&2; exit 2 ;;
+esac
+exec python3 -B "${BASH_SOURCE[0]%/*}/hardware.py" brightness "$1" --osd

@@ -37,11 +37,12 @@ output * bg #000000 solid_color
 ### Autostart
 # Keep D-Bus-activated applications consistent with the compositor environment.
 exec dbus-update-activation-environment --systemd WAYLAND_DISPLAY SWAYSOCK XDG_CURRENT_DESKTOP XCURSOR_THEME XCURSOR_SIZE TERMINAL PATH
-# Dunst is D-Bus-activated; polkit's GNOME-only autostart needs an explicit exec.
-exec waybar
+# Quickshell owns notifications after the documented Dunst handoff.
+# Polkit's GNOME-only autostart needs an explicit exec.
+exec quickshell -n
 exec kanshi
 exec /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1
-# Tray applets for quick network/bluetooth access from Waybar's tray.
+# Applet backends for the dedicated Quickshell network/Bluetooth menus.
 exec nm-applet
 exec blueman-applet
 # Start once per session: reloads must not add another IPC listener.
@@ -82,8 +83,8 @@ exec swayidle -w \
     # Kill focused window
     bindsym $mod+w kill
 
-    # Launcher (rofi)
-    bindsym Mod1+space exec rofi -show drun
+    # Launcher (quickshell)
+    bindsym Mod1+space exec qs ipc call launcher toggle
 
     # File manager (Nautilus)
     bindsym $mod+Shift+f exec nautilus
@@ -97,8 +98,8 @@ exec swayidle -w \
     # Window-specific rules
     for_window [app_id="rofi"] floating enable, border none
 
-    # Reload Sway and the current user's Waybar (WezTerm uses Alt+Z).
-    bindsym $mod+Shift+c reload, exec pkill -USR2 -u "$(id -u)" -x waybar
+    # Reload both owners without another shell process (WezTerm uses Alt+Z).
+    bindsym $mod+Shift+c reload, exec qs ipc call shell reload
 
     # Lock screen
     bindsym $mod+Shift+q exec 'gtklock -d -s "$HOME/.config/gtklock/style.css" -x "$HOME/.config/gtklock/layout.xml"'
