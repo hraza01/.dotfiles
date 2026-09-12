@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-# waybar-power.sh
-# Outputs JSON for the waybar custom power-profiles module.
+# Outputs JSON for Quickshell's power-profile service.
 #   text    -> icon in the bar (Font Awesome glyph)
 #   tooltip -> power profile + driver + battery percentage + status
 #

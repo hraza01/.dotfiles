@@ -1,7 +1,8 @@
 # Monitor configuration on Arch/Sway
 
-`./setup.sh gui` installs **nwg-displays** from Arch's official repository,
-alongside kanshi. Launch `nwg-displays -n 10` from a terminal inside the Sway
+The GUI group installs **nwg-displays** from Arch's official repository alongside
+kanshi; follow the [Quickshell ownership preflight](../quickshell/README.md#installation-and-ownership-handoff)
+before running it. Launch `nwg-displays -n 10` from a terminal inside the Sway
 session (ten workspace slots, matching these dotfiles) or find **Displays
 Settings** in the application launcher. The stock launcher entry defaults to
 eight workspace slots. Do not use sudo to launch the GUI.

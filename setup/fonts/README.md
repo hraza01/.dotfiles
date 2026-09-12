@@ -1,6 +1,7 @@
 # Titillium Web
 
-Run `bash setup/fonts.sh` as the desktop user, or use `./setup.sh gui`.
+Run `bash setup/fonts.sh` as the desktop user, or use the GUI group after the
+[Quickshell ownership preflight](../../quickshell/README.md#installation-and-ownership-handoff).
 Requires Bash, GNU coreutils and HTTPS curl. Fontconfig tools verify the family
 and refresh its cache when available; missing tools produce warnings.
 
@@ -16,9 +17,10 @@ uncatchable interruption, inspect any remaining `.titillium-web.*` directory.
 
 ## Typography
 
-Proportional UI uses **Titillium Web 12pt SemiBold**. Notification summaries and
-the larger calendar heading retain bold styling. Waybar icons remain 15px at
-normal weight; terminal/editor, calendar-grid and boot fonts remain separate.
+The panel and most proportional UI use **Titillium Web 12pt SemiBold**. The
+Quickshell launcher uses 10pt regular text; notification summaries are bold.
+Panel icons remain 15px. The calendar uses an 11pt bold Titillium Web heading
+and a 9pt JetBrains Mono grid. Terminal/editor and boot fonts remain separate.
 Fontconfig maps family aliases only, not global size or weight.
 
 At 96 logical DPI, 12pt is approximately 16 logical pixels, or 32 physical pixels

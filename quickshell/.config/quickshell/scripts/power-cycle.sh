@@ -59,7 +59,7 @@ except (OSError, subprocess.SubprocessError, ValueError) as error:
 
 # Best-effort feedback only after the daemon accepted the change.
 try:
-    subprocess.run(["notify-send", "-a", "waybar", f"Power profile: {next_profile}"],
+    subprocess.run(["notify-send", "-a", "quickshell", f"Power profile: {next_profile}"],
                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=3)
 except (OSError, subprocess.SubprocessError):
     pass
