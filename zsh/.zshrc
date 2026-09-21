@@ -104,7 +104,11 @@ fzf-cd-dev() {
         --prompt=''
   )
 
-  [[ -n "$dir" ]] && cd -- "$dir"
+  if [[ -n "$dir" ]]; then
+    cd -- "$dir"
+    (( $+functions[_omp_precmd] )) && _omp_precmd
+  fi
+
   zle reset-prompt
 }
 
