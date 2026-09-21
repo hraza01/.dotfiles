@@ -72,6 +72,45 @@ bindkey '^p' history-search-backward
 bindkey '^n' history-search-forward
 bindkey '^[w' kill-region
 
+fzf-cd-dev() {
+  local dir
+
+  dir=$(
+    fd --type directory \
+      --hidden \
+      --absolute-path \
+      --exclude .git \
+      --exclude node_modules \
+      --exclude __pycache__ \
+      --exclude logs \
+      --exclude .venv \
+      --exclude venv \
+      --exclude .tox \
+      --exclude .nox \
+      --exclude .pytest_cache \
+      --exclude .mypy_cache \
+      --exclude .ruff_cache \
+      --exclude .next \
+      --exclude .nuxt \
+      --exclude dist \
+      --exclude build \
+      --exclude target \
+      . "$HOME/dev" |
+      fzf \
+        --height=100% \
+        --layout=reverse \
+        --border=none \
+        --info=hidden \
+        --prompt=''
+  )
+
+  [[ -n "$dir" ]] && cd -- "$dir"
+  zle reset-prompt
+}
+
+zle -N fzf-cd-dev
+bindkey '^F' fzf-cd-dev
+
 HISTSIZE=25000
 HISTFILE=~/.zsh_history
 SAVEHIST=$HISTSIZE
