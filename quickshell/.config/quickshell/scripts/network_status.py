@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Read-only nmcli snapshots, with explicit unavailable and linked/no-IP states."""
+"""Read-only network and system tailscaled service snapshots."""
 
 import ipaddress
 import json
@@ -122,11 +122,39 @@ def get_net():
     return result
 
 
+def tailscale_service_running():
+    """Daemon liveness only: no tailnet connection or authentication query."""
+    try:
+        output = subprocess.check_output(
+            ["systemctl", "--system", "show", "tailscaled.service", "--no-pager",
+             "--property=ActiveState", "--property=SubState"],
+            text=True, encoding="utf-8", errors="replace", timeout=2,
+            stderr=subprocess.PIPE, env={**os.environ, "LC_ALL": "C"})
+        fields = {}
+        for line in output.splitlines():
+            key, separator, value = line.partition("=")
+            if not separator or key not in ("ActiveState", "SubState") or key in fields:
+                return False
+            fields[key] = value
+        return fields == {"ActiveState": "active", "SubState": "running"}
+    except (OSError, subprocess.SubprocessError, ValueError):
+        return False
+
+
+def get_snapshot():
+    # Keep this outside get_net: its early returns and failures must not skip it.
+    result = get_net()
+    result["tailscale_service_running"] = tailscale_service_running()
+    return result
+
+
 def main():
     while True:
-        print(json.dumps(get_net()), flush=True)
+        print(json.dumps(get_snapshot()), flush=True)
         if "-c" not in sys.argv:
             break
+        # Two nmcli calls (3s each) + systemctl (2s) + sleep = at most 13s
+        # of bounded waits between snapshots, below the QML 15s watchdog.
         time.sleep(5)
 
 

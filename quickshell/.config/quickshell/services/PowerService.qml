@@ -2,7 +2,6 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Io
-import "../theme"
 
 Singleton {
     id: root
@@ -17,15 +16,6 @@ Singleton {
     property bool refreshing: false
     readonly property string tooltip: statusTooltip + (busy ? "\nChanging profile…" : "")
         + (lastError ? "\n" + lastError : "")
-
-    readonly property color fgColor: {
-        switch (profile) {
-            case "performance": return Theme.powerPerformance;
-            case "balanced": return Theme.powerBalanced;
-            case "power-saver": return Theme.powerSaver;
-            default: return Theme.fg;
-        }
-    }
 
     function refresh(): void {
         if (refreshing) return;

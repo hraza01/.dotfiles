@@ -17,11 +17,6 @@ Singleton {
     readonly property color workspaceUrgent: "#eb4d4b"
     readonly property color panelBorder: Qt.rgba(0.392, 0.447, 0.490, 0.500)
 
-    // Power profile colors
-    readonly property color powerPerformance: "#f53c3c"
-    readonly property color powerBalanced: "#2980b9"
-    readonly property color powerSaver: "#2ecc71"
-
     // Component state colors
     readonly property color audioMutedBg: "#90b1b1"
     readonly property color audioMutedFg: "#2a5c45"

@@ -13,7 +13,8 @@ Compatibility target: Quickshell **0.3.1**, Qt **6.11.2**, Arch. Setup installs
 repository packages, not enforced version pins. Keep Qt and Quickshell coherent
 when upgrading; review API compatibility before substituting another release.
 Runtime helpers use the Python standard library and the desktop's command-line
-tools, including `wpctl`, `brightnessctl`, `nmcli`, `busctl`, `loginctl` and `pgrep`.
+tools, including `wpctl`, `brightnessctl`, `nmcli`, `busctl`, `systemctl`, `loginctl`
+and `pgrep`.
 
 - Sway starts one `quickshell -n` per display/configuration. Do not additionally
   enable a Quickshell user service.
@@ -22,6 +23,7 @@ tools, including `wpctl`, `brightnessctl`, `nmcli`, `busctl`, `loginctl` and `pg
   screen against Sway's monitor model; singleton state retains output names, not
   disconnected native screen wrappers.
 - **Alt+Space:** empty-first launcher. Type, use arrows/Enter, or Escape to cancel.
+  The search field has an 8px horizontal inset for its placeholder and input text.
   Ctrl+Tab/Ctrl+Shift+Tab cycle applications and deliberate shell-command mode;
   both reset the query. Results scroll beyond twelve matches. The run mode
   intentionally executes the command you typed through `sh -c`; desktop-file
@@ -32,6 +34,18 @@ tools, including `wpctl`, `brightnessctl`, `nmcli`, `busctl`, `loginctl` and `pg
   its real tray item is not drawn a second time. Missing applets show an unavailable
   menu rather than silently launching another application.
 - Other tray items retain primary, secondary, context-menu and scroll actions.
+- **CPU-chip hover:** memory usage, a separator, CPU total and numerically ordered
+  logical CPUs. The tooltip expands within the output; an explicit overflow count
+  replaces rows that cannot fit on smaller screens or larger CPU systems.
+- **Tailscale:** the dot indicator appears only while `tailscaled.service` is
+  active/running. It reports daemon liveness, not tailnet login or connectivity.
+  Read-only polling is shared across outputs; failed or stale status hides it.
+- **Battery:** the icon and percentage stay white for every power profile. On
+  battery, hover shows `4h 35m Remaining` and the percentage, or an unavailable
+  estimate notice. Estimates use kernel time-to-empty readings or matching
+  energy/power or charge/current values, floored to minutes; load changes can
+  make them fluctuate. Charging/full details remain available. Clicking still
+  cycles power profiles, and pending operations/errors remain visible.
 - **Clock hover:** calendar. **Clock right click:** bounded notification history.
   History entries are read-only, sticky copies, not retained callable app actions.
 - Notification left click dismisses one; right click dismisses all; middle click

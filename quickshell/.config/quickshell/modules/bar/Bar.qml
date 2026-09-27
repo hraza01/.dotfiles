@@ -64,7 +64,6 @@ PanelWindow {
 
         IdleInhibitorModule { window: barWindow }
         CpuModule {}
-        MemoryModule {}
         BacklightModule {}
         AudioModule {}
         NetworkModule {
@@ -76,6 +75,7 @@ PanelWindow {
             barWindow: barWindow
         }
         TrayModule { barWindow: barWindow }
+        TailscaleModule {}
         PowerModule {}
         ClockModule {
             id: clockModule

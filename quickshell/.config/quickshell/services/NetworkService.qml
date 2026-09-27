@@ -9,6 +9,8 @@ Singleton {
 
     property string state: "unavailable"
     property bool available: false
+    // System daemon liveness, independent of NetworkManager and tailnet login.
+    property bool tailscaleServiceRunning: false
     property string lastError: "Waiting for NetworkManager"
     property string devType: "none"
     property bool isWifi: true
@@ -21,6 +23,7 @@ Singleton {
     }
 
     function fail(message: string): void {
+        tailscaleServiceRunning = false;
         available = false;
         state = "unavailable";
         lastError = message;
@@ -34,7 +37,9 @@ Singleton {
             onRead: (line) => {
                 try {
                     let d = JSON.parse(line.trim());
-                    if (typeof d.available !== "boolean" || typeof d.state !== "string") throw new Error("Invalid status");
+                    if (typeof d.available !== "boolean" || typeof d.state !== "string"
+                        || typeof d.tailscale_service_running !== "boolean") throw new Error("Invalid status");
+                    root.tailscaleServiceRunning = d.tailscale_service_running;
                     root.available = d.available;
                     root.lastError = d.error || "";
                     root.state = d.state;
@@ -48,8 +53,13 @@ Singleton {
                 }
             }
         }
+        // Quickshell 0.3.1 emits this on FailedToStart too (without exited).
         onRunningChanged: {
-            if (running) staleTimer.restart();
+            root.tailscaleServiceRunning = false;
+            if (running) {
+                root.restartTimer.stop();
+                staleTimer.restart();
+            }
             else {
                 staleTimer.stop();
                 root.fail("Status monitor stopped");
@@ -65,6 +75,7 @@ Singleton {
     }
 
     readonly property Timer staleTimer: Timer {
+        // Relative Qt timer: heartbeat expiry does not use the wall clock.
         interval: 15000
         running: true
         onTriggered: {

@@ -2,6 +2,7 @@
 """System status monitor for CPU and Memory in Quickshell."""
 
 import json
+import re
 import sys
 import time
 
@@ -36,6 +37,10 @@ def read_cpu_times():
                 if line.startswith("cpu"):
                     parts = line.strip().split()
                     name = parts[0]
+                    if name != "cpu" and not re.fullmatch(r"cpu[0-9]+", name):
+                        continue
+                    if len(parts) < 5:
+                        continue
                     vals = [int(x) for x in parts[1:]]
                     idle = vals[3] + (vals[4] if len(vals) > 4 else 0)
                     # guest/guest_nice are already included in user/nice.
@@ -66,11 +71,12 @@ def main():
         if "cpu" in prev_times and "cpu" in curr_times:
             overall_pct = calc_cpu_percent(prev_times["cpu"], curr_times["cpu"])
 
-        cores = [k for k in sorted(curr_times.keys()) if k != "cpu"]
+        cores = sorted((k for k in curr_times if re.fullmatch(r"cpu[0-9]+", k)),
+                       key=lambda k: int(k[3:]))
         for c in cores:
             if c in prev_times:
                 cpct = calc_cpu_percent(prev_times[c], curr_times[c])
-                core_num = c.replace("cpu", "")
+                core_num = int(c[3:])
                 core_lines.append(f"Core {core_num}: {cpct}%")
 
         cpu_tooltip = f"CPU: {overall_pct}%"
