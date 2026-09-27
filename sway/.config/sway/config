@@ -50,12 +50,12 @@ exec blueman-applet
 exec python3 "$HOME/.config/sway/scripts/spiral.py"
 
 ### Idle configuration
-# Lock after 5 min idle, display off after 10 min, use swaylock's native
-# readiness handoff for the finite pre-sleep inhibitor window.
+# Lock after 5 min idle; display off after 10 min. Before sleep, reuse confirmed
+# Hyprlock or use swaylock's native readiness handoff within the finite inhibitor window.
 exec swayidle -w \
          timeout 300 'python3 "$HOME/.config/hypr/lock.py" || /usr/bin/swaylock -f -c 000000' \
          timeout 600 'swaymsg "output * power off"' resume 'swaymsg "output * power on"' \
-         before-sleep '/usr/bin/swaylock -f -c 000000'
+         before-sleep 'python3 "$HOME/.config/hypr/lock.py" --check-ready || /usr/bin/swaylock -f -c 000000'
 
 ### Input configuration
 # Caps Lock -> Escape (real Escape key still works). Applies to all keyboards.

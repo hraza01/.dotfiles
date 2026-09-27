@@ -30,7 +30,9 @@ verification lifecycle instead of displaying that stale prompt.
   The plain header starts `Arch Linux`; the literal `host login:` label appends
   the current account. Hyprlock itself is unpatched.
 - Every output receives a lock surface and the same simple layout. Positions are
-  output-local logical pixels and can be adjusted in the config.
+  output-local logical pixels and can be adjusted in the config. Label font sizes
+  are points: the footer, like the other labels, uses 15pt (20 logical px at
+  96 DPI, matching greetd's 20px font).
 
 `screen-data.py` supplies runtime labels. Fingerprint readiness is shown only after
 Hyprlock reports a successful verification start; claiming the reader is insufficient.
@@ -67,10 +69,39 @@ merely an SSH process with copied environment variables.
 The Sway manual shortcut and 300-second idle timeout use this adapter. If Hyprlock
 cannot acknowledge the compositor lock within its single bounded two-second
 handoff, fails startup or has an unreviewed version, they invoke an installed
-plain-black swaylock fallback. Because Hyprlock 0.9.6 has no native ready-fd and an
-unacknowledged process cannot be safely replaced, the finite pre-sleep inhibitor
-path uses `swaylock -f` directly and does not background it. GTKlock configuration
-is no longer bundled; recovering a previous locker requires externally saved
+plain-black swaylock fallback. Undocked lid-close first runs the adapter and its
+read-only `--check-ready` check; only success permits panel disable followed by
+`systemctl suspend-then-hibernate`. Failure does not disable the panel or request
+sleep. Docked lid-close still only disables the internal panel and stays awake.
+Output-query failure or malformed output data causes no lid-handler changes.
+
+The finite pre-sleep inhibitor path uses `--check-ready` to recognize an already
+confirmed Hyprlock; otherwise it runs `swaylock -f -c 000000` directly, without
+backgrounding. This check launches nothing, writes no files, and does not wait
+for the two-second startup handoff. Other sleep entry points do not launch
+Hyprlock through this hook. An unacknowledged native process may remain after
+adapter timeout; the lid handler aborts rather than killing or replacing it.
+
+The ready marker records the reviewed version, native PID, inherited lifetime
+descriptor and Linux process start time. Both coordination files must be private,
+same-UID, regular single-link files in private directories. A check takes the
+guard nonblockingly, requires the lifetime flock to be held, and checks the native
+process incarnation, non-zombie state and inherited descriptor's device/inode.
+Pending, old-format, unowned or dead-native markers fail, including the interval
+where the supervisor still holds the flock while draining logs/restoring cursor
+policy. The same validation now rejects stale readiness on repeated manual/idle
+requests; their launch/fallback commands and shared two-second deadline are unchanged.
+No native logs or credentials are persisted; the marker is coordination metadata.
+
+This is a snapshot of the reviewed 0.9.6 acknowledgement contract, not a fresh
+compositor query or an authentication decision. Native exit/unlock, compositor
+loss, or output-topology changes can race a successful check and subsequent
+commands. Compositor abandonment relies on session-lock's fail-secure behavior;
+the adapter never unlocks or kills the native locker. Same-UID code able to alter
+the private coordination files is within the trusted session boundary. Linux
+`/proc` access is required; inability to validate it fails closed.
+
+GTKlock configuration is no longer bundled; recovering a previous locker requires externally saved
 configuration and installed packages. Former sources remain in Git history for
 inspection.
 
