@@ -88,7 +88,7 @@ exec swayidle -w \
     bindsym Mod1+space exec qs ipc call launcher toggle
 
     # File manager (Dolphin)
-    bindsym $mod+Shift+f exec dolphin
+    bindsym $mod+Shift+f exec env QT_QPA_PLATFORMTHEME=qt6ct QT_STYLE_OVERRIDE=Breeze dolphin
 
     # Drag floating windows by holding $mod and left mouse button.
     # Resize with right mouse button + $mod.

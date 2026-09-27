@@ -150,6 +150,10 @@ def installed():
             if candidate == path:
                 break
             if candidate.exists() or candidate.is_symlink():
+                if name == "org.kde.dolphin.desktop" and candidate == data_home / "applications" / name:
+                    from dolphin_appearance import desktop_override
+                    if read(candidate) == desktop_override(path.read_bytes()):
+                        break  # Exact opt-in appearance override; arbitrary shadows still fail.
                 raise ValueError(f"Shadowing desktop entry preserved: {candidate}")
     if not Path("/usr/share/color-schemes/BreezeDark.colors").is_file():
         raise ValueError("Missing BreezeDark.colors; install Arch breeze")
