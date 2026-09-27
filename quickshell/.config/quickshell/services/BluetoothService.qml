@@ -4,7 +4,7 @@ import Quickshell
 import Quickshell.Bluetooth
 import "../theme"
 
-QtObject {
+Singleton {
     readonly property bool available: Bluetooth.adapters.values.length > 0
     readonly property bool powered: Bluetooth.adapters.values.some(adapter => adapter.enabled)
     readonly property var connectedDevices: Bluetooth.devices.values.filter(device => device.connected)

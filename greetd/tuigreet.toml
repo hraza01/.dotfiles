@@ -1,0 +1,61 @@
+[general]
+debug = false
+
+[display]
+show_time = true
+time_format = "%a %b %d %H:%M:%S %Z %Y"
+show_title = false
+issue = false
+battery = false
+align_greeting = "left"
+
+[layout]
+# Owner-approved, pinned console UI/login shortcuts; stock tuigreet ignores this key.
+console = true
+width = 56
+window_padding = 2
+container_padding = 0
+prompt_padding = 0
+
+[layout.widgets]
+time_position = "bottom"
+status_position = "bottom"
+
+[layout.widgets.status_bar]
+show_reset = true
+show_command = false
+show_session = false
+show_power = false
+show_background = false
+show_session_status = false
+show_caps_lock = true
+
+[remember]
+username = true
+session = false
+user_session = false
+
+[user_menu]
+enabled = false
+
+[secret]
+mode = "characters"
+characters = "*"
+
+[session]
+# Greeter-side Wayland/D-Bus addresses must not enter the new user session.
+environments = []
+
+[theme]
+border = "#000000"
+container = "#000000"
+text = "#E5E0E5"
+input = "#E5E0E5"
+prompt = "#E5E0E5"
+greet = "#AFA5AF"
+time = "#AFA5AF"
+action = "#AFA5AF"
+button = "#AFA5AF"
+
+[background]
+kind = "none"

@@ -4,7 +4,7 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.I3
 
-QtObject {
+Singleton {
     id: root
 
     readonly property var workspaces: I3.workspaces

@@ -1,4 +1,4 @@
-# Loaded by .zprofile before SDDM starts Sway.
+# Loaded by .zprofile before the managed greetd session starts Sway.
 
 export XCURSOR_THEME=Bibata-Original-Classic
 export XCURSOR_SIZE=24

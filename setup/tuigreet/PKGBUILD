@@ -1,0 +1,48 @@
+# Console presentation and opt-in login shortcuts; upstream greetd IPC.
+pkgname=greetd-tuigreet-console
+pkgver=0.11.1
+pkgrel=2
+pkgdesc='Pinned tuigreet console presentation for the dotfiles greeter'
+arch=('x86_64' 'aarch64')
+url='https://github.com/apognu/tuigreet'
+license=('GPL-3.0-only')
+depends=('glibc' 'libgcc' 'greetd' 'systemd')
+makedepends=('rust' 'patch')
+options=('!debug' '!lto')
+_commit=30bd91a650d5dfb261bf20cc1f437ce3b354296e
+source=("tuigreet-${_commit}.tar.gz::https://codeload.github.com/apognu/tuigreet/tar.gz/${_commit}"
+        'console.patch' 'console.rs')
+sha256sums=('5f26ec360c388c7156459a12bb0b43e88dc2b0134f239ac4a4779f125610511b'
+            '2f7b857d058689164c578448679cc2e8d64e22ddb18cc1af127ba22e8034a26f'
+            'd4d89ad9cd3a5e0850f96449db93065a022b52e0d8b916d9598d4d3050d5f367')
+
+prepare() {
+  cd "$srcdir/tuigreet-$_commit"
+  patch --batch --forward --fuzz=0 -Np1 -i "$srcdir/console.patch"
+  install -m644 "$srcdir/console.rs" crates/tuigreet/src/ui/console.rs
+  cargo fetch --locked
+}
+
+build() {
+  cd "$srcdir/tuigreet-$_commit"
+  cargo build --frozen --release --package tuigreet --jobs "${CARGO_BUILD_JOBS:-3}"
+}
+
+check() {
+  cd "$srcdir/tuigreet-$_commit"
+  # Upstream documents a wall-clock second-boundary race in this integration
+  # test. Run it separately to reduce parallel-load interference; the clock
+  # boundary race remains possible.
+  cargo test --frozen --workspace --jobs "${CARGO_BUILD_JOBS:-3}" -- \
+    --skip integration::display::show_time
+  cargo test --frozen --package tuigreet --jobs "${CARGO_BUILD_JOBS:-3}" \
+    integration::display::show_time -- --exact
+}
+
+package() {
+  cd "$srcdir/tuigreet-$_commit"
+  install -Dm755 target/release/tuigreet "$pkgdir/usr/lib/dotfiles-tuigreet/tuigreet"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -dm755 "$pkgdir/usr/share/doc/$pkgname"
+  (cd "$startdir"; sha256sum PKGBUILD console.patch console.rs) > "$pkgdir/usr/share/doc/$pkgname/build.sha256"
+}

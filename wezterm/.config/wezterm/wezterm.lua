@@ -20,11 +20,9 @@ end)
 
 return {
   -- fonts
-  -- JetBrains Mono for text; Nerd Font Mono variant as fallback for
-  -- icon glyphs used by oh-my-posh (e.g. the prompt arrow, U+F0055)
-  -- that plain JetBrains Mono doesn't carry. "Mono" variant keeps
-  -- icons at a consistent monospace cell width.
-  font = wezterm.font_with_fallback({ 'JetBrains Mono', 'JetBrainsMono Nerd Font Mono' }),
+  -- Nerd Font Mono keeps text and prompt icons at a monospace cell width.
+  -- Retain plain JetBrains Mono as the text fallback.
+  font = wezterm.font_with_fallback({ 'JetBrainsMono Nerd Font Mono', 'JetBrains Mono' }),
   font_size = 15.0,
   harfbuzz_features = { 'calt=0', 'liga=0' },
 

@@ -11,7 +11,7 @@ def content_allowed(session=None):
         return False
     try:
         locked = subprocess.run(
-            ["pgrep", "-u", str(os.getuid()), "-x", "gtklock"],
+            ["pgrep", "-u", str(os.getuid()), "-x", "gtklock|hyprlock|swaylock"],
             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=1,
         )
         if locked.returncode != 1:

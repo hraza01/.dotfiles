@@ -1,18 +1,18 @@
 pragma Singleton
 import QtQuick
 import Quickshell
-import Quickshell.I3
 import Quickshell.Io
 
-QtObject {
+Singleton {
     id: root
 
     property bool launcherVisible: false
-    readonly property var activeScreen: Quickshell.screens.find(screen => I3.focusedMonitor && screen.name === I3.focusedMonitor.name)
-        || Quickshell.screens[0] || null
-    property var pointerScreen: null
-    readonly property var notificationScreen: Quickshell.screens.indexOf(pointerScreen) >= 0 ? pointerScreen : activeScreen
+    // Keep stable output identity here, never native screen wrappers that become
+    // dangling after a Wayland output disconnects.
+    property string pointerScreenName: ""
     property bool contentAllowed: false
+    // User intent outlives the output-bound inhibitor objects.
+    property bool idleInhibited: false
 
     // OSD state
     property bool osdVisible: false
@@ -40,6 +40,15 @@ QtObject {
     function closeMenu(): void {
         if (activeMenu) activeMenu.close();
         activeMenu = null;
+    }
+
+    function resetOutputState(): void {
+        pointerScreenName = "";
+        closeMenu();
+        closeLauncher();
+        osdVisible = false;
+        showCalendar = false;
+        NotificationService.hideHistory();
     }
 
     function toggleLauncher(): void {
@@ -99,7 +108,13 @@ QtObject {
                 privacyStale.restart();
             }
         }
-        onExited: { root.contentAllowed = false; privacyRetry.restart(); }
+        // 0.3.1 also emits this on FailedToStart, which has no exited signal.
+        onRunningChanged: {
+            root.contentAllowed = false;
+            privacyStale.stop();
+            if (running) privacyRetry.stop();
+            else privacyRetry.restart();
+        }
     }
     readonly property Timer privacyStale: Timer {
         interval: 4000

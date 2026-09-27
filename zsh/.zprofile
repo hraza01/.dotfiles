@@ -1,4 +1,4 @@
-# SDDM launches zsh as a noninteractive login shell, without reading .zshrc.
+# The managed greetd session launches login zsh without reading .zshrc.
 typeset -U path
 path=("${PIPX_BIN_DIR:-$HOME/.local/bin}" "$HOME/.local/bin" $path)
 export PATH

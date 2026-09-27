@@ -2,7 +2,7 @@
 
 Plymouth script theme with a grey unlock screen, RGB-split reveal, and separate
 shutdown fade. The runtime requires the script plugin, JetBrainsMono Nerd Font,
-the sixteen PNGs in `assets/`, and the helpers in `../../integration/`.
+the sixteen PNGs in `assets/`, and the [boot integration helpers](../../integration/README.md).
 
 The asset manifest records geometry and SHA-256 hashes. Images are scaled at
 startup and sprites are reused; refresh callbacks do not load or resize images.

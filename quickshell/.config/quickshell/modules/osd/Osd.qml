@@ -9,7 +9,7 @@ PanelWindow {
     property var modelData
     screen: modelData
 
-    visible: ShellState.contentAllowed && ShellState.osdVisible
+    visible: !!modelData && ShellState.contentAllowed && ShellState.osdVisible
     mask: Region {}
     anchors {
         top: true

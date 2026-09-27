@@ -6,7 +6,8 @@ import "../../services"
 
 PanelWindow {
     id: barWindow
-    property var modelData
+    required property var modelData
+    property string outputName: ""
     screen: modelData
     property alias clock: clockModule
     property alias network: netModule
@@ -28,10 +29,14 @@ PanelWindow {
 
     HoverHandler {
         onHoveredChanged: {
-            if (hovered) ShellState.pointerScreen = barWindow.screen;
-            else if (ShellState.pointerScreen === barWindow.screen) ShellState.pointerScreen = null;
+            if (hovered) ShellState.pointerScreenName = barWindow.outputName;
+            else if (ShellState.pointerScreenName === barWindow.outputName) ShellState.pointerScreenName = "";
         }
     }
+    Component.onDestruction: {
+        if (ShellState.pointerScreenName === outputName) ShellState.pointerScreenName = "";
+    }
+    Component.onCompleted: outputName = modelData ? modelData.name : ""
 
     // Left section
     Row {

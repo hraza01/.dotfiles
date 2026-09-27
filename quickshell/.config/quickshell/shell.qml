@@ -1,7 +1,9 @@
 //@ pragma UseQApplication
 //@ pragma IconTheme Adwaita
+pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
+import Quickshell.I3
 import Quickshell.Io
 import "services"
 import "modules/bar"
@@ -11,26 +13,90 @@ import "modules/notifications"
 
 ShellRoot {
     id: root
-    // Deployment/recovery is explicit, avoiding partial generations during sync.
-    Component.onCompleted: Quickshell.watchFiles = false
+    property var usableScreens: []
+    property var activeScreen: null
+    readonly property var notificationScreen: usableScreens.find(screen =>
+        screen && screen.name === ShellState.pointerScreenName) || activeScreen
 
+    // Deployment/recovery is explicit, avoiding partial generations during sync.
+    Component.onCompleted: {
+        Quickshell.watchFiles = false;
+        screenSync.restart();
+    }
+
+    function selectActiveScreen(): void {
+        // Quickshell 0.3.1 can leave focusedMonitor pointing to a deleted monitor.
+        // Reading even its null check crashes; inspect only the live model.
+        const focused = I3.monitors.values.find(monitor => monitor.focused);
+        const focusedName = focused ? focused.name : "";
+        activeScreen = usableScreens.find(screen => screen.name === focusedName)
+            || usableScreens[0] || null;
+    }
+
+    function invalidateScreens(): void {
+        // Destroy output-bound windows immediately, but never construct their
+        // replacements reentrantly from Qt's screen-added callback.
+        ShellState.resetOutputState();
+        activeScreen = null;
+        usableScreens = [];
+        screenSync.restart();
+    }
+
+    function syncScreens(): void {
+        const monitorNames = I3.monitors.values.map(monitor => monitor.name);
+        const screens = Quickshell.screens.filter(screen => screen
+            && monitorNames.indexOf(screen.name) >= 0);
+        usableScreens = screens;
+        selectActiveScreen();
+    }
+
+    Timer {
+        id: screenSync
+        interval: 100
+        repeat: false
+        onTriggered: root.syncScreens()
+    }
+    Connections {
+        target: Quickshell
+        function onScreensChanged() { root.invalidateScreens(); }
+    }
+    Connections {
+        target: I3.monitors
+        function onValuesChanged() { root.invalidateScreens(); }
+    }
+    Connections {
+        target: I3
+        function onFocusedMonitorChanged() { root.selectActiveScreen(); }
+        function onConnected() { root.invalidateScreens(); }
+    }
     Variants {
         id: bars
-        model: Quickshell.screens
+        model: root.usableScreens
         delegate: Component {
-            Bar { required property var modelData; screen: modelData }
+            Bar {}
         }
     }
-    Launcher { modelData: ShellState.activeScreen }
-    Osd { modelData: ShellState.activeScreen }
-    NotificationToast {
-        modelData: ShellState.notificationScreen
-        contentAllowed: ShellState.contentAllowed
+    Loader {
+        active: !!root.activeScreen
+        sourceComponent: Component { Launcher { modelData: root.activeScreen } }
+    }
+    Loader {
+        active: !!root.activeScreen
+        sourceComponent: Component { Osd { modelData: root.activeScreen } }
+    }
+    Loader {
+        active: !!root.notificationScreen
+        sourceComponent: Component {
+            NotificationToast {
+                modelData: root.notificationScreen
+                contentAllowed: ShellState.contentAllowed
+            }
+        }
     }
 
     function focusedBar() {
         const list = bars.instances;
-        return list.find(bar => bar.screen === ShellState.activeScreen) || list[0] || null;
+        return list.find(bar => bar.screen === root.activeScreen) || list[0] || null;
     }
     IpcHandler {
         target: "shell"
