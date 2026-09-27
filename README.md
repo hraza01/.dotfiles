@@ -1,8 +1,9 @@
 # Dotfiles
 
 **Arch Linux + Sway + Quickshell** configuration managed with GNU Stow on the
-`arch` branch. The `linux` branch preserves the Fedora setup. Retained
-Fedora/Debian package branches are not supported desktop installation paths here.
+`arch` branch. Desktop and boot installation on this branch require Arch Linux.
+Shared shell/dev helpers retain Fedora/Debian handling; the `linux` branch
+preserves the Fedora desktop setup.
 
 ## Setup
 
@@ -85,6 +86,8 @@ The selected login path is `greetd -> Cage -> Foot -> tuigreet -> Sway`.
 `./setup.sh auth` publishes root-owned copies under `/etc/greetd` and
 `/etc/tuigreet`; neither `auth` nor `gui` enables or restarts greetd. Review the
 [activation and recovery procedure](greetd/README.md) before changing boot ownership.
+SDDM and GTKlock configurations are no longer bundled. Keep known-good machine
+backups externally; former sources remain in Git history for inspection.
 The GUI group installs logind's Sway lid policy without restarting logind; activate
 it with a deliberate reboot after checking locked/docked lid behavior.
 
@@ -136,6 +139,5 @@ outside this repository. Generated application and monitor state is ignored.
 ## Licenses
 
 Ashborn's original code and supplied artwork use the [MIT License](plymouth/themes/ashborn/LICENSE).
-The retained, inactive SDDM recovery source retains its [upstream MIT notice](sddm/where-is-my-sddm-theme/LICENSE).
 Barlow retains OFL 1.1; its license is downloaded and installed with the
 fonts. Third-party licenses and trademark rights are not replaced by Ashborn's license.

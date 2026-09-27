@@ -69,8 +69,10 @@ cannot acknowledge the compositor lock within its single bounded two-second
 handoff, fails startup or has an unreviewed version, they invoke an installed
 plain-black swaylock fallback. Because Hyprlock 0.9.6 has no native ready-fd and an
 unacknowledged process cannot be safely replaced, the finite pre-sleep inhibitor
-path uses `swaylock -f` directly and does not background it. Legacy GTKlock source
-is retained only as inactive recovery material.
+path uses `swaylock -f` directly and does not background it. GTKlock configuration
+is no longer bundled; recovering a previous locker requires externally saved
+configuration and installed packages. Former sources remain in Git history for
+inspection.
 
 See [greetd migration](../greetd/README.md) for boot-owner activation, validation
 and rollback. Tests, screenshots and deployment records belong outside this repo.

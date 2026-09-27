@@ -52,8 +52,7 @@ Singleton {
                 let d = JSON.parse(powerOutput.text);
                 root.icon = d.text || "\uf24e";
                 root.batteryPercent = (typeof d.battery === "number" && d.battery >= 0) ? d.battery : -1;
-                // The inherited helper returns HTML-escaped Waybar text.
-                // TooltipPopup is plain text, so decode only those entities.
+                // Decode the helper's HTML entities for plain-text tooltips.
                 root.statusTooltip = (d.tooltip || "Power status unavailable")
                     .replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
                 root.profile = "unknown";

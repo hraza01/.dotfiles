@@ -6,7 +6,6 @@ Singleton {
     // Surface & background colors
     readonly property color bg: "#000000"
     readonly property color launcherBg: "#0d0d0d"
-    readonly property color surface: "#141414"
     readonly property color fg: "#ffffff"
     readonly property color fgDim: "#888888"
     readonly property color border: "#333333"
@@ -59,7 +58,6 @@ Singleton {
     readonly property int launcherBorderWidth: 2
     readonly property int launcherPadding: 6
     readonly property int launcherRowRadius: 4
-    readonly property int launcherMaxResults: 12
 
     readonly property int osdWidth: 400
     readonly property int osdHeight: 32

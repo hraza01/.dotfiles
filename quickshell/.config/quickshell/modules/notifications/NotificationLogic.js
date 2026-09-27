@@ -250,7 +250,7 @@ function createController(env, maxActive, maxHistory) {
 
     function invokeDefault(id) {
         var invoked = invoke(id, "default", true);
-        // Dunst's do_action,close_current also closes when there is no default.
+        // Dismiss even when there is no default action.
         if (!invoked) dismiss(id);
         return invoked;
     }

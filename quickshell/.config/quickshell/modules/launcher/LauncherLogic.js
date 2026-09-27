@@ -1,6 +1,6 @@
 // Pure launcher logic, also exercised by the external Node fixture tests.
 // Ordered subsequence DP: reward adjacency and word/camel-case boundaries;
-// penalize skipped characters. This is deliberately not claimed as fzf parity.
+// penalize skipped characters.
 function fuzzyScore(needle, value) {
     var original = String(value || "");
     var text = original.toLowerCase();
@@ -51,8 +51,7 @@ function filterApps(apps, query) {
 }
 
 function nextMode(mode, forward) {
-    // a87ce49 advertises window mode, but the target Rofi Wayland build's
-    // working window mode has not been verified. Do not invent a switcher.
+    // Only application and command modes are supported.
     var modes = ["drun", "run"];
     return modes[(Math.max(0, modes.indexOf(mode)) + (forward ? 1 : modes.length - 1)) % modes.length];
 }
