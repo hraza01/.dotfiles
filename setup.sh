@@ -30,8 +30,9 @@ ${C_CYAN}Usage:${C_RESET}  ./setup.sh <group> [group ...]
 
 ${C_CYAN}Available groups:${C_RESET}
 
-  ${C_BOLD}shell${C_RESET}   zsh, fzf, fd, stow, git, oh-my-posh
-          Stows: zsh, oh-my-posh
+  ${C_BOLD}shell${C_RESET}   zsh, fzf, fd, stow, git, starship
+          Stows: zsh, starship
+          Starship: distro package or pinned official Linux release
 
   ${C_BOLD}gui${C_RESET}     sway, waybar, kanshi, ulauncher, dunst, gtklock,
           wezterm, fonts (Inter, JetBrains Mono, Font Awesome 6),

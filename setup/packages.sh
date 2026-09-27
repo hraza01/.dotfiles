@@ -3,14 +3,79 @@
 
 # --- User-level tool installers ----------------------------------
 
-install_oh_my_posh() {
-  if cmd_is_installed oh-my-posh; then
-    ok "oh-my-posh already installed"
-  else
-    log "Installing oh-my-posh"
-    curl -s https://ohmyposh.dev/install.sh | bash
+install_starship() {
+  if cmd_is_installed starship; then
+    starship --version >/dev/null || die "Existing Starship cannot run; leaving it untouched. Repair it before rerunning setup."
+    ok "starship already installed"
+    return
   fi
+
+  case "$DISTRO" in
+    arch) pkg_install starship || return ;;
+    fedora)
+      if dnf list --available starship &>/dev/null; then
+        pkg_install starship || return
+      else
+        install_starship_release || return
+      fi
+      ;;
+    debian)
+      sudo apt update || return
+      if LC_ALL=C apt-cache policy starship | grep -Eq 'Candidate: [^ (]'; then
+        pkg_install starship || return
+      else
+        install_starship_release || return
+      fi
+      ;;
+    *) die "Unsupported distro. Install Starship manually before running setup." ;;
+  esac
+  starship --version >/dev/null || die "Starship is not executable; shell setup stopped before stowing."
 }
+
+# Official release fallback; pins come from the matching upstream .sha256 assets:
+# https://github.com/starship/starship/releases/tag/v1.26.0
+install_starship_release() (
+  # Subshell-scoped variables stay available to EXIT cleanup even after die.
+  version="v1.26.0"
+  stage=""
+  target="$HOME/.local/bin/starship"
+  if [ -e "$target" ] || [ -L "$target" ]; then
+    die "Refusing to replace existing $target. Resolve the conflict before rerunning setup."
+  fi
+  [ "$(uname -s)" = Linux ] || die "Starship release install requires Linux."
+  arch="$(uname -m)"
+  case "$arch" in
+    x86_64) digest="b7c232b0e8249d8e55a40beb79c5c43a7d370f3f9408bd215deb0170daeaadf3" ;;
+    aarch64) digest="dc30189378d2f2e287384e8a692d3f95ad1df64cf0e8c36aa9201516028aed6b" ;;
+    *) die "No pinned Starship release for $arch. Install Starship manually, then rerun setup." ;;
+  esac
+  for tool in curl ca-certificates tar gzip coreutils; do
+    pkg_install "$tool" || die "Failed to install Starship dependency: $tool"
+  done
+  for tool in curl tar sha256sum install mktemp ln; do
+    cmd_is_installed "$tool" || die "Missing Starship installer dependency: $tool"
+  done
+  tmp="$(mktemp -d)" || die "Cannot create Starship temporary directory"
+  trap 'rm -rf "$tmp"; if [ -n "$stage" ]; then rm -rf "$stage"; fi' EXIT
+  log "Installing Starship $version ($arch) to ~/.local/bin"
+  curl --fail --location --proto '=https' --tlsv1.2 \
+    "https://github.com/starship/starship/releases/download/$version/starship-$arch-unknown-linux-musl.tar.gz" \
+    -o "$tmp/starship.tar.gz" || die "Failed to download Starship"
+  printf '%s  %s\n' "$digest" "$tmp/starship.tar.gz" | sha256sum --check --status \
+    || die "Starship checksum mismatch"
+  tar -xzf "$tmp/starship.tar.gz" -C "$tmp" starship || die "Failed to extract Starship"
+  [ -f "$tmp/starship" ] && [ ! -L "$tmp/starship" ] || die "Starship archive must contain a regular binary"
+  mkdir -p "$HOME/.local/bin" || die "Cannot create ~/.local/bin"
+  stage="$(mktemp -d "$HOME/.local/bin/.starship.XXXXXX")" || die "Cannot stage Starship"
+  install -m 0755 "$tmp/starship" "$stage/starship" || die "Failed to stage Starship"
+  "$stage/starship" --version >/dev/null || die "Downloaded Starship cannot run on this system"
+  if [ -e "$target" ] || [ -L "$target" ]; then
+    die "Refusing to replace existing $target. Resolve the conflict before rerunning setup."
+  fi
+  # Same-filesystem hard link publishes complete bytes atomically. GNU ln -T
+  # also refuses a target created after the check, including directory symlinks.
+  ln -T "$stage/starship" "$target" || die "Failed to publish Starship without replacing $target"
+)
 
 install_uv() {
   if cmd_is_installed uv; then
@@ -123,15 +188,17 @@ install_cursor_theme() {
 # --- Group: shell ------------------------------------------------
 group_shell() {
   log "Installing shell group"
+  export PATH="$HOME/.local/bin:$PATH"
+  install_starship || die "Starship installation failed; shell setup stopped before stowing."
 
   case "$DISTRO" in
     fedora) pkg_group_install stow git zsh fzf fd-find ;;
     debian) pkg_group_install stow git zsh fzf fd-find ;;
+    arch)   pkg_group_install stow git zsh fzf fd ;;
     *)      die "Cannot install shell packages on this distro" ;;
   esac
 
-  install_oh_my_posh
-  stow_packages zsh oh-my-posh
+  stow_packages zsh starship
 
   if [ "$(basename "$SHELL")" != "zsh" ]; then
     log "Changing default shell to zsh"

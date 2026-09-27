@@ -29,6 +29,8 @@ detect_distro() {
     echo "fedora"
   elif command -v apt &>/dev/null; then
     echo "debian"
+  elif command -v pacman &>/dev/null; then
+    echo "arch"
   else
     echo "unknown"
   fi
@@ -41,6 +43,7 @@ pkg_is_installed() {
   case "$DISTRO" in
     fedora) rpm -q "$1" &>/dev/null 2>&1 ;;
     debian) dpkg -s "$1" &>/dev/null 2>&1 ;;
+    arch)   pacman -Q "$1" &>/dev/null 2>&1 ;;
     *)      return 1 ;;
   esac
 }
@@ -57,6 +60,7 @@ pkg_install() {
   case "$DISTRO" in
     fedora) log "Installing $1"; sudo dnf install -y "$1" ;;
     debian) log "Installing $1"; sudo apt update && sudo apt install -y "$1" ;;
+    arch)   log "Installing $1"; sudo pacman -S --needed --noconfirm "$1" ;;
     *)      die "Unsupported distro. Install $1 manually." ;;
   esac
 }
