@@ -44,6 +44,50 @@ bindkey '^p' history-search-backward
 bindkey '^n' history-search-forward
 bindkey '^[w' kill-region
 
+fzf-cd-dev() {
+  emulate -L zsh
+  local selected fd_cmd
+
+  if [[ ! -d "$HOME/dev" ]]; then
+    zle -M 'fzf-cd-dev: ~/dev does not exist'
+    return 0
+  fi
+  if command -v fd >/dev/null 2>&1; then
+    fd_cmd=fd
+  elif command -v fdfind >/dev/null 2>&1; then
+    fd_cmd=fdfind
+  else
+    zle -M 'fzf-cd-dev: missing dependency: fd or fdfind'
+    return 0
+  fi
+  if ! command -v fzf >/dev/null 2>&1; then
+    zle -M 'fzf-cd-dev: missing dependency: fzf'
+    return 0
+  fi
+
+  # Use fzf's status: early selection may close the producer pipe successfully.
+  selected=$("$fd_cmd" --type directory --hidden --absolute-path --print0 \
+    --exclude .git --exclude node_modules --exclude __pycache__ \
+    --exclude logs --exclude .venv --exclude venv --exclude .tox \
+    --exclude .nox --exclude .pytest_cache --exclude .mypy_cache \
+    --exclude .ruff_cache --exclude .next --exclude .nuxt \
+    --exclude dist --exclude build --exclude target . "$HOME/dev" |
+    fzf --height=100% --layout=reverse --border=none --info=hidden \
+      --prompt='' --read0 --print0 --no-multi) || return 0
+  selected=${selected%$'\0'}
+  [[ -n "$selected" ]] || return 0
+
+  if ! builtin cd -- "$selected" 2>/dev/null; then
+    zle -M "fzf-cd-dev: cannot change directory to ${(q)selected}"
+    return 0
+  fi
+  # Starship's PROMPT_SUBST renders the new directory on redraw.
+  zle reset-prompt
+}
+
+zle -N fzf-cd-dev
+bindkey '^F' fzf-cd-dev
+
 # History
 HISTSIZE=5000
 HISTFILE=~/.zsh_history
