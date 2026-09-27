@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-"""Preflight and publish the setup-managed greetd, SDDM, and logind files."""
+"""Preflight and publish the setup-managed greetd and logind files."""
 
-import hashlib
 import os
 import shutil
 import signal
@@ -11,7 +10,6 @@ import tomllib
 from pathlib import Path
 
 
-THEME = "where-is-my-sddm-theme"
 LID_POLICY = "60-dotfiles-sway-lid.conf"
 
 
@@ -27,17 +25,6 @@ def contents(path):
     plain_path(path)
     if not path.exists():
         return None
-    if path.is_dir():
-        result = {".": "directory"}
-        for child in sorted(path.rglob("*")):
-            plain_path(child)
-            if child.is_dir():
-                result[str(child.relative_to(path))] = "directory"
-            elif child.is_file():
-                result[str(child.relative_to(path))] = hashlib.sha256(child.read_bytes()).hexdigest()
-            else:
-                raise ValueError(f"Unsupported file type: {child}")
-        return result
     if not path.is_file():
         raise ValueError(f"Unsupported file type: {path}")
     return path.read_bytes()
@@ -92,7 +79,7 @@ def settings(text, section):
     return values
 
 
-def check_effective_policy(kind, root, config_source, config_target):
+def check_effective_policy(root, config_source, config_target):
     values = {}
 
     def load(path):
@@ -106,55 +93,34 @@ def check_effective_policy(kind, root, config_source, config_target):
             text = path.read_text()
         else:
             return
-        values.update(settings(text, "Theme" if kind == "sddm" else "Login"))
+        values.update(settings(text, "Login"))
 
-    if kind == "sddm":
-        for directory in (root / "usr/lib/sddm/sddm.conf.d", root / "etc/sddm.conf.d"):
-            files = set(directory.glob("*.conf"))
-            if directory == config_target.parent:
-                files.add(config_target)
-            for path in sorted(files):
-                load(path)
-        load(root / "etc/sddm.conf")
-        if values.get("Current") != THEME:
-            raise ValueError("Another SDDM configuration overrides Current; reconcile it before installation")
-    else:
-        for name in ("etc", "run", "usr/local/lib", "usr/lib"):
-            main = root / name / "systemd/logind.conf"
-            if main.exists() or main.is_symlink():
-                load(main)
-                break
-        files = {}
-        for name in ("usr/lib", "usr/local/lib", "run", "etc"):
-            directory = root / name / "systemd/logind.conf.d"
-            for path in directory.glob("*.conf"):
-                files[path.name] = path
-        files[LID_POLICY] = config_target
-        for name in sorted(files):
-            path = files[name]
-            if path.is_symlink() and path.resolve() == Path("/dev/null"):
-                continue
-            load(path)
-        if values.get("HandleLidSwitch") != "ignore" or any(
-            values.get(key, "ignore") not in ("", "ignore")
-            for key in ("HandleLidSwitchExternalPower", "HandleLidSwitchDocked")
-        ):
-            raise ValueError("Another logind lid policy conflicts with Sway ownership; reconcile it first")
+    for name in ("etc", "run", "usr/local/lib", "usr/lib"):
+        main = root / name / "systemd/logind.conf"
+        if main.exists() or main.is_symlink():
+            load(main)
+            break
+    files = {}
+    for name in ("usr/lib", "usr/local/lib", "run", "etc"):
+        directory = root / name / "systemd/logind.conf.d"
+        for path in directory.glob("*.conf"):
+            files[path.name] = path
+    files[LID_POLICY] = config_target
+    for name in sorted(files):
+        path = files[name]
+        if path.is_symlink() and path.resolve() == Path("/dev/null"):
+            continue
+        load(path)
+    if values.get("HandleLidSwitch") != "ignore" or any(
+        values.get(key, "ignore") not in ("", "ignore")
+        for key in ("HandleLidSwitchExternalPower", "HandleLidSwitchDocked")
+    ):
+        raise ValueError("Another logind lid policy conflicts with Sway ownership; reconcile it first")
 
 
 def preflight(kind, repo, root=Path("/")):
     repo, root = Path(repo), Path(root)
-    if kind == "sddm":
-        source = repo / "sddm" / THEME
-        for name in ("Main.qml", "SessionsChoose.qml", "UsersChoose.qml", "theme.conf", "metadata.desktop", "LICENSE"):
-            path = source / name
-            plain_path(path)
-            if not path.is_file() or not path.stat().st_size:
-                raise ValueError(f"Required SDDM source is missing or empty: {path}")
-        config = repo / "sddm/sddm.conf.d/minimal.conf"
-        target = root / "etc/sddm.conf.d/minimal.conf"
-        pairs = [(source, root / "usr/share/sddm/themes" / THEME), (config, target)]
-    elif kind == "greetd":
+    if kind == "greetd":
         source = repo / "greetd"
         config = tomllib.loads((source / "config.toml").read_text())
         session = config.get("default_session", {})
@@ -185,11 +151,9 @@ def preflight(kind, repo, root=Path("/")):
         new, old = contents(source), contents(target)
         if new is None or new == b"":
             raise ValueError(f"Missing source: {source}")
-        if old is not None and isinstance(new, dict) != isinstance(old, dict):
-            raise ValueError(f"Conflicting destination type preserved: {target}")
         snapshots.append((source, target, new, old))
-    if kind != "greetd":
-        check_effective_policy(kind, root, config, target)
+    if kind == "logind":
+        check_effective_policy(root, config, target)
     return snapshots
 
 
@@ -212,13 +176,8 @@ def install(kind, repo, root=Path("/")):
             directory = Path(tempfile.mkdtemp(prefix=f".dotfiles-{kind}-", dir=target.parent))
             staged.append((directory, target, old))
             replacement = directory / "replacement"
-            if source.is_dir():
-                shutil.copytree(source, replacement)
-                for path in (replacement, *replacement.rglob("*")):
-                    path.chmod(0o755 if path.is_dir() else 0o644)
-            else:
-                shutil.copyfile(source, replacement)
-                replacement.chmod(0o644)
+            shutil.copyfile(source, replacement)
+            replacement.chmod(0o644)
             if contents(replacement) != new:
                 raise ValueError(f"Source changed while staging: {source}")
         preflight(kind, repo, root)
@@ -284,6 +243,8 @@ if __name__ == "__main__":
     signal.signal(signal.SIGHUP, interrupted)
     try:
         kind, action, repo = sys.argv[1:]
+        if kind not in ("greetd", "logind"):
+            raise ValueError(f"Unknown managed desktop component: {kind}")
         if action == "--check":
             preflight(kind, repo)
         elif action == "--install":

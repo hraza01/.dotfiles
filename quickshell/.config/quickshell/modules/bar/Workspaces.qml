@@ -38,7 +38,7 @@ Row {
                 color: Theme.fg
             }
 
-            // White underline for focused workspace (box-shadow inset 0 -2px in Waybar)
+            // White underline for focused workspace
             Rectangle {
                 visible: ws.focused
                 anchors.bottom: parent.bottom

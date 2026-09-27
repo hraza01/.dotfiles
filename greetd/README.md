@@ -115,9 +115,10 @@ sudo systemctl enable sddm.service
 ```
 
 If no prior manager exists, disable greetd from a rescue session to return to
-console login on the next boot. Retained SDDM/GTKlock source is inactive recovery
-material, not an installed fallback. Restore saved configuration and prior service
-state as needed; Git history alone does not capture a working machine's state.
+console login on the next boot. Restore externally saved configuration and prior
+service state as needed. Former SDDM/GTKlock sources are available in Git history
+for inspection; they are no longer bundled or an installed fallback. Git history
+alone does not capture a working machine's state.
 
 ## Fingerprints
 

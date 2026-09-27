@@ -84,7 +84,7 @@ return {
     -- disable wezterm's default Alt+Enter fullscreen toggle
     { key = 'Enter', mods = 'ALT', action = act.DisableDefaultAssignment },
 
-    -- disable wezterm's default Super+W close-tab (use Alt+W via sway instead)
+    -- disable wezterm's default Super+W close-tab (use Super+W via sway instead)
     { key = 'w', mods = 'SUPER', action = act.DisableDefaultAssignment },
   },
 }

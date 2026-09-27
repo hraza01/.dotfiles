@@ -24,7 +24,7 @@ PanelWindow {
     exclusionMode: ExclusionMode.Ignore
     focusable: false
 
-    // Centered Wob-style OSD
+    // Centered OSD
     Rectangle {
         id: wobBox
         anchors.centerIn: parent

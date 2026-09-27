@@ -116,7 +116,7 @@ PanelWindow {
         Column {
             id: toastColumn
             width: stack.width
-            spacing: 0 // Dunst's gap_size=0, square 1px frames.
+            spacing: 0 // No gaps between square 1px frames.
             Repeater {
                 model: notifWindow.cards
                 delegate: NotificationCard {

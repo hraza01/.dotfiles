@@ -447,88 +447,45 @@ group_gui() {
   # Shell setup must run first so greetd's login-zsh launcher has .zprofile.
   pkg_group_install stow git
   require_commands stow git
-  case "$DISTRO" in
-    arch)
-      pkg_group_install \
-        sway swayidle swaylock swaybg \
-        quickshell \
-        kanshi nwg-displays \
-        grim swappy \
-        wezterm \
-        dmenu \
-        curl fontconfig ttf-jetbrains-mono ttf-jetbrains-mono-nerd otf-font-awesome \
-        dolphin breeze xdg-utils gnome-calendar \
-        libnotify \
-        plymouth grub \
-        networkmanager network-manager-applet wireless-regdb \
-        bluez bluez-utils blueman \
-        pipewire pipewire-pulse pipewire-alsa wireplumber rtkit \
-        power-profiles-daemon \
-        xdg-desktop-portal xdg-desktop-portal-wlr xdg-desktop-portal-gtk \
-        polkit polkit-gnome \
-        neovim sof-firmware \
-        brightnessctl pciutils \
-        gimp opencode
+  pkg_group_install \
+    sway swayidle swaylock swaybg \
+    quickshell \
+    kanshi nwg-displays \
+    grim swappy \
+    wezterm \
+    dmenu \
+    curl fontconfig ttf-jetbrains-mono ttf-jetbrains-mono-nerd otf-font-awesome \
+    dolphin breeze xdg-utils gnome-calendar \
+    libnotify \
+    plymouth grub \
+    networkmanager network-manager-applet wireless-regdb \
+    bluez bluez-utils blueman \
+    pipewire pipewire-pulse pipewire-alsa wireplumber rtkit \
+    power-profiles-daemon \
+    xdg-desktop-portal xdg-desktop-portal-wlr xdg-desktop-portal-gtk \
+    polkit polkit-gnome \
+    neovim sof-firmware \
+    brightnessctl pciutils \
+    gimp opencode
 
-      install_gpu_drivers
+  install_gpu_drivers
 
-      log "Enabling system services (bluetooth, power-profiles-daemon)"
-      sudo systemctl enable bluetooth.service power-profiles-daemon.service || die "Cannot enable desktop services"
-      ok "Services enabled"
+  log "Enabling system services (bluetooth, power-profiles-daemon)"
+  sudo systemctl enable bluetooth.service power-profiles-daemon.service || die "Cannot enable desktop services"
+  ok "Services enabled"
 
-      # Quickshell provides OSD. Package installation does not change existing
-      # notification/OSD lifecycle state; use the separate ownership handoff.
+  # Quickshell provides OSD. Package installation does not change existing
+  # notification/OSD lifecycle state; use the separate ownership handoff.
 
-      # AUR-only packages (grimshot, adw-gtk3-dark theme,
-      # Brave Origin).
-      aur_group_install sway-contrib-git adw-gtk-theme-git brave-origin-bin pwvucontrol
+  # AUR-only packages (grimshot, adw-gtk3-dark theme,
+  # Brave Origin).
+  aur_group_install sway-contrib-git adw-gtk-theme-git brave-origin-bin pwvucontrol
 
-      python3 -B "$DOTFILES_DIR/setup/default_apps.py" --apply || die "Cannot configure default applications"
+  python3 -B "$DOTFILES_DIR/setup/default_apps.py" --apply || die "Cannot configure default applications"
 
-      install_sway_contrib_links
+  install_sway_contrib_links
 
-      install_nvim_config
-      ;;
-    fedora)
-      pkg_group_install \
-        sway swayidle swaylock swaybg \
-        gtklock gtk-session-lock \
-        waybar dunst \
-        kanshi rofi \
-        grim grimshot \
-        wezterm \
-        dmenu \
-        curl fontconfig jetbrains-mono-fonts \
-        fontawesome-6-free-fonts fontawesome-6-brands-fonts \
-        adw-gtk3-theme \
-        nautilus gnome-calendar \
-        pavucontrol \
-        libnotify \
-        plymouth plymouth-plugin-script grub2-tools \
-        python3-pip
-      ;;
-    debian)
-      pkg_group_install \
-        sway swayidle swaylock swaybg \
-        gtklock \
-        waybar dunst \
-        kanshi rofi \
-        grim grimshot \
-        wezterm \
-        dmenu \
-        curl fontconfig fonts-jetbrains-mono \
-        fonts-font-awesome \
-        gtk3-adwaita-dark \
-        nautilus gnome-calendar \
-        pavucontrol \
-        libnotify-bin \
-        plymouth plymouth-themes grub2-common \
-        python3-pip
-      ;;
-    *)
-      die "Cannot install gui packages on this distro"
-      ;;
-  esac
+  install_nvim_config
 
   require_commands curl gsettings
   install_logind_policy

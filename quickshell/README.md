@@ -170,9 +170,9 @@ rollback without the corresponding ownership/helper rollback is incomplete.
 ## Explicit boundaries
 
 - Hyprlock and Sway's secure session-lock protocol are the security boundary.
-  A supplemental monitor suppresses shell content when Hyprlock, the swaylock
-  safety fallback or retained GTKlock exists, logind marks
-  the owning session locked/inactive, or the check is missing/stale/failing. It
+  A supplemental monitor suppresses shell content when a known locker process
+  (Hyprlock, swaylock or externally installed GTKlock) exists, logind marks the
+  owning session locked/inactive, or the check is missing/stale/failing. It
   starts closed on reload. It never unlocks, replaces the lock command, or changes
   PAM, lid or pre-sleep policy. Process/logind checks are not an atomic lock protocol.
 - Launcher/OSD follow Sway's focused output. Notifications follow the pointer while

@@ -83,7 +83,7 @@ PanelWindow {
         }
     }
 
-    // Waybar-matching translucent bottom border
+    // Translucent bottom border
     Rectangle {
         anchors.bottom: parent.bottom
         anchors.left: parent.left
