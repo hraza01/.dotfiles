@@ -122,7 +122,7 @@ transaction behavior and migration from older applications.
 
 | Package | Destination |
 |---|---|
-| `zsh` | `~/.zshrc`, `~/.zprofile` |
+| [`zsh`](zsh/README.md) | `~/.zshrc`, `~/.zprofile` |
 | `starship` | `~/.config/starship.toml` |
 | `sway` | `~/.config/sway/` |
 | `hyprlock` | `~/.config/hypr/` |
