@@ -17,6 +17,18 @@ commands or replace an existing swayidle process. Use a controlled helper handof
 or a normal new login for startup changes. See [locking](../hyprlock/README.md),
 [Quickshell ownership](../quickshell/README.md) and [display ownership](../setup/displays.md).
 
+## Lid and pre-sleep locking
+
+Lid-close queries and validates outputs before making changes. Docked, it disables
+the internal panel and leaves the desktop awake. Undocked, it runs the Hyprlock
+adapter and read-only readiness check before disabling the panel and requesting
+suspend-then-hibernate. If readiness or the output query fails, it does neither.
+The pre-sleep hook skips swaylock only when `lock.py --check-ready` confirms an
+already acknowledged, live Hyprlock owner; otherwise it runs the existing direct
+`swaylock -f -c 000000`. Manual/idle launch fallback remains unchanged.
+Output topology and native lifetime can change after the readiness snapshot;
+see [the native contract and limits](../hyprlock/README.md).
+
 ## Spiral tiling
 
 New focused tiled windows are inserted Right → Down → Left → Up on every positive

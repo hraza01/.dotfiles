@@ -103,7 +103,12 @@ login, logout to the greeter, environment, unlock, DPMS, suspend/resume and outp
 Retain old packages and recovery material until these checks pass.
 
 Sway starts one `swayidle -w`: lock after 300 seconds, display power-off after
-600 seconds, power-on with activity, and direct `swaylock -f` before sleep.
+600 seconds and power-on with activity. Before sleep, a read-only Hyprlock
+`--check-ready` success skips the locker launch; otherwise direct
+`swaylock -f -c 000000` provides the native readiness handoff. Undocked lid-close
+confirms Hyprlock before disabling the panel/requesting sleep; failure aborts
+both. Docked lid-close only disables the internal panel and keeps running.
+See [lock readiness and lifecycle limits](../hyprlock/README.md).
 Reloading Sway updates bindings but does not replace an existing swayidle process;
 startup-policy changes require a controlled handoff or new login.
 
