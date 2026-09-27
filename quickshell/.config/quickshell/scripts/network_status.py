@@ -38,14 +38,14 @@ def split_escaped(line):
 
 
 def parse_devices(text):
+    """Multiline values are raw; only terse tabular output uses nmcli escaping."""
     devices, current = [], None
     for line in text.splitlines():
         if not line:
             continue
-        fields = split_escaped(line)
-        if len(fields) != 2:
+        key, separator, value = line.partition(":")
+        if not separator:
             raise ValueError("Malformed nmcli device field")
-        key, value = fields
         if key == "GENERAL.DEVICE":
             current = {}
             devices.append(current)
@@ -80,7 +80,7 @@ def get_net():
               "dev_type": "none", "is_wifi": False, "text": "",
               "tooltip": "Disconnected", "addresses": [], "gateways": [], "ssid": None}
     try:
-        devices = parse_devices(nmcli("--fields", FIELDS, "device", "show"))
+        devices = parse_devices(nmcli("--mode", "multiline", "--fields", FIELDS, "device", "show"))
         devices = [d for d in devices if d["GENERAL.TYPE"][0] in ("wifi", "ethernet")]
         active = next((d for d in devices if d["state_code"] == 100), None)
         if active is None:
@@ -104,7 +104,7 @@ def get_net():
             lines.append("Gateway: " + ", ".join(gateways))
         if kind == "wifi":
             try:
-                ssid, strength = parse_wifi(nmcli("--fields", "IN-USE,SSID,SIGNAL", "device", "wifi",
+                ssid, strength = parse_wifi(nmcli("--mode", "tabular", "--fields", "IN-USE,SSID,SIGNAL", "device", "wifi",
                                                   "list", "ifname", name, "--rescan", "no"))
                 result.update(ssid=ssid, signal=strength)
                 lines.insert(0, "SSID: " + (ssid if ssid else "unknown/hidden")
