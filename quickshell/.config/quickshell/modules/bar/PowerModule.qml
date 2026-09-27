@@ -18,7 +18,7 @@ Rectangle {
             width: batteryText.implicitWidth + 12
             height: 16
             radius: 2
-            border.color: PowerService.fgColor
+            border.color: Theme.fg
             border.width: 1.5
             color: "transparent"
 
@@ -29,7 +29,7 @@ Rectangle {
                 font.family: Theme.fontFamilyMono
                 font.pixelSize: 10
                 font.bold: true
-                color: PowerService.fgColor
+                color: Theme.fg
             }
         }
 
@@ -39,7 +39,7 @@ Rectangle {
             height: 7
             anchors.verticalCenter: batteryBody.verticalCenter
             radius: 1
-            color: PowerService.fgColor
+            color: Theme.fg
         }
     }
 

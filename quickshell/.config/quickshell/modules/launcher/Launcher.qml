@@ -97,8 +97,8 @@ PanelWindow {
                 TextInput {
                     id: searchInput
                     anchors.fill: parent
-                    anchors.leftMargin: 4
-                    anchors.rightMargin: 4
+                    anchors.leftMargin: 8
+                    anchors.rightMargin: 8
                     verticalAlignment: TextInput.AlignVCenter
                     font.family: Theme.fontFamily
                     font.pointSize: Theme.launcherFontSizePt

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Outputs JSON for Quickshell's power-profile service.
 #   text    -> icon in the bar (Font Awesome glyph)
-#   tooltip -> power profile + driver + battery percentage + status
+#   tooltip -> remaining time + percentage when discharging; profile/status otherwise
 #
 # Reads the active profile + driver via D-Bus (net.hadess.PowerProfiles)
 # and battery capacity/status from /sys/class/power_supply.
@@ -11,6 +11,7 @@ set -euo pipefail
 exec python3 - <<'PY'
 import html
 import json
+import math
 import os
 from pathlib import Path
 import subprocess
@@ -72,6 +73,34 @@ def read_battery_value(path, fallback):
         return fallback
 
 
+def positive_battery_number(battery, name):
+    try:
+        value = float(read_battery_value(battery / name, ""))
+    except ValueError:
+        return None
+    return value if math.isfinite(value) and value > 0 else None
+
+
+def remaining_minutes(battery):
+    # Direct kernel estimates are seconds; prefer now, then average.
+    for name in ("time_to_empty_now", "time_to_empty_avg"):
+        seconds = positive_battery_number(battery, name)
+        if seconds is not None:
+            return math.floor(seconds / 60)
+    # Matching micro-units cancel to hours. Never mix energy with current
+    # or charge with power. These are instantaneous estimates, not smoothed.
+    for amount_name, rate_name in (("energy_now", "power_now"),
+                                   ("charge_now", "current_now")):
+        amount = positive_battery_number(battery, amount_name)
+        rate = positive_battery_number(battery, rate_name)
+        if amount is not None and rate is not None:
+            minutes = amount / rate * 60
+            if math.isfinite(minutes) and minutes > 0:
+                # Floor to completed minutes, including genuine sub-minute values.
+                return math.floor(minutes)
+    return None
+
+
 try:
     profile, driver = active_profile()
 except (OSError, subprocess.SubprocessError, ValueError):
@@ -88,6 +117,11 @@ capacity = read_battery_value(battery / "capacity", "?") if battery else "?"
 status = read_battery_value(battery / "status", "unknown") if battery else "no battery"
 
 tooltip = f"Power profile: {profile}\nDriver: {driver}\nBattery: {capacity}% ({status})"
+if battery is not None and status == "Discharging":
+    minutes = remaining_minutes(battery)
+    remaining = (f"{minutes // 60}h {minutes % 60}m Remaining" if minutes is not None
+                 else "Remaining time unavailable")
+    tooltip = f"{remaining}\n{capacity}%"
 battery_pct = int(capacity) if capacity.isdigit() else None
 print(json.dumps({
     "text": ICONS.get(profile, "\uf0e7"),

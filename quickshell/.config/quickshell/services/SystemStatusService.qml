@@ -14,7 +14,16 @@ Singleton {
     property real memUsed: 0.0
     property real memTotal: 0.0
     property string memTooltip: "Memory: 0%"
-    readonly property string memIcon: ""
+
+    // Reserve a visible overflow row on small outputs / larger CPU systems.
+    function metricsTooltip(maxLines: int): string {
+        const lines = (memTooltip + "\n────────────────────\n" + cpuTooltip).split("\n");
+        const limit = Math.max(1, maxLines);
+        if (lines.length <= limit) return lines.join("\n");
+        const kept = lines.slice(0, limit - 1);
+        const hidden = lines.slice(limit - 1).filter(line => /^Core [0-9]+:/.test(line)).length;
+        return kept.concat([hidden > 0 ? "… " + hidden + " more cores" : "… more metrics"]).join("\n");
+    }
 
     readonly property Process monitorProc: Process {
         command: ["python3", "-u", Quickshell.shellPath("scripts/system_status.py"), "-c"]
