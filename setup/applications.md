@@ -1,0 +1,55 @@
+# Application defaults on Arch
+
+The GUI group installs AUR `brave-origin-bin` (`brave-origin`,
+`brave-origin.desktop`) and Arch `dolphin` (`dolphin`,
+`org.kde.dolphin.desktop`). It also installs `breeze` for
+`/usr/share/color-schemes/BreezeDark.colors` and `xdg-utils` for default queries.
+
+After package installation and before Stow, `default_apps.py` merges HTTP, HTTPS
+and `text/html` defaults to Brave Origin and `inode/directory` to Dolphin in
+`~/.config/mimeapps.list`. Previous handlers remain as fallbacks; unrelated
+associations, comments and settings are retained. Dolphin's `dolphinrc` receives
+`[UiSettings] ColorScheme=BreezeDark` only when that key is absent. Restart Dolphin
+to load the preference. No global Qt environment is set for Quickshell.
+
+## Checks and publication
+
+Run from the checkout as the desktop user, without sudo:
+
+```sh
+python3 -B setup/default_apps.py --check   # read-only; installed apps not required
+python3 -B setup/default_apps.py --verify  # read-only; installed assets/defaults required
+```
+
+To apply independently of the GUI group, after installing the required packages:
+
+```sh
+python3 -B setup/default_apps.py --apply
+```
+
+The helper honors `XDG_CONFIG_HOME`; setup's Stow groups require the default
+configuration location. Invalid files, symlinks, destination conflicts,
+shadowing desktop entries and conflicting desktop-specific preferences stop
+publication. Changed existing files receive a private `.before-dotfiles-apps`
+baseline copy, retained across reruns.
+
+All changes are staged before per-file atomic replacement. Effective XDG queries
+for Sway and the current desktop are part of the transaction: publication or
+verification failure triggers restoration of this run's originals or prior
+absence. This is not a single atomic multi-file exchange. Concurrent changes are
+preserved; incomplete recovery retains staging and reports it. Inspect retained
+material after a crash or recovery failure before retrying.
+
+## Migration
+
+Setup does not uninstall Chrome/Nautilus or remove profiles, preferences or
+credentials. Verify replacement launches and effective defaults before separately
+reviewing removal of installed old packages and their reverse dependencies.
+Keep pacman's dependency checks; avoid forced or automatic recursive cleanup.
+
+## Upstream references
+
+- [Brave Origin package recipe](https://github.com/archlinux/aur/blob/brave-origin-bin/PKGBUILD)
+- [Brave Origin desktop entry](https://github.com/archlinux/aur/blob/brave-origin-bin/brave-origin.desktop)
+- [Dolphin color-scheme integration](https://github.com/KDE/dolphin/blob/v26.08.1/src/dolphinmainwindow.cpp)
+- [KColorSchemeManager preference reader](https://github.com/KDE/kcolorscheme/blob/master/src/kcolorschememanager.cpp)

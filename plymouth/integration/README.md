@@ -3,17 +3,22 @@
 The original helpers and theme are covered by the
 [MIT License](../themes/ashborn/LICENSE).
 
-`setup.sh boot` installs Ashborn and its bounded root-filesystem helpers on an
-already bootable Arch system. Preflight requires a mount at `/boot`; confirm that
-it is the intended ESP. The installer validates the manually configured boot
-architecture; it does not rewrite hooks or infer encryption identifiers.
+`./setup.sh boot` installs Ashborn and its bounded root-filesystem helpers on an
+already bootable Arch system. Run it as the installing user; setup invokes sudo
+for publication. `all` includes this group.
+
+The supported deployment is manually verified LVM inside LUKS, btrfs root and an
+ESP mounted at `/boot`. Preflight checks configuration structure, required hooks
+and supported kernel/image entries. It does not discover or verify storage
+topology, filesystem type, ESP identity or encryption identifiers. Existing hooks
+and root arguments must already be correct.
 
 ## Prerequisites and supported configuration
 
 Required commands: `sudo`, `/usr/bin/env`, `python3` (3.9+, stdlib only), `bash`,
 `sh`, `mkinitcpio`, `grub-mkconfig`, `grub-script-check`, `plymouth`, `plymouth-set-default-theme`,
 `systemctl`, `systemd-analyze`, and `fc-match`. Install Arch's GRUB, mkinitcpio,
-Plymouth, systemd, fontconfig, SDDM, and JetBrainsMono Nerd Font packages first.
+Plymouth, systemd, fontconfig, a display manager, and JetBrainsMono Nerd Font packages first.
 The Plymouth script plugin and all configured initcpio install hooks must exist.
 
 Stock Arch configuration needs manual preparation before this boot group can run.
@@ -25,9 +30,8 @@ and replace that assignment in `/etc/default/grub` with a literal, for example:
 GRUB_DISTRIBUTOR='Arch Linux'
 ```
 
-This is a manual label replacement, not permission to evaluate the old expression.
-The installed encryption/root arguments and hook ordering also need to be set
-before setup; a first Ashborn installation is not an automatic stock Arch bootstrap.
+Use a literal label without evaluating the old expression. A first Ashborn
+installation is not an automatic stock Arch bootstrap.
 
 - `/etc/default/grub`: one literal assignment per key, with single/double quotes
   or simple unquoted values. `GRUB_CMDLINE_LINUX` must already contain the actual
@@ -46,13 +50,16 @@ before setup; a first Ashborn installation is not an automatic stock Arch bootst
   `ALL_config` must name `/etc/mkinitcpio.conf`; only fallback `-S autodetect`
   options are supported. Alternate configs, outputs, UKIs and other presets are
   rejected before publication. Every configured image must already have a GRUB
-  entry. This conservative gate intentionally requires review of unusual setups.
-  The current upstream [package-hook preset template](https://github.com/archlinux/mkinitcpio/blob/master/mkinitcpio.d/hook.preset)
-  selects `PRESETS=('default')`, with fallback/UKI options commented out; that
-  shape is supported for both kernels. Older default-plus-fallback presets remain
-  supported. Setup neither adds a fallback preset nor enables commented options.
+  entry. Both default-only and default-plus-fallback presets are supported.
+  Setup neither adds a fallback preset nor enables commented options. Compare
+  the [upstream preset template](https://github.com/archlinux/mkinitcpio/blob/master/mkinitcpio.d/hook.preset)
+  with the actual installed configuration before use.
 - Managed files and their parents must not redirect through symlinks. Existing
-  helper enable links may be the normal absolute or `../unit.service` links;
+  `/usr/share/plymouth/themes/default.plymouth` is an explicit exception: the
+  chooser removes that legacy selector only if it is a symlink, so its exact
+  link target (including a dangling target) is snapshotted without following it.
+  The chooser's `/etc/plymouth/plymouthd.confe` backup must be absent or regular.
+  Existing helper enable links may be the normal absolute or `../unit.service` links;
   masks, helper drop-ins, runtime/vendor replacements and other enable links are
   rejected. Do not run package upgrades or other boot configuration tools in
   parallel with this installer.
@@ -60,12 +67,9 @@ before setup; a first Ashborn installation is not an automatic stock Arch bootst
 ## Publication and recovery
 
 Setup stages and validates defaults, theme assets, helper syntax and unit ordering
-before publishing them. For `systemd-analyze verify`, separate unit copies point
-`ExecStart` directly at the executable staged helper, retaining its boot/shutdown
-argument and the original ordering/timeouts. This lets verification check the
-helper before `/usr/local/libexec/ashborn-pre-quit` exists. Verification executes
-no helper or service. The original units, including their clean `/usr/bin/env -i`
-invocation, are installed byte-for-byte; the verification copies are never installed.
+before publication. `systemd-analyze verify` uses temporary unit copies pointing
+at the staged helper; it executes no helper or service. The original units with
+their clean `/usr/bin/env -i` invocation are installed byte-for-byte.
 
 The old theme is renamed aside before the staged tree is
 renamed into place; a failed second rename restores it. This is recoverable but
@@ -78,10 +82,10 @@ the known-good config.
 The four declared `WantedBy` links are published directly, so recovery can restore
 their exact prior presence/targets without a broad `systemctl disable`. Unit
 metadata is reloaded after publication; services are never started by setup.
-The helpers and unit contents retain their approved timing:
+Helper timing:
 
 - Boot: after Plymouth start/user-session readiness, before both quit units and
-  SDDM. Sends `ashborn:reveal` and allows 3s for the 2.3s reveal; unit timeout 4s.
+  `display-manager.service`. Sends `ashborn:reveal` and allows 3s for the 2.3s reveal; unit timeout 4s.
 - Reboot/poweroff/halt: after the vendor splash-start units, before final shutdown
   and initramfs handoff. Allows 1s for the 0.6s Arch-only fade; unit timeout 2s.
 
@@ -97,6 +101,11 @@ prints its path. Before publication, `manifest.json` records each managed path a
 file, directory, symlink or previously absent; `files/` contains the original
 defaults, `grub.cfg`, Plymouth selection, theme, helper/units, enable links, and
 **every supported preset initramfs image**.
+The snapshot also covers the chooser's `plymouthd.confe` backup and legacy
+`default.plymouth` selector, including previous absence. On success, the chooser
+may leave `plymouthd.confe` containing the prior configuration and remove the
+legacy symlink. On failure both side-effect paths are restored with the other
+managed files; the chooser's own backup is not a substitute for `manifest.json`.
 Backups are never automatically pruned. Review root and ESP capacity before use.
 Kernels, unrelated configuration and arbitrary custom-hook side effects are not
 part of this backup; this installer does not change kernel files.
@@ -140,4 +149,4 @@ machine-specific recovery path is assumed.
   font packaging and script-plugin support. Native unit verification checks
   executability/configuration/order, not successful helper execution or visible
   boot timing. Actual initramfs contents and boot/shutdown behavior still require
-  separately approved host validation.
+  target-machine validation.

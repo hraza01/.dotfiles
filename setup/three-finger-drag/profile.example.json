@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "device": "/dev/input/by-path/REPLACE-event-mouse",
+  "expected": {
+    "id_path": "REPLACE",
+    "name": "REPLACE with exact touchpad name",
+    "vendor": "0000",
+    "product": "0000"
+  },
+  "gesture": {
+    "acceleration": 1.0,
+    "dragEndDelay": 0,
+    "entryDebounce": 50,
+    "probeDelay": 15,
+    "pressGrace": 75,
+    "logFile": "stdout",
+    "logLevel": "info"
+  }
+}

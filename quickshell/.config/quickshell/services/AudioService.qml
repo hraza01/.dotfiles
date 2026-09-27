@@ -4,7 +4,7 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Services.Pipewire
 
-QtObject {
+Singleton {
     id: root
 
     readonly property PwObjectTracker tracker: PwObjectTracker {

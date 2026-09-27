@@ -2,16 +2,25 @@
 
 The GUI group installs **nwg-displays** from Arch's official repository alongside
 kanshi; follow the [Quickshell ownership preflight](../quickshell/README.md#installation-and-ownership-handoff)
-before running it. Launch `nwg-displays -n 10` from a terminal inside the Sway
+before running GUI setup. Launch `nwg-displays -n 10` from a terminal inside the Sway
 session (ten workspace slots, matching these dotfiles) or find **Displays
 Settings** in the application launcher. The stock launcher entry defaults to
 eight workspace slots. Do not use sudo to launch the GUI.
 
-## Current ownership: kanshi
+## Optional private profiles and ownership
 
-Kanshi owns automatic layout selection on startup/hotplug. Sway also reloads
-kanshi after its own configuration reload. Profiles live in
-`kanshi/.config/kanshi/config`; Sway holds the separate subpixel/filter settings.
+The public configuration contains no monitor-specific profiles, modes, scaling
+or subpixel choices. Without private profiles, the compositor retains its current
+or default layout. Preserve existing machine settings outside the repository
+before updating; never copy live identifiers or recovery snapshots into Git.
+
+Use the optional external include documented in `kanshi/.config/kanshi/config`
+for private profiles, and Sway's private snippet include for separate
+subpixel/filter settings. Keep those files outside the checkout and Stow. The
+kanshi include is opt-in and must name an existing file; the Sway glob may be absent.
+
+When private profiles are enabled, kanshi owns automatic layout selection on
+startup/hotplug. Sway also reloads kanshi after its own configuration reload.
 
 nwg-displays applies output settings immediately through Sway IPC and writes
 `~/.config/sway/outputs`; workspace assignments are saved separately in
@@ -31,6 +40,8 @@ On new hardware, review connector names, modes, scaling, panel subpixel layout
 and external monitor identities. Test dock/undock and lid-close/open, including
 while locked and in the resize/exit binding modes. Sway's lid handler requires
 `HandleLidSwitch=ignore` in logind: docked lid-close disables the internal panel;
-undocked lid-close also requests suspend-then-hibernate.
+undocked lid-close also requests suspend-then-hibernate. Review the handler's
+internal connector assumption and local hibernation support. GUI setup publishes
+the logind policy without restarting logind; activate it by a deliberate reboot.
 
 Upstream: <https://github.com/nwg-piotr/nwg-displays>

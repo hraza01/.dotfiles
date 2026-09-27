@@ -1,22 +1,26 @@
 # Quickshell on Arch/Sway
 
 Quickshell provides the panel, application/run launcher, notifications and hardware
-OSD, replacing Waybar, Rofi, Dunst and wob. Sway, GTKlock/swayidle, kanshi,
-NetworkManager, BlueZ and their applets remain the
-authorities. The legacy configurations are no longer bundled and the Arch GUI
+OSD, replacing Waybar, Rofi, Dunst and wob. Sway, Hyprlock/swayidle, kanshi,
+NetworkManager, BlueZ and their applets retain their existing roles.
+The legacy configurations are no longer bundled and the Arch GUI
 group no longer installs those four packages. Existing packages and services are
 not removed or stopped by setup; recovery uses saved snapshots or historical source.
 
 ## Runtime and controls
 
-Validated implementation target: Quickshell **0.3.1**, Qt **6.11.2**, Arch.
-Use a coherent Arch upgrade, not a partial Qt upgrade or a `quickshell-git`
-substitution. Runtime helpers use the Python standard library and existing
-`wpctl`, `brightnessctl`, `nmcli`, `busctl`, `loginctl` and WezTerm commands.
-No new Python package, theme manager or background service is required.
+Compatibility target: Quickshell **0.3.1**, Qt **6.11.2**, Arch. Setup installs
+repository packages, not enforced version pins. Keep Qt and Quickshell coherent
+when upgrading; review API compatibility before substituting another release.
+Runtime helpers use the Python standard library and the desktop's command-line
+tools, including `wpctl`, `brightnessctl`, `nmcli`, `busctl`, `loginctl` and `pgrep`.
 
 - Sway starts one `quickshell -n` per display/configuration. Do not additionally
   enable a Quickshell user service.
+- Output-bound windows are destroyed when Sway exposes no real monitor (including
+  VT switches). Re-creation is deferred 100ms and filters Qt's synthetic fallback
+  screen against Sway's monitor model; singleton state retains output names, not
+  disconnected native screen wrappers.
 - **Alt+Space:** empty-first launcher. Type, use arrows/Enter, or Escape to cancel.
   Ctrl+Tab/Ctrl+Shift+Tab cycle applications and deliberate shell-command mode;
   both reset the query. Results scroll beyond twelve matches. The run mode
@@ -43,22 +47,18 @@ Useful IPC (run inside the intended Sway environment):
 ```sh
 qs ipc call shell reload
 qs ipc call launcher toggle
-qs ipc call notifications history
-qs ipc call notifications recall
-qs ipc call notifications hideHistory
-qs ipc call notifications clearHistory
-qs ipc call notifications dismissAll
 ```
+
+Notification IPC and lifecycle behavior are documented in the
+[notification README](.config/quickshell/modules/notifications/README.md#controls-and-ipc).
 
 ## Menu implementation
 
 The dedicated icons resolve registered `SystemTrayItem` identities and consume
 their `.menu` handles with `QsMenuOpener`. Qt Quick Controls supplies real window
-popups, cascading submenus, keyboard navigation, scrolling, and outside dismissal,
-with explicit dark styling. No guessed session-bus addresses, JSON snapshots,
-connection-editor substitution, or binding-breaking visibility assignments remain.
-Only the initiating popup/output owns the active menu. Menu labels are plain text;
-checkbox/radio state comes from the applet, never an optimistic local toggle.
+popups, cascading submenus, keyboard navigation, scrolling and outside dismissal,
+with explicit dark styling. Only the initiating popup/output owns the active menu.
+Menu labels are plain text; checkbox/radio state comes from the applet.
 
 `UseQApplication` and `IconTheme Adwaita` are startup pragmas. Changing them requires
 a process restart, not just a QML reload. Menu transport errors remain in the scoped
@@ -68,15 +68,19 @@ Quickshell 0.3.1 resets omitted fields in partial DBusMenu property updates. Whi
 a menu is open, the configuration coalesces property changes and requests a full
 layout through the toolkit's documented API to restore toggle types and other
 unchanged fields. Menu-local keyboard routing also prevents an idle pointer from
-changing selection as long menus scroll. Native tests cover these compatibility
-paths, missing/reappearing applets, and recursive submenus.
+changing selection as long menus scroll.
 
 ## Installation and ownership handoff
 
-GUI installation on this branch is Arch-only and requires
-`DOTFILES_NOTIFICATION_OWNER=quickshell`. This is consent to publish configuration,
-**not** permission for the installer to stop/mask running services. `gui`, `shell gui`
-and `all` run the ownership/platform preflight before group mutations.
+GUI installation is Arch-only and requires the [setup prerequisites](../README.md#setup)
+and `DOTFILES_NOTIFICATION_OWNER=quickshell`. This selects notification ownership;
+setup does not stop or mask existing owners. Every request containing `gui` or
+`all` runs the ownership/platform preflight before group changes.
+
+Preflight connects explicitly to the installing user's canonical systemd bus.
+Its runtime directory must be private and its bus socket user-owned. Alternate
+`XDG_RUNTIME_DIR` or `DBUS_SESSION_BUS_ADDRESS` values are rejected; a private
+test bus is not an installation environment.
 
 On an existing Quickshell desktop, inspect `qs list` in the intended display
 environment, then provide its actual PID as `DOTFILES_QUICKSHELL_PID` as well. The
@@ -94,19 +98,18 @@ For an initial migration:
    be shared by graphical sessions; identify the notification owner before acting.
    If upgrading a legacy checkout, follow the Stow-link procedure below before
    removing its source directories.
-2. In a separately approved handoff, stop the old lifecycle owners. When Dunst is
+2. In a deliberate handoff, stop the old lifecycle owners. When Dunst is
    systemd/D-Bus activated, mask its user unit to prevent reactivation; disable and
    stop wob's socket/service. Preserve any pre-existing overrides/masks. Do not edit
    vendor activation files or kill a foreign session's owner.
-3. Install/Stow the coherent source, including `sway/scripts/hardware.py`. Start the
-   shell through Sway (or a terminal in that session), so it inherits the session's
-   Wayland, Sway socket, login-session and activation environment.
+3. Install/Stow the coherent Sway and Quickshell source, including hardware helpers.
+   Start the shell through Sway (or a terminal in that session), so it inherits
+   the Wayland, Sway socket, login-session and activation environment.
 4. Verify one panel per output, one intended shell, the actual Notifications bus
    owner, and actual launcher/menu/hardware interactions. The installer deliberately
    does not manage the old services or uninstall already-installed legacy packages.
 
-`setup/packages.sh` contains the bounded preflight and detailed handoff notes.
-Do not run that installer against a private test bus to evade an ownership conflict.
+`setup/packages.sh` implements the bounded preflight.
 
 ## Update and recovery
 
@@ -118,12 +121,12 @@ Load a candidate configuration with
 name. Use a distinct config path and stop that exact candidate afterward. Candidate
 bars are previews, not evidence that all live interactions passed.
 
-For normal edits, sync the complete tree, then use `qs ipc call shell reload`.
+For normal edits, sync the complete tree, then reload the existing shell generation.
 Inspect `qs log --tail 100` and test the real changed interaction. If pragmas changed
 or the shell is hung, identify the exact instance with `qs list`, stop only that
 instance (`qs kill --pid "$verified_pid"`), then use Sway to start `quickshell -n`.
 The bar/launcher/notifications briefly disappear; open client applications survive.
-Do not use a blanket `pkill`, run two lifecycle owners, or restart SDDM to recover UI.
+Do not use a blanket `pkill`, run two lifecycle owners, or restart the display manager to recover UI.
 
 ### Retiring legacy Stow links
 
@@ -132,11 +135,11 @@ installer action. First confirm Quickshell owns the active panel, launcher,
 notifications and OSD; complete the ownership handoff if it does not. Preserve the
 legacy source, custom files, link targets and service state outside the repository.
 
-**Before pulling the cleanup into a checkout that still contains the old packages**,
-preview removal of its managed links:
+While an older checkout still contains the retired packages, preview removal of
+its managed links from that checkout's root:
 
 ```sh
-stow --simulate --delete --dir="$HOME/.dotfiles" --target="$HOME" waybar rofi dunst
+stow --simulate --delete --dir="$PWD" --target="$HOME" waybar rofi dunst
 ```
 
 After reviewing the preview, run the same command without `--simulate` to unstow
@@ -152,11 +155,10 @@ and service changes require a separate review of activation and dependency state
 
 ### Recovery sources and service state
 
-Keep a known-good coherent snapshot outside the repository. The pre-Quickshell
-revision [`a87ce49`](https://github.com/hraza01/.dotfiles/tree/a87ce49a9dc53bc1749e6faa413eaf7d117d4d4f)
-also records the former desktop stack; inspect it in a separate checkout if needed.
-Git history does not preserve installed package versions, untracked overrides or
-the machine's service state, so a historical checkout alone is not a live rollback.
+Keep a known-good coherent snapshot outside the repository. Git history retains
+the former desktop source for inspection in a separate checkout. It does not
+preserve installed package versions, untracked overrides or service state, so a
+historical checkout alone is not a live rollback.
 
 Rollback restores the saved coherent Sway/helpers and the **prior** service state:
 stop the exact replacement shell; restore the old launcher/bar/OSD configuration;
@@ -167,8 +169,9 @@ rollback without the corresponding ownership/helper rollback is incomplete.
 
 ## Explicit boundaries
 
-- GTKlock and Sway's secure session-lock protocol are the security boundary.
-  A supplemental monitor suppresses shell content when GTKlock exists, logind marks
+- Hyprlock and Sway's secure session-lock protocol are the security boundary.
+  A supplemental monitor suppresses shell content when Hyprlock, the swaylock
+  safety fallback or retained GTKlock exists, logind marks
   the owning session locked/inactive, or the check is missing/stale/failing. It
   starts closed on reload. It never unlocks, replaces the lock command, or changes
   PAM, lid or pre-sleep policy. Process/logind checks are not an atomic lock protocol.
@@ -180,9 +183,8 @@ rollback without the corresponding ownership/helper rollback is incomplete.
   are not advertised. App icons and numeric progress hints are supported. See
   [notification lifecycle notes](.config/quickshell/modules/notifications/README.md)
   for timeout units, replacement limitations and the explicit reload policy.
-- D-Bus-activatable desktop entries use their `Exec` fallback. D-Bus-only entries
-  and synthesis of launch activation tokens are not implemented. Window-switcher
-  mode is not added without verifying that baseline workflow.
+- D-Bus-activatable desktop entries use their `Exec` fallback. D-Bus-only entries,
+  launch activation-token synthesis and window-switcher mode are not implemented.
 
 External tests, native interaction fixtures, screenshots and deployment backups live
 outside this repository. A parser/unit-test pass is not a live desktop acceptance pass.

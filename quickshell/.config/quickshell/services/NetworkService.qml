@@ -4,7 +4,7 @@ import Quickshell
 import Quickshell.Io
 import "../theme"
 
-QtObject {
+Singleton {
     id: root
 
     property string state: "unavailable"

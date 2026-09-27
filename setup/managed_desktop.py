@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Preflight and publish only the setup-managed SDDM and logind files."""
+"""Preflight and publish the setup-managed greetd, SDDM, and logind files."""
 
 import hashlib
 import os
@@ -7,6 +7,7 @@ import shutil
 import signal
 import sys
 import tempfile
+import tomllib
 from pathlib import Path
 
 
@@ -40,6 +41,40 @@ def contents(path):
     if not path.is_file():
         raise ValueError(f"Unsupported file type: {path}")
     return path.read_bytes()
+
+
+def secure_system_parents(path, root):
+    """Require stable ancestry traversable by the unprivileged greeter."""
+    for parent in (path.parent, *path.parent.parents):
+        if parent == root and root != Path("/"):
+            break
+        plain_path(parent)
+        if not parent.exists():
+            continue
+        metadata = parent.stat()
+        if (not parent.is_dir() or (root == Path("/") and metadata.st_uid != 0)
+                or metadata.st_mode & 0o022 or not metadata.st_mode & 0o001):
+            raise ValueError(f"Insecure system destination parent preserved for review: {parent}")
+
+
+def check_greeter_file(path, root):
+    if not path.exists():
+        return
+    metadata = path.stat()
+    if (not path.is_file() or (root == Path("/") and metadata.st_uid != 0)
+            or metadata.st_mode & 0o022 or not metadata.st_mode & 0o004):
+        raise ValueError(f"Greeter destination ownership/readability requires review: {path}")
+
+
+def make_greeter_parents(path):
+    missing = []
+    parent = path.parent
+    while not parent.exists():
+        missing.append(parent)
+        parent = parent.parent
+    for parent in reversed(missing):
+        parent.mkdir(mode=0o755)
+        parent.chmod(0o755)  # Only newly created directories; independent of umask.
 
 
 def settings(text, section):
@@ -119,6 +154,22 @@ def preflight(kind, repo, root=Path("/")):
         config = repo / "sddm/sddm.conf.d/minimal.conf"
         target = root / "etc/sddm.conf.d/minimal.conf"
         pairs = [(source, root / "usr/share/sddm/themes" / THEME), (config, target)]
+    elif kind == "greetd":
+        source = repo / "greetd"
+        config = tomllib.loads((source / "config.toml").read_text())
+        session = config.get("default_session", {})
+        if session.get("user") != "greeter" or session.get("command") != "/usr/bin/python3 /etc/greetd/launch.py":
+            raise ValueError("Expected the reviewed unprivileged greeter launcher")
+        if config.get("initial_session"):
+            raise ValueError("Automatic user login is outside this managed configuration")
+        if config.get("terminal", {}).get("vt") != 1:
+            raise ValueError("Review the terminal policy before changing the managed VT")
+        tomllib.loads((source / "tuigreet.toml").read_text())
+        pairs = [
+            (source / name, root / "etc/greetd" / name)
+            for name in ("config.toml", "foot.ini", "launch.py", "sway-session.sh")
+        ]
+        pairs.append((source / "tuigreet.toml", root / "etc/tuigreet/config.toml"))
     elif kind == "logind":
         config = repo / "setup/logind" / LID_POLICY
         target = root / "etc/systemd/logind.conf.d" / LID_POLICY
@@ -127,13 +178,18 @@ def preflight(kind, repo, root=Path("/")):
         raise ValueError(f"Unknown managed desktop component: {kind}")
     snapshots = []
     for source, target in pairs:
+        if kind == "greetd":
+            secure_system_parents(target, root)
+            plain_path(target)
+            check_greeter_file(target, root)
         new, old = contents(source), contents(target)
         if new is None or new == b"":
             raise ValueError(f"Missing source: {source}")
         if old is not None and isinstance(new, dict) != isinstance(old, dict):
             raise ValueError(f"Conflicting destination type preserved: {target}")
         snapshots.append((source, target, new, old))
-    check_effective_policy(kind, root, config, target)
+    if kind != "greetd":
+        check_effective_policy(kind, root, config, target)
     return snapshots
 
 
@@ -144,11 +200,15 @@ def install(kind, repo, root=Path("/")):
     saved = []
     retain_staging = False
     try:
-        # Stage every changed path before replacing either SDDM component.
+        # Stage every changed path before replacing any managed component.
         for source, target, new, old in snapshots:
             if new == old:
                 continue
-            target.parent.mkdir(parents=True, exist_ok=True)
+            if kind == "greetd":
+                make_greeter_parents(target)
+                secure_system_parents(target, root)
+            else:
+                target.parent.mkdir(parents=True, exist_ok=True)
             directory = Path(tempfile.mkdtemp(prefix=f".dotfiles-{kind}-", dir=target.parent))
             staged.append((directory, target, old))
             replacement = directory / "replacement"
@@ -163,6 +223,8 @@ def install(kind, repo, root=Path("/")):
                 raise ValueError(f"Source changed while staging: {source}")
         preflight(kind, repo, root)
         for directory, target, old in staged:
+            if kind == "greetd":
+                secure_system_parents(target, root)
             if contents(target) != old:
                 raise ValueError(f"Destination changed during staging: {target}")
             if old is not None:
@@ -171,6 +233,9 @@ def install(kind, repo, root=Path("/")):
             (directory / "replacement").rename(target)
             published.append(target)
         for _, target, new, _ in snapshots:
+            if kind == "greetd":
+                secure_system_parents(target, root)
+                check_greeter_file(target, root)
             if contents(target) != new:
                 raise ValueError(f"Published content did not verify: {target}")
     except BaseException as original:
@@ -216,6 +281,7 @@ if __name__ == "__main__":
         raise InterruptedError(f"Publication interrupted by signal {signum}")
 
     signal.signal(signal.SIGTERM, interrupted)
+    signal.signal(signal.SIGHUP, interrupted)
     try:
         kind, action, repo = sys.argv[1:]
         if action == "--check":

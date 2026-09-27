@@ -4,7 +4,7 @@ import Quickshell
 import Quickshell.Io
 import "../modules/launcher/LauncherLogic.js" as Logic
 
-QtObject {
+Singleton {
     id: root
 
     property string query: ""
@@ -17,15 +17,26 @@ QtObject {
     property int launchRevision: -1
     property bool refreshQueued: false
     property bool scanPending: false
+    property bool scanTimedOut: false
+    property string scanError: ""
     property bool launching: false
 
     function refreshApps(): void {
-        if (appsProc.running) {
-            refreshQueued = true;
+        if (scanPending || appsProc.running) {
+            if (!scanTimedOut) refreshQueued = true;
             return;
         }
+        refreshQueued = false;
+        scanTimedOut = false;
         scanPending = true;
+        scanDeadline.restart();
         appsProc.running = true;
+    }
+
+    function failScan(message: string): void {
+        replaceApps([]);
+        scanError = message;
+        lastError = message;
     }
 
     function replaceApps(apps: var): void {
@@ -143,15 +154,20 @@ QtObject {
         command: ["python3", "-B", Quickshell.shellPath("scripts/desktop_entries.py"), "list"]
         stdout: StdioCollector { id: appsOutput }
         onExited: (exitCode, exitStatus) => {
+            scanDeadline.stop();
             root.scanPending = false;
+            if (root.scanTimedOut) {
+                root.refreshQueued = false;
+                return;
+            }
             try {
                 let reply = JSON.parse(appsOutput.text);
-                if (exitCode !== 0 || !reply.ok || !Array.isArray(reply.applications)) throw new Error(reply.error || "Application scan failed");
+                if (exitCode !== 0 || exitStatus !== 0 || !reply.ok || !Array.isArray(reply.applications)) throw new Error("Application scan failed");
                 root.replaceApps(reply.applications);
+                if (root.lastError === root.scanError) root.lastError = "";
+                root.scanError = "";
             } catch (error) {
-                root.replaceApps([]);
-                root.lastError = "Application scan failed";
-                console.warn("Launcher:", error);
+                root.failScan("Application scan failed");
             }
             if (root.refreshQueued) {
                 root.refreshQueued = false;
@@ -161,10 +177,24 @@ QtObject {
         // FailedToStart emits runningChanged, but NOT exited, in 0.3.1.
         onRunningChanged: {
             if (!running && root.scanPending) {
+                scanDeadline.stop();
                 root.scanPending = false;
-                root.replaceApps([]);
-                root.lastError = "Application scan helper could not start";
+                root.refreshQueued = false;
+                root.failScan("Application scan helper could not start");
             }
+        }
+    }
+
+    readonly property Timer scanDeadline: Timer {
+        interval: 10000
+        onTriggered: {
+            if (!root.scanPending || !appsProc.running) return;
+            root.scanTimedOut = true;
+            root.refreshQueued = false;
+            root.failScan("Application scan timed out");
+            // Keep Process ownership until exited reaps the helper. Polls must
+            // not start a replacement while termination is still pending.
+            appsProc.signal(9);
         }
     }
 

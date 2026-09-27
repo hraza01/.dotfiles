@@ -15,7 +15,7 @@ PanelWindow {
                                                    Theme.launcherPadding, LauncherService.results.length,
                                                    LauncherService.lastError ? 24 : 0)
 
-    visible: ShellState.contentAllowed && ShellState.launcherVisible
+    visible: !!modelData && ShellState.contentAllowed && ShellState.launcherVisible
     anchors {
         top: true
         bottom: true

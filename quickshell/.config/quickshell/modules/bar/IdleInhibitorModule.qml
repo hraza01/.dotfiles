@@ -1,11 +1,12 @@
 import QtQuick
 import Quickshell.Wayland as Wayland
 import "../../theme"
+import "../../services"
 
 Rectangle {
     id: root
     property var window
-    property bool active: false
+    readonly property bool active: ShellState.idleInhibited
 
     height: Theme.panelHeight - 4
     anchors.verticalCenter: parent.verticalCenter
@@ -33,7 +34,7 @@ Rectangle {
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
         onClicked: {
-            root.active = !root.active;
+            ShellState.idleInhibited = !ShellState.idleInhibited;
         }
     }
 

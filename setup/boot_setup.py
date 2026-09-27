@@ -22,6 +22,7 @@ THEME = "/usr/share/plymouth/themes/ashborn"
 DEFAULTS = "/etc/default/grub"
 CFG = "/boot/grub/grub.cfg"
 CHOOSER = "/etc/plymouth/plymouthd.conf"
+CHOOSER_PATHS = (CHOOSER, CHOOSER + "e", "/usr/share/plymouth/themes/default.plymouth")
 HELPER = "/usr/local/libexec/ashborn-pre-quit"
 UNITS = ("ashborn-pre-quit.service", "ashborn-shutdown.service")
 LINKS = {
@@ -79,7 +80,7 @@ def assignments(text, arrays=()):
             value = shlex.split(body)
         else:
             match = ASSIGN.fullmatch(line)
-            require(match, f"Unsupported assignment at line {start + 1}: {line}")
+            require(match, f"Unsupported assignment at line {start + 1}")
             key, literal = match.groups()
             value = shlex.split(literal)[0] if literal else ""
         require(key not in values, f"Duplicate assignment: {key}")
@@ -181,7 +182,12 @@ class BootSetup:
         require(os.path.ismount(self.path("/boot")), "The ESP must be mounted at /boot before setup")
         for name in (DEFAULTS, CFG, "/etc/mkinitcpio.conf", "/usr/lib/plymouth/script.so"):
             self.regular(name)
-        self.regular(CHOOSER, optional=True)
+        for name in CHOOSER_PATHS[:2]:
+            self.regular(name, optional=True)
+        legacy_theme = self.path(CHOOSER_PATHS[2])
+        self.check_parents(legacy_theme)
+        require(not os.path.lexists(legacy_theme) or legacy_theme.is_symlink() or legacy_theme.is_file(),
+                "Unsupported legacy Plymouth theme selector; review manually")
         self.regular(HELPER, optional=True)
         self.no_dropins("/etc/default/grub.d")
         self.no_dropins("/etc/mkinitcpio.conf.d", "*.conf")
@@ -399,7 +405,7 @@ class BootSetup:
         # Include vendor ordering dependencies before publishing any files/links.
         vendors = ("plymouth-start.service", "plymouth-quit.service", "plymouth-quit-wait.service",
                    "plymouth-reboot.service", "plymouth-poweroff.service", "plymouth-halt.service",
-                   "plymouth-switch-root-initramfs.service", "sddm.service", "graphical.target",
+                   "plymouth-switch-root-initramfs.service", "graphical.target",
                    "reboot.target", "poweroff.target", "halt.target")
         vendor_paths = [self.regular(f"/usr/lib/systemd/system/{name}") for name in vendors]
         self.run(["systemd-analyze", "verify", "--man=no", "--generators=no",
@@ -409,7 +415,7 @@ class BootSetup:
         self.theme_stage = Path(tempfile.mkdtemp(prefix=".ashborn-new-", dir=self.path(THEME).parent))
         shutil.copytree(source, self.theme_stage, dirs_exist_ok=True)
         self.validate_theme(self.theme_stage)
-        targets = [DEFAULTS, CFG, CHOOSER, HELPER, THEME,
+        targets = [DEFAULTS, CFG, *CHOOSER_PATHS, HELPER, THEME,
                    *(f"/etc/systemd/system/{unit}" for unit in UNITS), *LINKS, *self.images]
         for name in targets:
             self.snapshot(name)
@@ -429,12 +435,14 @@ class BootSetup:
             os.replace(theme, self.theme_old)
         os.replace(self.theme_stage, theme)
         self.publish(DEFAULTS, stage / "grub")
-        # The chooser changes only plymouthd.conf without -R. Rebuild all
-        # supported presets exactly once, after the complete theme is installed.
+        # Without -R the chooser still removes a legacy default.plymouth symlink
+        # and may overwrite plymouthd.confe via sed -ie. Track all paths before
+        # invocation, including their prior absence, for partial-failure recovery.
         self.ensure_parent(self.path(CHOOSER))
-        self.changed.append(CHOOSER)
+        self.changed.extend(CHOOSER_PATHS)
         self.run(["plymouth-set-default-theme", "ashborn"])
         require(self.run(["plymouth-set-default-theme"]) == "ashborn", "Theme selection did not persist")
+        # Rebuild all supported presets once, after the complete theme is installed.
         self.changed.extend(self.images)
         self.run(["mkinitcpio", "-P"])
         for name in self.images:

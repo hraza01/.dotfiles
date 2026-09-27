@@ -1,7 +1,8 @@
 pragma Singleton
 import QtQuick
+import Quickshell
 
-QtObject {
+Singleton {
     // Surface & background colors
     readonly property color bg: "#000000"
     readonly property color launcherBg: "#0d0d0d"
@@ -33,7 +34,7 @@ QtObject {
     readonly property color criticalBorder: "#ff0000"
 
     // Fonts
-    readonly property string fontFamily: "Titillium Web"
+    readonly property string fontFamily: "Barlow"
     readonly property string fontFamilyIconFree: "Font Awesome 7 Free"
     readonly property string fontFamilyIconBrands: "Font Awesome 7 Brands"
     readonly property string fontFamilyMono: "JetBrains Mono"
@@ -42,7 +43,7 @@ QtObject {
     readonly property int panelFontWeight: Font.DemiBold
     readonly property int panelIconSizePx: 15
 
-    readonly property int launcherFontSizePt: 10
+    readonly property int launcherFontSizePt: 12
     readonly property int launcherFontWeight: Font.Normal
     readonly property int launcherIconSizePx: 15
 

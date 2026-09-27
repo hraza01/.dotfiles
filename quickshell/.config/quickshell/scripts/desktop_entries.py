@@ -17,6 +17,7 @@ import json
 import os
 from pathlib import Path
 import shutil
+import stat
 import subprocess
 import sys
 
@@ -49,10 +50,22 @@ def decode_value(value, *, multiple=False):
 
 
 def read_keys(path):
+    if not stat.S_ISREG(path.stat().st_mode):
+        raise DesktopError("Desktop entry is not a regular file")
+    # Preserve regular-file symlinks, but a FIFO swapped in after stat must not
+    # block open. Validate the opened descriptor before reading any content.
+    fd = os.open(path, os.O_RDONLY | os.O_NONBLOCK | os.O_CLOEXEC)
+    try:
+        if not stat.S_ISREG(os.fstat(fd).st_mode):
+            raise DesktopError("Desktop entry is not a regular file")
+        with os.fdopen(fd, "r", encoding="utf-8", closefd=False) as stream:
+            text = stream.read()
+    finally:
+        os.close(fd)
     # ConfigParser adds interpolation, DEFAULT inheritance and continuation
     # syntax absent from desktop files. Read only the Desktop Entry group.
     keys, active = {}, False
-    for line in path.read_text(encoding="utf-8").splitlines():
+    for line in text.splitlines():
         line = line.strip()
         if not line or line.startswith("#"):
             continue
@@ -304,7 +317,8 @@ def main():
         else:
             raise DesktopError("Missing desktop identity")
     except (OSError, UnicodeError, DesktopError) as error:
-        print(json.dumps({"ok": False, "error": str(error)}), flush=True)
+        message = str(error) if isinstance(error, DesktopError) else "Application metadata or executable is unavailable"
+        print(json.dumps({"ok": False, "error": message}), flush=True)
         return 1
     print(json.dumps(response, ensure_ascii=True), flush=True)
     return 0

@@ -4,7 +4,7 @@ import Quickshell
 import Quickshell.Services.Notifications
 import "../modules/notifications/NotificationLogic.js" as Logic
 
-QtObject {
+Singleton {
     id: root
 
     property bool enabled: Quickshell.env("QS_REPAIR_CANDIDATE") !== "1"

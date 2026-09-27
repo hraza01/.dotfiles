@@ -4,7 +4,7 @@ import Quickshell
 import Quickshell.Io
 import "../theme"
 
-QtObject {
+Singleton {
     id: root
 
     property string profile: "unknown"
@@ -64,6 +64,7 @@ QtObject {
             } catch (e) {
                 root.available = false;
                 root.profile = "unknown";
+                root.batteryPercent = -1;
                 root.statusTooltip = "Power status response invalid";
             }
         }

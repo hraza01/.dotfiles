@@ -1,7 +1,7 @@
 # Read `man 5 sway` for a complete reference.
 
 ### General
-font pango:Titillium Web SemiBold 12
+font pango:Barlow SemiBold 12
 default_border pixel 2
 default_floating_border pixel 2
 gaps inner 1
@@ -25,11 +25,11 @@ set $right l
 set $term wezterm
 
 ### Output configuration
-# Display mode/position/scale are managed by kanshi (see ~/.config/kanshi/config).
-# These lines only set properties kanshi does not manage (subpixel, scale_filter).
-output "Dell Inc. DELL U3223QE J4MZ4P3" scale_filter smart subpixel rgb
-output "Dell Inc. DELL U3223QE 44MZ4P3" scale_filter smart subpixel rgb
-output eDP-1 scale_filter smart subpixel bgr
+# Optional private kanshi profiles manage mode/position/scale (see its config).
+# Keep serials and panel-specific subpixel/filter choices outside this checkout.
+# Optional private snippets; an absent glob leaves compositor defaults intact.
+# This directory must be a real private directory, not a Stow link into Git.
+include ~/.config/dotfiles-private/sway/*.conf
 
 # Solid background (swaybg).
 output * bg #000000 solid_color
@@ -46,15 +46,16 @@ exec /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1
 exec nm-applet
 exec blueman-applet
 # Start once per session: reloads must not add another IPC listener.
-# Supply pipx's bin directory to this child, including at a fresh SDDM login.
-exec env PATH="${PIPX_BIN_DIR:-$HOME/.local/bin}:$PATH" autotiling -w 1 3 5 7 9
+# Repository-owned spiral tiling for all positive odd-numbered workspaces.
+exec python3 "$HOME/.config/sway/scripts/spiral.py"
 
 ### Idle configuration
-# Lock after 5 min idle, display off after 10 min, lock before sleep.
+# Lock after 5 min idle, display off after 10 min, use swaylock's native
+# readiness handoff for the finite pre-sleep inhibitor window.
 exec swayidle -w \
-         timeout 300 'gtklock -d -s "$HOME/.config/gtklock/style.css" -x "$HOME/.config/gtklock/layout.xml"' \
+         timeout 300 'python3 "$HOME/.config/hypr/lock.py" || /usr/bin/swaylock -f -c 000000' \
          timeout 600 'swaymsg "output * power off"' resume 'swaymsg "output * power on"' \
-         before-sleep 'gtklock -d -s "$HOME/.config/gtklock/style.css" -x "$HOME/.config/gtklock/layout.xml"'
+         before-sleep '/usr/bin/swaylock -f -c 000000'
 
 ### Input configuration
 # Caps Lock -> Escape (real Escape key still works). Applies to all keyboards.
@@ -78,7 +79,7 @@ exec swayidle -w \
 # Basics:
 #
     # Start a terminal
-    bindsym Ctrl+Return exec $term
+    bindsym $mod+Return exec $term
 
     # Kill focused window
     bindsym $mod+w kill
@@ -86,8 +87,8 @@ exec swayidle -w \
     # Launcher (quickshell)
     bindsym Mod1+space exec qs ipc call launcher toggle
 
-    # File manager (Nautilus)
-    bindsym $mod+Shift+f exec nautilus
+    # File manager (Dolphin)
+    bindsym $mod+Shift+f exec dolphin
 
     # Drag floating windows by holding $mod and left mouse button.
     # Resize with right mouse button + $mod.
@@ -99,7 +100,7 @@ exec swayidle -w \
     bindsym $mod+Shift+c reload, exec qs ipc call shell reload
 
     # Lock screen
-    bindsym $mod+Shift+q exec 'gtklock -d -s "$HOME/.config/gtklock/style.css" -x "$HOME/.config/gtklock/layout.xml"'
+    bindsym $mod+Shift+q exec 'python3 "$HOME/.config/hypr/lock.py" || /usr/bin/swaylock -f -c 000000'
 
     # Exit sway: enter confirm mode, then press e to exit or Esc to cancel
     bindsym $mod+Shift+e mode "exit"
@@ -255,7 +256,7 @@ exec_always {
     gsettings set $gnome-schema icon-theme 'Adwaita'
     gsettings set $gnome-schema color-scheme 'prefer-dark'
     # GTK4/libadwaita use this preference rather than GTK3's settings.ini.
-    gsettings set $gnome-schema font-name 'Titillium Web SemiBold 12'
+    gsettings set $gnome-schema font-name 'Barlow SemiBold 12'
     # Reapply kanshi's mode/scale/position policy after a Sway reload.
     pkill -SIGHUP kanshi
 }

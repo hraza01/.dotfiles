@@ -117,6 +117,6 @@ if [ -f "$GCLOUD_DIR/google-cloud-sdk/path.zsh.inc" ]; then . "$GCLOUD_DIR/googl
 if [ -f "$GCLOUD_DIR/google-cloud-sdk/completion.zsh.inc" ]; then . "$GCLOUD_DIR/google-cloud-sdk/completion.zsh.inc"; fi
 
 # Theme
-if command -v oh-my-posh &>/dev/null; then
-  eval "$(oh-my-posh init zsh --config "$HOME/.config/oh-my-posh/oh-my-posh.toml")"
+if command -v starship &>/dev/null; then
+  eval "$(starship init zsh)"
 fi

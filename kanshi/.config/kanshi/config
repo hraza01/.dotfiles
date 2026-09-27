@@ -1,22 +1,15 @@
-# kanshi - dynamic display configuration
-# man 5 kanshi
+# kanshi - optional private display profiles (man 5 kanshi)
+# No public profile forces connector names, modes, scale, or output enablement.
+# With no profiles, the compositor retains its current/default layout.
 #
-# Profiles are applied automatically on startup and on hotplug.
-# Kanshi manages mode, position, and scale. Subpixel and scale_filter
-# are set in the sway config (kanshi does not support those directives).
-
-# Center Dell + laptop
-profile center-dell {
-    output "Dell Inc. DELL U3223QE 44MZ4P3" mode 3840x2160 position 0,0 scale 1.15
-    output eDP-1 mode 1920x1080 position 3339,0 scale 1.00
-}
-
-# Center Dell only (lid closed)
-profile center-dell-only {
-    output "Dell Inc. DELL U3223QE 44MZ4P3" mode 3840x2160 position 0,0 scale 1.15
-}
-
-# Laptop only (undocked)
-profile laptop {
-    output eDP-1 mode 1920x1080 position 0,0 scale 1.00
-}
+# Create ~/.config/dotfiles-private/kanshi.conf outside the checkout, then
+# uncomment the include below. Keep that directory private and outside Stow.
+# An explicit opt-in avoids an include error when the private file is absent.
+# include ~/.config/dotfiles-private/kanshi.conf
+#
+# Private profile template (replace placeholders only in the private file):
+# profile docked {
+#     output "<manufacturer model serial>" mode preferred scale 1
+# }
+# Kanshi owns mode/position/scale; panel-specific subpixel/filter settings belong
+# in ~/.config/dotfiles-private/sway/*.conf. Review before any live reload.

@@ -1,0 +1,415 @@
+diff --git a/crates/tuigreet/src/keyboard.rs b/crates/tuigreet/src/keyboard.rs
+--- a/crates/tuigreet/src/keyboard.rs
++++ b/crates/tuigreet/src/keyboard.rs
+@@ -47,6 +47,38 @@ pub async fn handle(
+     return Ok(());
+   }
+ 
++  // Console login shortcuts only; menus and the stock UI retain upstream keys.
++  if crate::ui::console::enabled(&greeter)
++    && matches!(greeter.mode, Mode::Username | Mode::Password)
++  {
++    use zeroize::Zeroize;
++    match input {
++      KeyEvent { code: KeyCode::Esc, .. } => {
++        greeter.buffer.zeroize();
++        if greeter.mode == Mode::Password {
++          greeter.cursor_offset = 0;
++        }
++        return Ok(());
++      },
++      KeyEvent {
++        code: KeyCode::Char('u'), modifiers: KeyModifiers::CONTROL, ..
++      } => {
++        Ipc::cancel(&mut greeter).await;
++        greeter.reset(false).await;
++        greeter.username = MaskedString::default();
++        greeter.message.zeroize();
++        greeter.message = None;
++        greeter.previous_buffer.zeroize();
++        greeter.previous_buffer = None;
++        greeter.cursor_offset = 0;
++        greeter.prompt = None;
++        greeter.asking_for_secret = false;
++        return Ok(());
++      },
++      _ => {},
++    }
++  }
++
+   match input {
+     // ^U should erase the current buffer.
+     KeyEvent {
+@@ -537,6 +569,118 @@ mod test {
+     },
+   };
+ 
++  fn console_state(mode: Mode) -> Greeter {
++    let mut g = Greeter::default();
++    let mut config = tuigreet_config::Config::default();
++    config.layout.console = true;
++    g.loaded_config = Some(config);
++    g.mode = mode;
++    g.previous_mode = Mode::Password;
++    g.username = MaskedString::from("alice".into(), Some("Alice".into()));
++    g.buffer = "response".into();
++    g.previous_buffer = Some("saved response".into());
++    g.prompt = Some("Verification code:".into());
++    g.message = Some("failed".into());
++    g.cursor_offset = -2;
++    g.asking_for_secret = true;
++    g
++  }
++
++  #[tokio::test]
++  async fn console_escape_preserves_conversation() {
++    use greetd_ipc::{Request, codec::TokioCodec};
++    use tokio::{net::UnixStream, time::{timeout, Duration}};
++    for mode in [Mode::Username, Mode::Password] {
++      for secret in [false, true] {
++        let (client, mut server) = UnixStream::pair().unwrap();
++        let stream = Arc::new(RwLock::new(client));
++        let mut g = console_state(mode);
++        g.asking_for_secret = secret;
++        g.stream = Some(stream.clone());
++        let g = Arc::new(RwLock::new(g));
++        handle(g.clone(), KeyEvent::new(KeyCode::Esc, KeyModifiers::NONE), Ipc::new()).await.unwrap();
++        let state = g.read().await;
++        assert_eq!(state.mode, mode);
++        assert_eq!(state.username.value, "alice");
++        assert!(state.buffer.is_empty());
++        assert_eq!(state.prompt.as_deref(), Some("Verification code:"));
++        assert_eq!(state.message.as_deref(), Some("failed"));
++        assert_eq!(state.asking_for_secret, secret);
++        assert_eq!(state.cursor_offset, if mode == Mode::Password { 0 } else { -2 });
++        assert!(Arc::ptr_eq(state.stream.as_ref().unwrap(), &stream));
++        assert!(timeout(Duration::from_millis(20), Request::read_from(&mut server)).await.is_err());
++      }
++    }
++  }
++
++  #[tokio::test]
++  async fn console_reset_cancels_and_reconnects() {
++    use greetd_ipc::{Request, codec::TokioCodec};
++    use tokio::{net::{UnixListener, UnixStream}, time::{timeout, Duration}};
++    for mode in [Mode::Username, Mode::Password] {
++      let dir = tempfile::tempdir().unwrap();
++      let path = dir.path().join("greetd.sock");
++      let listener = UnixListener::bind(&path).unwrap();
++      let (client, mut server) = UnixStream::pair().unwrap();
++      let mut g = console_state(mode);
++      g.socket = path.to_str().unwrap().into();
++      g.stream = Some(Arc::new(RwLock::new(client)));
++      let g = Arc::new(RwLock::new(g));
++      timeout(Duration::from_secs(1), handle(g.clone(),
++        KeyEvent::new(KeyCode::Char('u'), KeyModifiers::CONTROL), Ipc::new())).await.unwrap().unwrap();
++      let request = timeout(Duration::from_secs(1), Request::read_from(&mut server)).await.unwrap().unwrap();
++      assert!(matches!(request, Request::CancelSession));
++      let (mut fresh, _) = timeout(Duration::from_secs(1), listener.accept()).await.unwrap().unwrap();
++      let state = g.read().await;
++      assert_eq!(state.mode, Mode::Username);
++      assert_eq!(state.previous_mode, Mode::Username);
++      assert!(state.username.value.is_empty());
++      assert!(state.buffer.is_empty());
++      assert!(state.previous_buffer.is_none());
++      assert!(state.message.is_none());
++      assert!(state.prompt.is_none());
++      assert_eq!(state.cursor_offset, 0);
++      assert!(!state.working && !state.done && !state.asking_for_secret);
++      assert!(timeout(Duration::from_millis(20), Request::read_from(&mut fresh)).await.is_err());
++    }
++  }
++
++  #[tokio::test]
++  async fn console_busy_shortcuts_are_ignored() {
++    for key in [KeyEvent::new(KeyCode::Esc, KeyModifiers::NONE),
++      KeyEvent::new(KeyCode::Char('u'), KeyModifiers::CONTROL)] {
++      let mut g = console_state(Mode::Password);
++      g.working = true;
++      let g = Arc::new(RwLock::new(g));
++      handle(g.clone(), key, Ipc::new()).await.unwrap();
++      let state = g.read().await;
++      assert_eq!(state.mode, Mode::Password);
++      assert_eq!(state.username.value, "alice");
++      assert_eq!(state.buffer, "response");
++      assert_eq!(state.previous_buffer.as_deref(), Some("saved response"));
++      assert_eq!(state.message.as_deref(), Some("failed"));
++      assert_eq!(state.cursor_offset, -2);
++    }
++  }
++
++  #[tokio::test]
++  async fn console_menus_keep_upstream_back_and_clear() {
++    for mode in [Mode::Command, Mode::Users, Mode::Sessions, Mode::Power, Mode::Background] {
++      let g = Arc::new(RwLock::new(console_state(mode)));
++      handle(g.clone(), KeyEvent::new(KeyCode::Char('u'), KeyModifiers::CONTROL), Ipc::new()).await.unwrap();
++      {
++        let state = g.read().await;
++        assert_eq!(state.mode, mode);
++        assert_eq!(state.buffer, if mode == Mode::Command { "" } else { "response" });
++        assert_eq!(state.username.value, "alice");
++      }
++      handle(g.clone(), KeyEvent::new(KeyCode::Esc, KeyModifiers::NONE), Ipc::new()).await.unwrap();
++      let state = g.read().await;
++      assert_eq!(state.mode, Mode::Password);
++      assert_eq!(state.buffer, if mode == Mode::Command { "saved response" } else { "response" });
++    }
++  }
++
+   #[tokio::test]
+   async fn ctrl_u() {
+     let greeter = Arc::new(RwLock::new(Greeter::default()));
+diff --git a/crates/tuigreet-config/src/schema.rs b/crates/tuigreet-config/src/schema.rs
+index b796a32..0a3f561 100644
+--- a/crates/tuigreet-config/src/schema.rs
++++ b/crates/tuigreet-config/src/schema.rs
+@@ -295,6 +295,10 @@ impl Default for SecretConfig {
+ /// Layout and sizing configuration
+ #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
+ pub struct LayoutConfig {
++  /// Opt-in terminal-style presentation and console login shortcuts.
++  #[serde(default)]
++  pub console: bool,
++
+   /// Width of the main prompt container
+   #[serde(default = "default_width")]
+   pub width: u16,
+@@ -319,6 +323,7 @@ pub struct LayoutConfig {
+ impl Default for LayoutConfig {
+   fn default() -> Self {
+     Self {
++      console:           false,
+       width:             default_width(),
+       window_padding:    None,
+       container_padding: None,
+diff --git a/crates/tuigreet/build.rs b/crates/tuigreet/build.rs
+index 56f0fb5..f0bfcde 100644
+--- a/crates/tuigreet/build.rs
++++ b/crates/tuigreet/build.rs
+@@ -1,20 +1,7 @@
+-use std::{env, process::Command};
++use std::env;
+ 
+ fn main() {
+-  let version =
+-    git_version().unwrap_or_else(|| env!("CARGO_PKG_VERSION").to_string());
++  let version = "0.11.1-console.2";
+   println!("cargo:rustc-env=VERSION={version}");
+   println!("cargo:rustc-env=TARGET={}", env::var("TARGET").unwrap());
+ }
+-
+-fn git_version() -> Option<String> {
+-  let out = Command::new("git")
+-    .args(["describe", "--long"])
+-    .output()
+-    .ok()?;
+-  if !out.status.success() {
+-    return None;
+-  }
+-  let s = String::from_utf8(out.stdout).ok()?;
+-  Some(s.trim().replacen('-', ".r", 1).replacen('-', ".", 1))
+-}
+diff --git a/crates/tuigreet/src/ui/mod.rs b/crates/tuigreet/src/ui/mod.rs
+index 998b475..4049cda 100644
+--- a/crates/tuigreet/src/ui/mod.rs
++++ b/crates/tuigreet/src/ui/mod.rs
+@@ -3,6 +3,7 @@
+ pub mod background;
+ pub mod bg_animation;
+ mod command;
++pub(crate) mod console;
+ pub mod common;
+ mod i18n;
+ pub mod power;
+@@ -81,6 +82,10 @@ where
+ 
+   terminal.draw(|f| {
+     let area = f.area();
++    if console::enabled(&greeter) {
++      console::draw(&mut greeter, f);
++      return;
++    }
+     if let Some(anim) = greeter.animation.as_mut() {
+       anim.resize(area);
+       anim.step();
+diff --git a/crates/tuigreet/src/ui/prompt.rs b/crates/tuigreet/src/ui/prompt.rs
+index a70762f..8b7363d 100644
+--- a/crates/tuigreet/src/ui/prompt.rs
++++ b/crates/tuigreet/src/ui/prompt.rs
+@@ -40,7 +40,8 @@ pub fn draw_with_area(
+   let size = area;
+   let (x, y, width, height) = get_rect_bounds(greeter, size, 0);
+ 
+-  let container_padding = greeter.container_padding();
++  let console = super::console::enabled(greeter);
++  let container_padding = greeter.container_padding().saturating_sub(u16::from(console));
+   let prompt_padding = greeter.prompt_padding();
+   let greeting_alignment = match greeter.greet_align() {
+     GreetAlign::Center => Alignment::Center,
+@@ -66,7 +67,7 @@ pub fn draw_with_area(
+   let mut block = Block::default()
+     .title_style(theme.of(&[Themed::Title]))
+     .style(theme.of(&[Themed::Container]))
+-    .borders(Borders::ALL)
++    .borders(if console { Borders::NONE } else { Borders::ALL })
+     .border_type(BorderType::Plain)
+     .border_style(theme.of(&[Themed::Border]));
+ 
+@@ -82,10 +83,17 @@ pub fn draw_with_area(
+ 
+   f.render_widget(block, container);
+ 
+-  let (message, message_height) =
+-    get_message_height(greeter, container_padding, 1);
+-  let (greeting, greeting_height) =
+-    get_greeting_height(greeter, container_padding, 0);
++  let (message, message_height) = if console {
++    super::util::message_for_width(greeter, container_padding, 1, width)
++  } else {
++    get_message_height(greeter, container_padding, 1)
++  };
++  let (greeting, greeting_height) = if console {
++    super::util::greeting_for_width(greeter, container_padding, 0, width)
++  } else {
++    get_greeting_height(greeter, container_padding, 0)
++  };
++  let username_prompt = if console { "host login:".to_owned() } else { fl!("username") };
+ 
+   let should_display_answer = greeter.mode == Mode::Password;
+ 
+@@ -120,7 +128,7 @@ pub fn draw_with_area(
+ 
+     Paragraph::new(prompt_text).alignment(Alignment::Center)
+   } else {
+-    let username_text = prompt_value(theme, Some(fl!("username")));
++    let username_text = prompt_value(theme, Some(username_prompt.clone()));
+ 
+     Paragraph::new(username_text)
+   };
+@@ -139,9 +147,9 @@ pub fn draw_with_area(
+           username_value,
+           Rect::new(
+             1 + chunks[USERNAME_INDEX].x
+-              + fl!("username").chars().count() as u16,
++              + username_prompt.chars().count() as u16,
+             chunks[USERNAME_INDEX].y,
+-            get_input_width(greeter, width, &Some(fl!("username"))),
++            get_input_width(greeter, width, &Some(username_prompt.clone())),
+             1,
+           ),
+         );
+@@ -150,7 +158,16 @@ pub fn draw_with_area(
+       let answer_text = if greeter.working {
+         Span::from(fl!("wait"))
+       } else {
+-        prompt_value(theme, greeter.prompt.as_ref())
++        // Only restyle the ordinary English password label. Preserve every
++        // other PAM conversation prompt, including PINs and extra factors.
++        let label = greeter.prompt.as_deref().map(|text| {
++          if console && text.trim() == "Password:" {
++            text.replacen("Password:", "password:", 1)
++          } else {
++            text.to_owned()
++          }
++        });
++        prompt_value(theme, label)
+       };
+ 
+       let answer_label =
+@@ -203,7 +220,7 @@ pub fn draw_with_area(
+       }
+ 
+       if let Some(message) = message {
+-        let message = message.alignment(Alignment::Center);
++        let message = message.alignment(if console { Alignment::Left } else { Alignment::Center });
+ 
+         f.render_widget(
+           message,
+@@ -221,7 +238,7 @@ pub fn draw_with_area(
+       let offset = get_cursor_offset(greeter, username_length);
+ 
+       Ok((
+-        2 + cursor.x + fl!("username").chars().count() as u16 + offset as u16,
++        2 + cursor.x + username_prompt.chars().count() as u16 + offset as u16,
+         USERNAME_INDEX as u16 + cursor.y,
+       ))
+     },
+diff --git a/crates/tuigreet/src/ui/util.rs b/crates/tuigreet/src/ui/util.rs
+index 5b5aa01..cec50e1 100644
+--- a/crates/tuigreet/src/ui/util.rs
++++ b/crates/tuigreet/src/ui/util.rs
+@@ -83,6 +83,23 @@ pub fn get_rect_bounds(
+   area: Rect,
+   items: usize,
+ ) -> (u16, u16, u16, u16) {
++  if super::console::enabled(greeter)
++    && matches!(greeter.mode, Mode::Username | Mode::Password | Mode::Action)
++  {
++    let left = ((u32::from(area.width) * 6 + 50) / 100) as u16;
++    let left = left.clamp(3, 12).min(area.width.saturating_sub(24));
++    let width = greeter.width().min(area.width.saturating_sub(left + 2));
++    let padding = greeter.container_padding().saturating_sub(1);
++    let (_, greeting_height) = greeting_for_width(greeter, padding, 0, width);
++    let (_, message_height) = message_for_width(greeter, padding, 0, width);
++    let height = greeting_height + 2 * padding + 1
++      + if greeter.mode == Mode::Password && greeter.prompt.is_some() {
++        1 + greeter.prompt_padding()
++      } else { 0 };
++    let top = ((area.height + 5) / 10).clamp(2, 5)
++      .min(area.height.saturating_sub(height.saturating_add(message_height)));
++    return (area.x + left, area.y + top, width, height);
++  }
+   let width = greeter.width();
+   let box_height: u16 = get_height(greeter) + items as u16;
+ 
+@@ -154,9 +171,17 @@ pub fn get_greeting_height(
+   greeter: &Greeter,
+   padding: u16,
+   fallback: u16,
++) -> (Option<Paragraph<'_>>, u16) {
++  greeting_for_width(greeter, padding, fallback, greeter.width())
++}
++
++pub fn greeting_for_width(
++  greeter: &Greeter,
++  padding: u16,
++  fallback: u16,
++  width: u16,
+ ) -> (Option<Paragraph<'_>>, u16) {
+   if let Some(greeting) = &greeter.greeting {
+-    let width = greeter.width();
+ 
+     let text = match greeting.clone().into_text() {
+       Ok(text) => text,
+@@ -164,7 +189,7 @@ pub fn get_greeting_height(
+     };
+ 
+     let paragraph = Paragraph::new(text.clone()).wrap(Wrap { trim: false });
+-    let height = paragraph.line_count(width - (2 * padding)) + 1;
++    let height = paragraph.line_count(width.saturating_sub(2 * padding).max(1)) + 1;
+ 
+     (Some(paragraph), height as u16)
+   } else {
+@@ -176,12 +201,20 @@ pub fn get_message_height(
+   greeter: &Greeter,
+   padding: u16,
+   fallback: u16,
++) -> (Option<Paragraph<'_>>, u16) {
++  message_for_width(greeter, padding, fallback, greeter.width())
++}
++
++pub fn message_for_width(
++  greeter: &Greeter,
++  padding: u16,
++  fallback: u16,
++  width: u16,
+ ) -> (Option<Paragraph<'_>>, u16) {
+   if let Some(message) = &greeter.message {
+-    let width = greeter.width();
+     let paragraph =
+       Paragraph::new(message.trim_end()).wrap(Wrap { trim: true });
+-    let height = paragraph.line_count(width - 4);
++    let height = paragraph.line_count(width.saturating_sub(4).max(1));
+ 
+     (Some(paragraph), height as u16 + padding)
+   } else {

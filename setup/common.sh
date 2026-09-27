@@ -1,5 +1,5 @@
 # Shared helpers for setup scripts.
-# Sourced by setup.sh and all setup/*.sh modules.
+# Source before the setup modules; setup.sh loads this first.
 
 # --- Dotfiles directory ------------------------------------------
 DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -65,6 +65,7 @@ require_regular_user() {
   case "${HOME:-}" in /*) ;; *) die "HOME must be an absolute directory" ;; esac
   [ -d "$HOME" ] && [ -O "$HOME" ] && [ "$HOME" -ef "$account_home" ] ||
     die "HOME must be the installing user's owned passwd home"
+  SETUP_LOGIN_SHELL="$shell"
 }
 
 add_user_bin_paths() {
@@ -150,7 +151,16 @@ aur_group_install() {
 }
 
 # --- Stow helper -------------------------------------------------
+preflight_stow_config() {
+  local config="${XDG_CONFIG_HOME:-$HOME/.config}"
+  case "$config" in /*) ;; *) die "XDG_CONFIG_HOME must be absolute" ;; esac
+  if [ "$config" != "$HOME/.config" ] && ! [ "$config" -ef "$HOME/.config" ]; then
+    die "Stow configuration groups require XDG_CONFIG_HOME to resolve to HOME/.config"
+  fi
+}
+
 check_stow_packages() {
+  preflight_stow_config
   local pkg
   [ "$#" -gt 0 ] || die "No Stow packages requested"
   for pkg in "$@"; do
@@ -164,8 +174,9 @@ stow_packages() {
   require_commands stow
   check_stow_packages "$@"
   log "Stowing: $*"
-  stow --dir="$DOTFILES_DIR" --target="$HOME" --simulate -- "$@" || die "Stow preflight failed"
-  stow --dir="$DOTFILES_DIR" --target="$HOME" -- "$@" || die "Stow failed"
+  # Package names are validated above; GNU Stow 2.4.1 mishandles a bare -- here.
+  stow --dir="$DOTFILES_DIR" --target="$HOME" --simulate "$@" || die "Stow preflight failed"
+  stow --dir="$DOTFILES_DIR" --target="$HOME" "$@" || die "Stow failed"
   ok "Symlinks created"
 }
 
@@ -191,6 +202,7 @@ download_file() {
 run_downloaded_installer() (
   local url="$1" checksum="$2" interpreter="$3" stage
   shift 3
+  [[ "$checksum" =~ ^[[:xdigit:]]{64}$ ]] || die "Executable downloads require a pinned SHA-256 checksum"
   require_commands "$interpreter" mktemp
   stage="$(mktemp -d "${TMPDIR:-/tmp}/dotfiles-download.XXXXXX")" || die "Cannot create private download directory"
   trap "rm -rf -- $(printf '%q' "$stage")" EXIT

@@ -3,25 +3,6 @@
 
 # --- User-level tool installers ----------------------------------
 
-install_oh_my_posh() {
-  require_regular_user
-  add_user_bin_paths
-  if cmd_is_installed oh-my-posh; then
-    oh-my-posh version >/dev/null || die "Existing oh-my-posh is incomplete"
-    ok "oh-my-posh already installed"
-  else
-    require_plain_path "$HOME/.local/bin/oh-my-posh"
-    [ ! -e "$HOME/.local/bin/oh-my-posh" ] || die "Incomplete oh-my-posh executable preserved"
-    if ! cmd_is_installed unzip; then
-      pkg_install unzip
-    fi
-    log "Installing oh-my-posh"
-    run_downloaded_installer https://ohmyposh.dev/install.sh "${OH_MY_POSH_INSTALL_SHA256:-}" bash -d "$HOME/.local/bin" ||
-      die "oh-my-posh installation failed"
-    "$HOME/.local/bin/oh-my-posh" version >/dev/null || die "oh-my-posh installation is incomplete"
-  fi
-}
-
 install_uv() {
   require_regular_user
   add_user_bin_paths
@@ -33,11 +14,42 @@ install_uv() {
     require_plain_path "$HOME/.local/bin/uv"
     require_plain_path "$HOME/.local/bin/uvx"
     [ ! -e "$HOME/.local/bin/uv" ] && [ ! -e "$HOME/.local/bin/uvx" ] || die "Conflicting uv/uvx executable preserved"
+    # This release installer embeds SHA-256 checks for every platform payload.
     UV_INSTALL_DIR="$HOME/.local/bin" UV_NO_MODIFY_PATH=1 \
-      run_downloaded_installer https://astral.sh/uv/install.sh "${UV_INSTALL_SHA256:-}" sh || die "uv installation failed"
+      run_downloaded_installer https://github.com/astral-sh/uv/releases/download/0.12.19/uv-installer.sh \
+      "${UV_INSTALL_SHA256:-61b349611f1b6e1ba33645f30c36da5287df2609dd7af8605d96a031435eb35b}" sh || die "uv installation failed"
     "$HOME/.local/bin/uv" --version >/dev/null || die "uv installation is incomplete"
   fi
 }
+
+install_nvm_sources() (
+  # v0.40.1 peeled commit. Verify every sourced/executable file, not a bootstrap
+  # script that would subsequently fetch unverified code from a moving ref.
+  local base=https://raw.githubusercontent.com/nvm-sh/nvm/179d45050be0a71fd57591b0ed8aedf9b177ba10
+  local stage file digest
+  require_commands curl sha256sum bash mktemp rmdir
+  mkdir -p -- "$(dirname "$NVM_DIR")" || die "Cannot create nvm parent"
+  stage="$(mktemp -d "$(dirname "$NVM_DIR")/.nvm.XXXXXX")" || die "Cannot stage nvm"
+  trap "rm -rf -- $(printf '%q' "$stage")" EXIT
+  trap 'exit 130' INT
+  trap 'exit 143' TERM
+  for file in nvm.sh nvm-exec bash_completion; do
+    case "$file" in
+      nvm.sh) digest=dc84afb1ded75cccdb1a62b35d99ecbbc0c8653eb70224cd3c1c01c171340ddf ;;
+      nvm-exec) digest=e6b7a2bafac6994e1ba14282cff82c75476fba0788f68a9ecf558dfdf3331621 ;;
+      bash_completion) digest=b7eb3bf03d59b61e451957b020640aa55fe8bf47fb39d85d244e259f445d2fbe ;;
+    esac
+    download_file "$base/$file" "$stage/$file" "$digest"
+    bash -n "$stage/$file" || die "Invalid pinned nvm source"
+  done
+  chmod 755 "$stage" "$stage/nvm-exec" && chmod 644 "$stage/nvm.sh" "$stage/bash_completion" || die "Cannot set nvm modes"
+  require_plain_path "$NVM_DIR"
+  if [ -d "$NVM_DIR" ]; then
+    rmdir -- "$NVM_DIR" || die "nvm destination is no longer empty; preserved"
+  fi
+  mv --no-clobber --no-target-directory -- "$stage" "$NVM_DIR" || die "Cannot publish nvm"
+  [ ! -e "$stage" ] || die "nvm destination appeared; preserved"
+)
 
 install_nvm() {
   require_regular_user
@@ -62,11 +74,8 @@ install_nvm() {
       contents="$(ls -A -- "$NVM_DIR")" || die "Cannot inspect $NVM_DIR"
       [ -z "$contents" ] || die "Incomplete nvm at $NVM_DIR; preserve/repair it before rerunning"
     fi
-    mkdir -p -- "$NVM_DIR" || die "Cannot create $NVM_DIR"
     log "Installing nvm at $NVM_DIR"
-    PROFILE=/dev/null run_downloaded_installer \
-      https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh "${NVM_INSTALL_SHA256:-}" bash ||
-      die "nvm installation failed"
+    install_nvm_sources || die "nvm installation failed"
   fi
   [ -r "$NVM_DIR/nvm.sh" ] && [ -s "$NVM_DIR/nvm.sh" ] || die "nvm.sh is missing after installation"
   unset -f nvm
@@ -163,7 +172,7 @@ install_golang() (
 
 install_gcloud() (
   require_regular_user
-  local parent="$HOME/.gcloud" target="$HOME/.gcloud/google-cloud-sdk" stage arch
+  local parent="$HOME/.gcloud" target="$HOME/.gcloud/google-cloud-sdk" stage arch digest
   require_plain_path "$target"
   if [ -x "$target/bin/gcloud" ] && "$target/bin/gcloud" --version >/dev/null 2>&1; then
     ok "google cloud sdk already installed"
@@ -173,8 +182,8 @@ install_gcloud() (
   require_commands python3
   arch="$(uname -m)"
   case "$arch" in
-    x86_64) arch=x86_64 ;;
-    aarch64) arch=arm64 ;;
+    x86_64) arch=x86_64; digest=6c774c76793eedd501150b59da653610fbe3eaac169e822965b722de75a2f001 ;;
+    aarch64) arch=arm; digest=e50ea0141a027d5118d7dd011d2870e706466dc0fc437d95cae86a14e0d871bc ;;
     *) die "Unsupported arch for gcloud: $arch" ;;
   esac
   mkdir -p -- "$parent" || die "Cannot create $parent"
@@ -182,10 +191,13 @@ install_gcloud() (
   trap "rm -rf -- $(printf '%q' "$stage")" EXIT
   trap 'exit 130' INT
   trap 'exit 143' TERM
-  download_file "https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-linux-${arch}.tar.gz" \
-    "$stage/sdk.tar.gz" "${GCLOUD_SHA256:-}"
+  # Hashes are for the versioned archives, not the separately generated rapid aliases.
+  download_file "https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-586.0.0-linux-${arch}.tar.gz" \
+    "$stage/sdk.tar.gz" "${GCLOUD_SHA256:-$digest}"
   python3 "$DOTFILES_DIR/setup/extract_archive.py" "$stage/sdk.tar.gz" "$stage/unpacked" google-cloud-sdk || die "Invalid SDK archive"
-  "$stage/unpacked/google-cloud-sdk/install.sh" --quiet --path-update=false --command-completion=false || die "SDK installer failed"
+  CLOUDSDK_REINSTALL_COMPONENTS= "$stage/unpacked/google-cloud-sdk/install.sh" \
+    --quiet --path-update=false --command-completion=false --usage-reporting=false \
+    --install-python=false --override-components || die "SDK installer failed"
   "$stage/unpacked/google-cloud-sdk/bin/gcloud" --version >/dev/null || die "SDK installation is incomplete"
   mv --no-clobber --no-target-directory -- "$stage/unpacked/google-cloud-sdk" "$target" || die "Cannot publish SDK"
   [ ! -e "$stage/unpacked/google-cloud-sdk" ] || die "SDK destination appeared; preserved"
@@ -193,35 +205,14 @@ install_gcloud() (
   ok "Google Cloud SDK installed"
 )
 
-install_autotiling() {
+prepare_spiral_tiling() {
   require_regular_user
-  add_user_bin_paths
-  if cmd_is_installed autotiling; then
-    [ -x "$(command -v autotiling)" ] || die "Existing autotiling is not an executable"
-    ok "autotiling already installed"
-    return
-  fi
-
-  case "$DISTRO" in
-    arch)
-      # pipx respects Arch's externally managed system Python.
-      if ! cmd_is_installed pipx; then
-        pkg_install python-pipx
-      fi
-      log "Installing autotiling via pipx"
-      pipx install autotiling || die "pipx could not install autotiling"
-      ;;
-    *)
-      if ! command -v pip3 &>/dev/null; then
-        pkg_install python3-pip
-      fi
-      log "Installing autotiling via pip"
-      pip3 install --user autotiling || die "pip could not install autotiling"
-      ;;
-  esac
-  hash -r
-  cmd_is_installed autotiling || die "autotiling is missing from PATH; check pipx/pip's executable directory"
-  [ -x "$(command -v autotiling)" ] || die "autotiling is not executable"
+  require_commands python3
+  local source="$DOTFILES_DIR/sway/.config/sway/scripts/spiral.py"
+  [ -f "$source" ] && [ -r "$source" ] && [ -s "$source" ] ||
+    die "Required spiral tiling source is missing or unreadable: $source"
+  python3 -B "$source" --help >/dev/null || die "Spiral tiling source validation failed: $source"
+  ok "Spiral tiling verified; Stow publishes the script"
 }
 
 install_nvim_config() (
@@ -313,22 +304,29 @@ install_cursor_theme() (
 # --- Group: shell ------------------------------------------------
 group_shell() {
   require_regular_user
+  preflight_stow_config
   log "Installing shell group"
 
   case "$DISTRO" in
-    arch)   pkg_group_install stow git zsh fzf fd ;;
-    fedora) pkg_group_install stow git zsh fzf fd-find ;;
-    debian) pkg_group_install stow git zsh fzf fd-find ;;
+    arch)   pkg_group_install stow git zsh fzf fd starship ;;
+    fedora) pkg_group_install stow git zsh fzf fd-find starship ;;
+    debian) pkg_group_install stow git zsh fzf fd-find starship ;;
     *)      die "Cannot install shell packages on this distro" ;;
   esac
 
-  install_oh_my_posh
-  stow_packages zsh oh-my-posh
+  stow_packages zsh starship
 
-  if [ "$(basename "${SHELL:-}")" != "zsh" ]; then
+  local desired_shell
+  case "$DISTRO" in
+    arch) desired_shell=/usr/bin/zsh ;;
+    *) desired_shell="$(command -v zsh)" || die "Installed zsh executable is missing" ;;
+  esac
+  if [ "$SETUP_LOGIN_SHELL" != "$desired_shell" ]; then
     log "Changing default shell to zsh"
     # usermod avoids chsh's interactive PAM prompt.
-    sudo usermod -s "$(command -v zsh)" "$SETUP_USER" || die "Cannot change default shell"
+    sudo usermod -s "$desired_shell" "$SETUP_USER" || die "Cannot change default shell"
+    require_regular_user
+    [ "$SETUP_LOGIN_SHELL" = "$desired_shell" ] || die "Login shell change did not persist"
   fi
 
   ok "Shell group complete"
@@ -344,21 +342,9 @@ group_shell() {
 # If Quickshell already owns the name, also supply DOTFILES_QUICKSHELL_PID from
 # the scoped shell lifecycle owner; the bus PID and executable are checked.
 #
-# Operator handoff (separate from package installation):
-# 1. Record `systemctl --user show dunst.service wob.socket wob.service` and
-#    `systemctl --user is-enabled ...`, plus the old Sway config and shell
-#    lifecycle command. Preserve pre-existing masks/overrides verbatim.
-# 2. Explicitly stop/disable the old notification/OSD lifecycle owner. For a
-#    systemd-owned Dunst: `systemctl --user mask --now dunst.service`; for wob:
-#    `systemctl --user disable --now wob.socket wob.service`. Do not kill a
-#    foreign bus owner or remove unrelated autostarts. Rerun preflight.
-# 3. Start exactly one scoped Quickshell instance using the reviewed lifecycle
-#    command; rerun preflight with its PID to verify actual bus ownership.
-# 4. Rollback: stop that exact shell instance, restore the saved config and
-#    prior enablement/mask/active states (unmask only masks created in step 2),
-#    then verify the restored notification owner's bus PID. Never use blanket
-#    pkill, unconditional unmask/enable, or logout as an ownership operation.
-# This installer deliberately performs none of those live handoff commands.
+# Manual handoff and rollback: quickshell/README.md, Installation and ownership
+# handoff. Preserve prior service state and use the installing user's canonical
+# systemd bus. This installer performs no live ownership handoff.
 preflight_quickshell_gui() {
   [ "$DISTRO" = arch ] || die "Quickshell GUI installation is supported only on Arch; no GUI changes made"
   [ "${DOTFILES_NOTIFICATION_OWNER:-}" = quickshell ] ||
@@ -368,12 +354,13 @@ preflight_quickshell_gui() {
 import json
 import os
 from pathlib import Path
+import stat
 import subprocess
 import sys
 
 def call(method, signature, argument, expected_type):
     result = subprocess.run(
-        ['busctl', '--user', '--timeout=2s', '--json=short', 'call',
+        ['busctl', '--address=' + address, '--timeout=2s', '--json=short', 'call',
          'org.freedesktop.DBus', '/org/freedesktop/DBus', 'org.freedesktop.DBus',
          method, signature, argument], capture_output=True, text=True, check=True, timeout=3)
     value = json.loads(result.stdout)
@@ -382,6 +369,19 @@ def call(method, signature, argument, expected_type):
     return value['data'][0]
 
 try:
+    runtime = Path('/run/user') / str(os.getuid())
+    info = runtime.lstat()
+    if not stat.S_ISDIR(info.st_mode) or info.st_uid != os.getuid() or info.st_mode & 0o077:
+        raise ValueError('Expected the installing user\'s private systemd runtime directory')
+    bus = runtime / 'bus'
+    info = bus.lstat()
+    if not stat.S_ISSOCK(info.st_mode) or info.st_uid != os.getuid():
+        raise ValueError('Expected the installing user\'s systemd bus socket')
+    address = 'unix:path=' + str(bus)
+    if os.environ.get('XDG_RUNTIME_DIR', str(runtime)) != str(runtime):
+        raise ValueError('XDG_RUNTIME_DIR disagrees with the canonical user bus')
+    if os.environ.get('DBUS_SESSION_BUS_ADDRESS', address) != address:
+        raise ValueError('Alternate session bus refused; run from the canonical user session')
     present = call('NameHasOwner', 's', 'org.freedesktop.Notifications', 'b')
     if type(present) is not bool:
         raise ValueError('Invalid ownership boolean')
@@ -411,9 +411,7 @@ PY
   [ "$?" = 0 ] || die "Resolve notification ownership before GUI installation"
 }
 
-# setup.sh sources this module before executing ANY group. Checking the full
-# request here also prevents `shell gui` and `all` from partially mutating an
-# unsupported machine before group_gui is reached.
+# Called explicitly by setup.sh before any requested group changes the system.
 preflight_quickshell_request() {
   local requested
   case "${1:-}" in --help|-h) return ;; esac
@@ -425,41 +423,46 @@ preflight_quickshell_request() {
 group_gui() {
   preflight_quickshell_gui
   require_regular_user
+  [ "$DISTRO" = arch ] || die "The arch branch GUI stack is maintained for Arch Linux only"
+  declare -F preflight_auth_user >/dev/null || die "Source setup/auth.sh before installing the GUI group"
+  preflight_auth_user
+  preflight_auth_packages
   require_commands python3 sha256sum sudo systemctl
   python3 -c 'import hashlib, lzma, tarfile' || die "GUI setup requires Python's hashing and tar/xz standard-library modules"
+  prepare_spiral_tiling
   local source
-  local stow_groups=(sway gtklock quickshell wezterm kanshi fontconfig gtk opencode)
+  local stow_groups=(sway hyprlock quickshell wezterm kanshi fontconfig gtk opencode)
   check_stow_packages "${stow_groups[@]}"
   declare -F install_ui_font >/dev/null || die "Source setup/fonts.sh before installing the GUI group"
-  declare -F install_sddm_theme >/dev/null || die "Source setup/sddm.sh before installing the GUI group"
-  for source in managed_desktop.py extract_archive.py fonts/titillium-web.sha256; do
+  declare -F group_auth >/dev/null || die "Source setup/auth.sh before installing the GUI group"
+  for source in managed_desktop.py extract_archive.py default_apps.py fonts/barlow.sha256; do
     [ -f "$DOTFILES_DIR/setup/$source" ] && [ -r "$DOTFILES_DIR/setup/$source" ] && [ -s "$DOTFILES_DIR/setup/$source" ] ||
       die "Required GUI setup source is missing or unreadable: setup/$source"
   done
-  python3 "$DOTFILES_DIR/setup/managed_desktop.py" sddm --check "$DOTFILES_DIR" || die "SDDM preflight failed"
+  python3 "$DOTFILES_DIR/setup/managed_desktop.py" greetd --check "$DOTFILES_DIR" || die "greetd preflight failed"
   python3 "$DOTFILES_DIR/setup/managed_desktop.py" logind --check "$DOTFILES_DIR" || die "logind policy preflight failed"
   log "Installing gui group"
+  python3 -B "$DOTFILES_DIR/setup/default_apps.py" --check || die "Default applications preflight failed"
 
-  # GUI setup can run without the shell group.
+  # Shell setup must run first so greetd's login-zsh launcher has .zprofile.
   pkg_group_install stow git
   require_commands stow git
   case "$DISTRO" in
     arch)
       pkg_group_install \
         sway swayidle swaylock swaybg \
-        gtklock gtk-session-lock \
         quickshell \
         kanshi nwg-displays \
         grim swappy \
         wezterm \
         dmenu \
         curl fontconfig ttf-jetbrains-mono ttf-jetbrains-mono-nerd otf-font-awesome \
-        nautilus gnome-calendar \
+        dolphin breeze xdg-utils gnome-calendar \
         libnotify \
         plymouth grub \
-        networkmanager network-manager-applet \
+        networkmanager network-manager-applet wireless-regdb \
         bluez bluez-utils blueman \
-        pipewire pipewire-pulse pipewire-alsa wireplumber \
+        pipewire pipewire-pulse pipewire-alsa wireplumber rtkit \
         power-profiles-daemon \
         xdg-desktop-portal xdg-desktop-portal-wlr xdg-desktop-portal-gtk \
         polkit polkit-gnome \
@@ -477,8 +480,10 @@ group_gui() {
       # notification/OSD lifecycle state; use the separate ownership handoff.
 
       # AUR-only packages (grimshot, adw-gtk3-dark theme,
-      # google-chrome).
-      aur_group_install sway-contrib-git adw-gtk-theme-git google-chrome pwvucontrol
+      # Brave Origin).
+      aur_group_install sway-contrib-git adw-gtk-theme-git brave-origin-bin pwvucontrol
+
+      python3 -B "$DOTFILES_DIR/setup/default_apps.py" --apply || die "Cannot configure default applications"
 
       install_sway_contrib_links
 
@@ -527,11 +532,10 @@ group_gui() {
 
   require_commands curl gsettings
   install_logind_policy
-  # Pinned, checksum-verified Google Fonts download; shared UI family on all distros.
+  # Install the pinned, checksum-verified Barlow UI family.
   install_ui_font
-  install_autotiling
   install_cursor_theme
-  install_sddm_theme
+  group_auth
 
   preflight_quickshell_gui
   stow_packages "${stow_groups[@]}"
@@ -543,7 +547,7 @@ group_gui() {
 preflight_docker_rootless() {
   require_regular_user
   require_commands python3 systemctl
-  # Ranges are prepared manually per the installation spec; never renumber storage.
+  # Subordinate-ID allocations are prepared manually; never renumber storage.
   python3 "$DOTFILES_DIR/setup/check_subids.py" "$SETUP_USER" "$SETUP_UID" "$SETUP_GID" /etc/subuid /etc/subgid ||
     die "Prepare valid nonoverlapping subordinate IDs before installing rootless Docker"
   local runtime="/run/user/$SETUP_UID" endpoint
@@ -585,7 +589,7 @@ check_rootless_context() {
   contexts="$(docker context ls --format '{{.Name}}')" || die "Cannot list Docker contexts"
   if grep -Fxq rootless <<< "$contexts"; then
     actual="$(docker context inspect rootless --format '{{.Endpoints.docker.Host}}')" || die "Cannot inspect rootless context"
-    [ "$actual" = "$endpoint" ] || die "Conflicting rootless context preserved ($actual); reconcile it explicitly to $endpoint"
+    [ "$actual" = "$endpoint" ] || die "Conflicting rootless context endpoint preserved; reconcile the rootless Docker context explicitly"
   fi
 }
 
@@ -619,6 +623,20 @@ install_logind_policy() {
 }
 
 # --- Group: dev --------------------------------------------------
+configure_tailscale() {
+  require_regular_user
+  require_commands systemctl sudo
+  local state
+  state="$(systemctl is-enabled tailscaled.service)" || :
+  case "$state" in
+    enabled|enabled-runtime|disabled) ;;
+    *) die "Conflicting tailscaled.service state preserved: $state" ;;
+  esac
+  sudo systemctl enable --now tailscaled.service || die "Cannot enable/start tailscaled.service"
+  systemctl is-enabled --quiet tailscaled.service || die "tailscaled.service is not enabled"
+  systemctl is-active --quiet tailscaled.service || die "tailscaled.service is not active"
+}
+
 group_dev() {
   require_regular_user
   if [ "$DISTRO" = arch ]; then
@@ -634,13 +652,11 @@ group_dev() {
   case "$DISTRO" in
     arch)
       pkg_install yazi
+      pkg_group_install github-cli bitwarden-cli tailscale
+      configure_tailscale
       configure_docker_rootless
       ;;
   esac
 
   ok "Dev group complete"
 }
-
-case "${BASH_SOURCE[1]:-}" in
-  setup.sh|*/setup.sh) preflight_quickshell_request "$@" ;;
-esac

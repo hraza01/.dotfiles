@@ -38,7 +38,8 @@ def read_cpu_times():
                     name = parts[0]
                     vals = [int(x) for x in parts[1:]]
                     idle = vals[3] + (vals[4] if len(vals) > 4 else 0)
-                    total = sum(vals)
+                    # guest/guest_nice are already included in user/nice.
+                    total = sum(vals[:8])
                     times[name] = (idle, total)
     except Exception:
         pass

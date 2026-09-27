@@ -26,3 +26,57 @@ sway/.config/sway/workspaces
 
 # Application-generated state
 **/.config/dconf/
+
+# Private inputs are kept outside the checkout; these are accidental-copy guards.
+/private/
+/.private/
+**/.config/dotfiles-private/
+.env
+.env.*
+!.env.example
+!.env.sample
+**/.ssh/
+**/.aws/credentials
+**/.kube/config
+**/.netrc
+**/.npmrc
+**/.pypirc
+**/id_rsa
+**/id_ed25519
+*.key
+*.pem
+!*.example.pem
+*.p12
+*.pfx
+*.kdbx
+**/credentials.json
+**/auth.json
+**/.zsh_history
+**/.bash_history
+/.pi/agent/sessions/
+/.pi/agent/trust.json
+/.pi/agent/models-store.json
+/pi/agent/sessions/
+/pi/agent/trust.json
+/pi/agent/models-store.json
+
+# Local display profiles and recovery copies (not public templates/assets).
+sway/.config/sway/profiles/
+kanshi/.config/kanshi/*.local
+*.before-dotfiles-*
+*.orig
+*.rej
+/deployment-logs/
+/deployment.log
+/screenshots-private/
+/runtime/
+**/.config/opencode/bun.lockb
+**/.config/opencode/*.log
+
+# Gesture build/deployment material must never be a source-tree input.
+/setup/three-finger-drag/target/
+/setup/three-finger-drag/build/
+/setup/three-finger-drag/artifacts/
+/setup/three-finger-drag/input-profile.json
+/setup/three-finger-drag/receipt.json
+/setup/three-finger-drag/local.json

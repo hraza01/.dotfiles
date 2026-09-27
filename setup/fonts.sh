@@ -3,10 +3,10 @@
 
 install_ui_font() (
   # Keep traps, shell options and working-directory changes local to this call.
-  local manifest="$DOTFILES_DIR/setup/fonts/titillium-web.sha256"
-  local source_url="https://raw.githubusercontent.com/google/fonts/8e44913e4ff26fc997e6856c1ec40ff4791c98c5/ofl/titilliumweb"
+  local manifest="$DOTFILES_DIR/setup/fonts/barlow.sha256"
+  local source_url="https://raw.githubusercontent.com/google/fonts/8e44913e4ff26fc997e6856c1ec40ff4791c98c5/ofl/barlow"
   local font_root="${XDG_DATA_HOME:-$HOME/.local/share}/fonts"
-  local target="$font_root/titillium-web"
+  local target="$font_root/barlow"
   local stage="" verified_dir digest file family
   local files=() installed_files=()
 
@@ -48,13 +48,13 @@ install_ui_font() (
       return 1
     fi
     verified_dir="$target"
-    ok "Titillium Web already matches the pinned manifest; skipping downloads"
+    ok "Barlow already matches the pinned manifest; skipping downloads"
   else
     command -v curl >/dev/null 2>&1 || { err "curl is required"; return 1; }
     mkdir -p -- "$font_root" || return 1
     # Stage on the same filesystem for an atomic directory rename.
-    stage="$(mktemp -d "$font_root/.titillium-web.XXXXXX")" || return 1
-    log "Downloading Titillium Web from the pinned Google Fonts commit"
+    stage="$(mktemp -d "$font_root/.barlow.XXXXXX")" || return 1
+    log "Downloading Barlow from the pinned Google Fonts commit"
     for file in "${files[@]}"; do
       if ! curl --fail --show-error --silent --location \
         --proto '=https' --proto-redir '=https' \
@@ -79,7 +79,7 @@ install_ui_font() (
           family="$(fc-scan --format '%{family[0]}' "$verified_dir/$file")" || {
             err "Cannot scan font: $file"; return 1;
           }
-          if [ "$family" != "Titillium Web" ]; then
+          if [ "$family" != "Barlow" ]; then
             err "Unexpected font family in $file: $family"
             return 1
           fi
@@ -109,17 +109,17 @@ install_ui_font() (
     warn "fc-cache unavailable; refresh the font cache when fontconfig is installed"
   fi
   if command -v fc-match >/dev/null 2>&1; then
-    family="$(fc-match --format '%{family[0]}' 'Titillium Web')" || {
+    family="$(fc-match --format '%{family[0]}' 'Barlow')" || {
       err "Fonts are installed, but fc-match failed"; return 1;
     }
-    if [ "$family" != "Titillium Web" ]; then
-      err "Fonts are installed, but fontconfig resolves Titillium Web to: $family"
+    if [ "$family" != "Barlow" ]; then
+      err "Fonts are installed, but fontconfig resolves Barlow to: $family"
       return 1
     fi
   else
     warn "fc-match unavailable; fontconfig family lookup skipped"
   fi
-  ok "Titillium Web verified at $target"
+  ok "Barlow verified at $target"
 )
 
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
