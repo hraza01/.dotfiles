@@ -1,0 +1,12 @@
+[Icon Theme]
+Name=Graphite
+Comment=Monochrome folders with Breeze Dark fallback
+Inherits=breeze-dark,breeze,hicolor
+Directories=scalable/places
+
+[scalable/places]
+Size=128
+MinSize=16
+MaxSize=512
+Type=Scalable
+Context=Places

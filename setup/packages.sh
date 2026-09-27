@@ -455,7 +455,7 @@ group_gui() {
     wezterm \
     dmenu \
     curl fontconfig ttf-jetbrains-mono ttf-jetbrains-mono-nerd otf-font-awesome \
-    dolphin breeze xdg-utils gnome-calendar \
+    dolphin breeze qt6ct xdg-utils gnome-calendar \
     libnotify \
     plymouth grub \
     networkmanager network-manager-applet wireless-regdb \
