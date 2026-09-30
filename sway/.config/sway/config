@@ -86,6 +86,8 @@ exec swayidle -w \
 
     # Launcher (quickshell)
     bindsym Mod1+space exec qs ipc call launcher toggle
+    bindsym Mod1+period exec qs ipc call scratchpad toggle
+    for_window [app_id="org.dotfiles.Preview"] floating enable, border pixel 1, move position center
 
     # File manager (Dolphin)
     bindsym $mod+Shift+f exec env QT_QPA_PLATFORMTHEME=qt6ct QT_STYLE_OVERRIDE=Breeze dolphin

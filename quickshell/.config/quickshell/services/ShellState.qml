@@ -7,6 +7,14 @@ Singleton {
     id: root
 
     property bool launcherVisible: false
+    property bool notesVisible: false
+    function closeNotes(): void { notesVisible = false; ScratchpadService.save(); }
+    function toggleNotes(): void {
+        if (!contentAllowed) return;
+        if (notesVisible) { closeNotes(); return; }
+        closeMenu(); closeLauncher(); NotificationService.hideHistory();
+        notesVisible = true;
+    }
     // Keep stable output identity here, never native screen wrappers that become
     // dangling after a Wayland output disconnects.
     property string pointerScreenName: ""
@@ -27,6 +35,7 @@ Singleton {
     property var activeMenu: null
 
     function claimMenu(owner): void {
+        closeNotes();
         if (activeMenu && activeMenu !== owner) activeMenu.close();
         closeLauncher();
         NotificationService.hideHistory();
@@ -43,6 +52,7 @@ Singleton {
     }
 
     function resetOutputState(): void {
+        closeNotes();
         pointerScreenName = "";
         closeMenu();
         closeLauncher();
@@ -53,6 +63,7 @@ Singleton {
 
     function toggleLauncher(): void {
         if (!contentAllowed) return;
+        closeNotes();
         if (!launcherVisible) {
             closeMenu();
             NotificationService.hideHistory();
@@ -93,6 +104,7 @@ Singleton {
     // Supplemental content suppression, NOT a replacement for Sway's secure
     // session-lock enforcement. Unknown/stale state is deliberately closed.
     onContentAllowedChanged: if (!contentAllowed) {
+        closeNotes();
         closeMenu();
         closeLauncher();
         osdVisible = false;

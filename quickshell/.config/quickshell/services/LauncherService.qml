@@ -20,6 +20,11 @@ Singleton {
     property bool scanTimedOut: false
     property string scanError: ""
     property bool launching: false
+    property var toolResults: []
+    property int toolRevision: -1
+    property bool toolQueued: false
+    property string toolRequest: ""
+    property string actionRequest: ""
 
     function refreshApps(): void {
         if (scanPending || appsProc.running) {
@@ -57,6 +62,10 @@ Singleton {
 
     readonly property Connections visibilityConnection: Connections {
         target: ShellState
+        function onContentAllowedChanged() {
+            root.clipboardRetry.stop();
+            root.clipboardWatcher.running = ShellState.contentAllowed;
+        }
         function onLauncherVisibleChanged() {
             root.revision++;
             if (ShellState.launcherVisible) {
@@ -74,8 +83,10 @@ Singleton {
     function setQuery(newQuery: string): void {
         revision++;
         query = newQuery;
+        toolResults = [];
         lastError = "";
         updateFilter(false);
+        toolDebounce.restart();
     }
 
     function updateFilter(preserveSelection: bool): void {
@@ -86,7 +97,7 @@ Singleton {
             // Exact, deliberate user shell command; never desktop metadata.
             results = [{ id: "run:" + query, name: query, icon: "system-run", command: query, isCommand: true }];
         } else {
-            results = Logic.filterApps(allApps, query);
+            results = toolResults.concat(Logic.filterApps(allApps, query));
         }
         let index = selected ? results.findIndex(item => item.id === selected) : -1;
         selectedIndex = index >= 0 ? index : 0;
@@ -122,6 +133,11 @@ Singleton {
             // 0.3.1; swaymsg exec intentionally interprets this ONE command.
             Quickshell.execDetached(["swaymsg", "exec", "--", current.command]);
             ShellState.closeLauncher();
+        } else if (mode === "drun" && current.toolAction) {
+            launchRevision = revision;
+            launching = true;
+            actionRequest = JSON.stringify({ op: "action", action: current.toolAction, value: current.value });
+            toolAction.running = true;
         } else if (mode === "drun" && !current.isCommand) {
             // Pass identity only. The helper re-resolves overrides/visibility,
             // parses the current file and spawns argv without any shell parser.
@@ -218,7 +234,60 @@ Singleton {
     readonly property Timer launchDeadline: Timer {
         interval: 10000
         running: root.launching
-        onTriggered: execProc.signal(9)
+        onTriggered: { if (root.execProc.running) root.execProc.signal(9); if (root.toolAction.running) root.toolAction.signal(9); }
+    }
+
+    readonly property Timer toolDebounce: Timer {
+        interval: 250
+        onTriggered: {
+            if (!ShellState.launcherVisible || root.mode !== "drun" || !root.query.trim()) return;
+            if (root.toolQuery.running) { root.toolQueued = true; return; }
+            root.toolRevision = root.revision;
+            root.toolRequest = JSON.stringify({ op: "query", query: root.query });
+            root.toolQuery.running = true;
+        }
+    }
+    readonly property Process toolQuery: Process {
+        command: ["python3", "-B", Quickshell.shellPath("scripts/launcher_tools.py")]
+        stdinEnabled: true
+        onStarted: write(root.toolRequest + "\n")
+        stdout: StdioCollector { id: toolOutput }
+        onExited: {
+            if (root.toolRevision === root.revision) {
+                try {
+                    const reply = JSON.parse(toolOutput.text);
+                    root.toolResults = reply.ok ? reply.results : [];
+                    if (!reply.ok) root.lastError = reply.error;
+                    root.updateFilter(false);
+                } catch (error) { root.lastError = "Search tool unavailable"; }
+            }
+            if (root.toolQueued) { root.toolQueued = false; root.toolDebounce.restart(); }
+        }
+    }
+    readonly property Timer toolDeadline: Timer {
+        interval: 6500
+        running: root.toolQuery.running
+        onTriggered: root.toolQuery.signal(9)
+    }
+    readonly property Process toolAction: Process {
+        command: ["python3", "-B", Quickshell.shellPath("scripts/launcher_tools.py")]
+        stdinEnabled: true
+        onStarted: write(root.actionRequest + "\n")
+        stdout: StdioCollector { id: toolActionOutput }
+        onExited: {
+            try { root.finishLaunch(JSON.parse(toolActionOutput.text)); }
+            catch (error) { root.finishLaunch({ok: false, error: "Clipboard action failed"}); }
+        }
+        onRunningChanged: if (!running && root.launching) root.finishLaunch({ok: false, error: "Clipboard helper could not start"})
+    }
+    readonly property Process clipboardWatcher: Process {
+        command: ["wl-paste", "--type", "text", "--watch", "python3", "-B", Quickshell.shellPath("scripts/launcher_tools.py"), "store"]
+        running: ShellState.contentAllowed
+        onRunningChanged: if (!running && ShellState.contentAllowed) root.clipboardRetry.restart()
+    }
+    readonly property Timer clipboardRetry: Timer {
+        interval: 3000
+        onTriggered: if (ShellState.contentAllowed) root.clipboardWatcher.running = true
     }
 
     Component.onCompleted: refreshApps()

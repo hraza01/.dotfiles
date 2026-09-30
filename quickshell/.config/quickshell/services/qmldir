@@ -8,3 +8,4 @@ singleton PowerService 1.0 PowerService.qml
 singleton LauncherService 1.0 LauncherService.qml
 singleton NotificationService 1.0 NotificationService.qml
 singleton ShellState 1.0 ShellState.qml
+singleton ScratchpadService 1.0 ScratchpadService.qml

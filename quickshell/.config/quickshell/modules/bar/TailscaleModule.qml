@@ -11,17 +11,18 @@ Item {
     // Independently drawn nine-dot Tailscale-style mark, not an official asset.
     Item {
         anchors.centerIn: parent
-        width: 18
-        height: 18
+        width: Theme.panelIconSizePx
+        height: Theme.panelIconSizePx
         Repeater {
             model: 9
             Rectangle {
                 required property int index
-                x: (index % 3) * 7
-                y: Math.floor(index / 3) * 7
-                width: 4
-                height: 4
-                radius: 2
+                x: (index % 3) * 6
+                y: Math.floor(index / 3) * 6
+                width: 3
+                height: 3
+                radius: 1.5
+                antialiasing: true
                 color: "white"
                 opacity: (index >= 3 && index <= 5) || index === 7 ? 1 : 0.35
             }

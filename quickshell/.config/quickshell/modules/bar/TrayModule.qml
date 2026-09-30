@@ -31,7 +31,8 @@ Row {
             Image {
                 anchors.centerIn: parent
                 width: 15; height: 15
-                sourceSize.width: width; sourceSize.height: height
+                sourceSize.width: Math.ceil(width * Screen.devicePixelRatio)
+                sourceSize.height: Math.ceil(height * Screen.devicePixelRatio)
                 source: button.modelData.icon
                 fillMode: Image.PreserveAspectFit
             }

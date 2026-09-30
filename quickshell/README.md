@@ -28,6 +28,9 @@ and `pgrep`.
   both reset the query. Results scroll beyond twelve matches. The run mode
   intentionally executes the command you typed through `sh -c`; desktop-file
   commands instead use direct argv execution with field codes and working directory.
+  Application-search mode also supports calculator expressions, currency conversion
+  and text clipboard history. **Alt+.** opens an autosaving scratchpad. See
+  [desktop tools](DESKTOP-TOOLS.md) for queries, storage and shortcuts.
 - **Wi-Fi/Bluetooth left or right click:** real applet menu, including submenus,
   live state changes and keyboard navigation. **Middle click:** explicit settings
   fallback (`nm-connection-editor` / `blueman-manager`). Each has one white icon;
@@ -40,13 +43,16 @@ and `pgrep`.
 - **Tailscale:** the dot indicator appears only while `tailscaled.service` is
   active/running. It reports daemon liveness, not tailnet login or connectivity.
   Read-only polling is shared across outputs; failed or stale status hides it.
-- **Battery:** the icon and percentage stay white for every power profile. On
+- **Battery:** the icon and percentage are red below 10%, white otherwise,
+  independently of power profile. On
   battery, hover shows `4h 35m Remaining` and the percentage, or an unavailable
   estimate notice. Estimates use kernel time-to-empty readings or matching
   energy/power or charge/current values, floored to minutes; load changes can
   make them fluctuate. Charging/full details remain available. Clicking still
   cycles power profiles, and pending operations/errors remain visible.
-- **Clock hover:** calendar. **Clock right click:** bounded notification history.
+- **Clock hover:** interactive calendar; hovering its popup keeps it open.
+  Left-click pins it; arrows change month and the month title returns to today.
+  **Clock right click:** bounded notification history.
   History entries are read-only, sticky copies, not retained callable app actions.
 - Notification left click dismisses one; right click dismisses all; middle click
   invokes its `default` action then closes. Other actions have explicit buttons.

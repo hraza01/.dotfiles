@@ -1,0 +1,6 @@
+/* GTK selection only; Dolphin's Qt/KDE Graphite palettes are independent. */
+@define-color accent_bg_color #3584e4;
+@define-color accent_fg_color #ffffff;
+@define-color theme_selected_bg_color #3584e4;
+@define-color theme_selected_fg_color #ffffff;
+selection { background-color: #3584e4; color: #ffffff; }

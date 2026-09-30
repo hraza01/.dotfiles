@@ -8,7 +8,7 @@ Rectangle {
     width: audioIcon.implicitWidth + 12
     color: AudioService.muted ? Theme.audioMutedBg : "transparent"
 
-    Text {
+    BarIcon {
         id: audioIcon
         anchors.centerIn: parent
         text: AudioService.icon
