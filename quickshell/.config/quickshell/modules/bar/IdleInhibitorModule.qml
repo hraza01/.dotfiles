@@ -19,7 +19,7 @@ Rectangle {
         enabled: root.active
     }
 
-    Text {
+    BarIcon {
         id: iconText
         anchors.centerIn: parent
         text: root.active ? "" : ""

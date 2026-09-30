@@ -9,7 +9,7 @@ Rectangle {
     width: btIcon.implicitWidth + 12
     color: "transparent"
     function toggleMenu(): void { menu.toggleMenu(); }
-    Text {
+    BarIcon {
         id: btIcon
         anchors.centerIn: parent
         text: BluetoothService.icon

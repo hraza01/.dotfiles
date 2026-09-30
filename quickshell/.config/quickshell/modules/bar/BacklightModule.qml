@@ -8,7 +8,7 @@ Rectangle {
     width: blIcon.implicitWidth + 12
     color: "transparent"
 
-    Text {
+    BarIcon {
         id: blIcon
         anchors.centerIn: parent
         text: BrightnessService.icon

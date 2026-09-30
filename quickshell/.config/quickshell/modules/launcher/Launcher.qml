@@ -103,6 +103,8 @@ PanelWindow {
                     font.family: Theme.fontFamily
                     font.pointSize: Theme.launcherFontSizePt
                     color: Theme.fg
+                    selectionColor: "#3584e4"
+                    selectedTextColor: "white"
                     clip: true
                     focus: true
 

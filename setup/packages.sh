@@ -451,11 +451,11 @@ group_gui() {
     sway swayidle swaylock swaybg \
     quickshell \
     kanshi nwg-displays \
-    grim swappy \
+    grim swappy wl-clipboard \
     wezterm \
     dmenu \
     curl fontconfig ttf-jetbrains-mono ttf-jetbrains-mono-nerd otf-font-awesome \
-    dolphin breeze qt6ct xdg-utils gnome-calendar \
+    dolphin breeze qt6ct xdg-utils gnome-calendar mpv imv zathura zathura-pdf-mupdf poppler \
     libnotify \
     plymouth grub \
     networkmanager network-manager-applet wireless-regdb \

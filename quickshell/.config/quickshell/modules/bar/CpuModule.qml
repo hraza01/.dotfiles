@@ -8,7 +8,7 @@ Rectangle {
     width: cpuIcon.implicitWidth + 12
     color: "transparent"
 
-    Text {
+    BarIcon {
         id: cpuIcon
         anchors.centerIn: parent
         text: SystemStatusService.cpuIcon

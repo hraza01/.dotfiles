@@ -82,6 +82,10 @@ ShellRoot {
     }
     Loader {
         active: !!root.activeScreen
+        sourceComponent: Component { Notes { modelData: root.activeScreen } }
+    }
+    Loader {
+        active: !!root.activeScreen
         sourceComponent: Component { Osd { modelData: root.activeScreen } }
     }
     Loader {
@@ -113,6 +117,11 @@ ShellRoot {
         function toggle(): void { ShellState.toggleLauncher(); }
         function open(): void { if (!ShellState.launcherVisible) ShellState.toggleLauncher(); }
         function close(): void { ShellState.closeLauncher(); }
+    }
+    IpcHandler {
+        target: "scratchpad"
+        function toggle(): void { ShellState.toggleNotes(); }
+        function close(): void { ShellState.closeNotes(); }
     }
     IpcHandler {
         target: "osd"

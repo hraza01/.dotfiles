@@ -7,6 +7,9 @@ Rectangle {
     height: Theme.panelHeight
     width: batteryRow.implicitWidth + 12
     color: "transparent"
+    readonly property color batteryColor: PowerService.batteryPercent >= 0
+        && PowerService.batteryPercent < 10 ? "#ff5555" : Theme.fg
+    readonly property real pixelRatio: Math.max(1, Screen.devicePixelRatio)
 
     Row {
         id: batteryRow
@@ -15,21 +18,27 @@ Rectangle {
 
         Rectangle {
             id: batteryBody
-            width: batteryText.implicitWidth + 12
-            height: 16
-            radius: 2
-            border.color: Theme.fg
-            border.width: 1.5
+            width: Math.ceil((batteryMetrics.advanceWidth("100") + 8) * root.pixelRatio) / root.pixelRatio
+            height: Math.round(16 * root.pixelRatio) / root.pixelRatio
+            radius: 4
+            antialiasing: true
+            border.color: root.batteryColor
+            border.width: Math.max(1, Math.round(root.pixelRatio)) / root.pixelRatio
             color: "transparent"
 
-            Text {
+            FontMetrics {
+                id: batteryMetrics
+                font: batteryText.font
+            }
+
+            BarIcon {
                 id: batteryText
                 anchors.centerIn: parent
                 text: PowerService.batteryPercent >= 0 ? String(PowerService.batteryPercent) : "?"
                 font.family: Theme.fontFamilyMono
                 font.pixelSize: 10
                 font.bold: true
-                color: Theme.fg
+                color: root.batteryColor
             }
         }
 
@@ -38,8 +47,9 @@ Rectangle {
             width: 3
             height: 7
             anchors.verticalCenter: batteryBody.verticalCenter
-            radius: 1
-            color: Theme.fg
+            radius: 1.5
+            antialiasing: true
+            color: root.batteryColor
         }
     }
 

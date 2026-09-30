@@ -7,7 +7,7 @@ Rectangle {
     implicitWidth: archText.implicitWidth + 12
     color: "transparent"
 
-    Text {
+    BarIcon {
         id: archText
         anchors.centerIn: parent
         text: "" // Font Awesome 7 Brands Arch glyph U+E867
