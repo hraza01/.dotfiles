@@ -20,8 +20,6 @@ Singleton {
     // Component state colors
     readonly property color audioMutedBg: "#90b1b1"
     readonly property color audioMutedFg: "#2a5c45"
-    readonly property color idleInhibitorActiveBg: "#ecf0f1"
-    readonly property color idleInhibitorActiveFg: "#2d3436"
     readonly property color todayBg: "#26A65B"
     readonly property color todayFg: "#000000"
     readonly property color criticalBg: "#900000"
