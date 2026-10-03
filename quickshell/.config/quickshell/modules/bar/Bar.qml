@@ -47,7 +47,10 @@ PanelWindow {
         height: Theme.panelHeight
         spacing: Theme.panelSpacing
 
-        ArchMark {}
+        ArchMark {
+            id: archMark
+            window: barWindow
+        }
         Workspaces { screen: barWindow.screen }
         BindingMode {}
         Scratchpad {}
@@ -62,7 +65,6 @@ PanelWindow {
         height: Theme.panelHeight
         spacing: Theme.panelSpacing
 
-        IdleInhibitorModule { window: barWindow }
         CpuModule {}
         BacklightModule {}
         AudioModule {}
@@ -90,5 +92,13 @@ PanelWindow {
         anchors.right: parent.right
         height: 2
         color: Theme.panelBorder
+    }
+
+    Rectangle {
+        x: leftSection.x + archMark.x + (archMark.width - width) / 2
+        anchors.bottom: parent.bottom
+        width: archMark.underlineWidth
+        height: 2
+        color: ShellState.idleInhibited ? Theme.fg : "transparent"
     }
 }
