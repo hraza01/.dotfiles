@@ -1,4 +1,4 @@
--- ctrl+enter to toggle WezTerm (launch / focus / hide)
+-- opt+enter to toggle WezTerm (launch / focus / hide)
 -- requires Accessibility permission for Hammerspoon
 
 local wezterm = 'com.github.wez.wezterm'
@@ -38,6 +38,6 @@ local function launch_wezterm_hidden()
   end)
 end
 
-hs.hotkey.bind({ 'ctrl' }, 'return', toggle_wezterm)
+hs.hotkey.bind({ 'alt' }, 'return', toggle_wezterm)
 
 launch_wezterm_hidden()
