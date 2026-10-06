@@ -16,6 +16,8 @@ cd ~/.dotfiles
 # Read the Quickshell ownership preflight before gui (link below).
 DOTFILES_NOTIFICATION_OWNER=quickshell ./setup.sh gui
 ./setup.sh dev           # requires subordinate IDs; fresh Go also needs version/hash
+# Optional: read setup/secure-boot/README.md before this preparation-only group.
+./setup.sh secure-boot   # checks + tools; boot/trust configuration remains manual
 ```
 
 Run from the installing user's own login session, without `sudo ./setup.sh`.
@@ -33,7 +35,8 @@ incomplete tool installations are preserved for explicit reconciliation.
 | `gui` | Sway desktop and applications, including auth; enables Bluetooth and power-profiles services without starting them. |
 | `dev` | Development tools; enables/starts Tailscale and the rootless Docker socket, selects its context and enables user lingering. |
 | `boot` | GRUB/Plymouth configuration and initramfs rebuilds on a prepared system. |
-| `all` | `shell + gui + dev + boot`, in that order. |
+| `secure-boot` | Opt-in Arch x86_64 UEFI checks and missing official tools; requires an ESP at `/boot`. No direct boot/trust configuration or activation. Package hooks may rebuild/re-sign boot files. |
+| `all` | `shell + gui + dev + boot`, in that order; excludes `secure-boot`. |
 
 Run `shell` before `auth` or `gui`. Auth requires the Hyprlock repository candidate
 and any installed Hyprlock to be upstream **0.9.6**; setup checks this before package
@@ -81,6 +84,21 @@ The supported deployment is manually verified LVM inside LUKS, btrfs root and an
 ESP mounted at `/boot`, with `linux` and optionally `linux-lts`. Setup checks
 configuration structure, hooks and kernel/image entries; it does not discover or
 verify storage topology or encryption identifiers. Recovery backups stay outside Git.
+
+For signed UKIs, systemd-boot, lockdown and recovery, **read the
+[Secure Boot owner/LLM handoff](setup/secure-boot/README.md#start-here-owner-and-llm-handoff)
+before changing boot-related configuration**. It distinguishes reusable design
+from machine-pinned migrations and documents per-machine checks, consent gates,
+update ownership and failure handling. `./setup.sh secure-boot` is preparation
+only: it checks prerequisites and installs missing `systemd-ukify`, `sbctl`,
+`sbsigntools` and `efibootmgr` from official repositories, with an interactive
+package transaction. Existing package scripts/hooks may rebuild or re-sign boot
+files; they are not bypassed. Already installed tools do not trigger a package
+transaction. The group does not run the pinned migrations, create/enroll keys,
+configure a bootloader, change firmware settings, enable services or reboot.
+Machine-specific setup and activation still require owner review. `secure-boot`
+is excluded from `all` and cannot be requested together with `boot` or `all`.
+Do not blindly rerun `boot` or `all` over an established UKI setup.
 
 The selected login path is `greetd -> Cage -> Foot -> tuigreet -> Sway`.
 `./setup.sh auth` publishes root-owned copies under `/etc/greetd` and
