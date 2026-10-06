@@ -5,6 +5,7 @@ SETUP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/setup"
 
 # Source shared helpers and modules
 source "$SETUP_DIR/common.sh"
+source "$SETUP_DIR/secure_boot.sh"
 source "$SETUP_DIR/auth.sh"
 source "$SETUP_DIR/fonts.sh"
 source "$SETUP_DIR/packages.sh"
@@ -49,7 +50,13 @@ ${C_CYAN}Available groups:${C_RESET}
           Requires a manually verified, bootable LVM-inside-LUKS/btrfs layout.
           Checks configuration structure, not the actual storage topology.
 
-  ${C_BOLD}all${C_RESET}     shell + gui + dev + boot
+  ${C_BOLD}secure-boot${C_RESET}  Opt-in Arch x86_64 UEFI preparation; requires an ESP at /boot.
+          Checks prerequisites and installs missing official signing/inspection tools.
+          Interactive package transaction; existing hooks may rebuild/re-sign boot files.
+          No migration, key enrollment, boot-order change or reboot by this group.
+          Read setup/secure-boot/README.md; request separately from boot or all.
+
+  ${C_BOLD}all${C_RESET}     shell + gui + dev + boot (excludes secure-boot)
 
 Prerequisites: installing user's own login session, sudo, working Arch,
   Bash, Python 3.11+, curl and GNU coreutils; paru for GUI/Arch dev.
@@ -70,6 +77,7 @@ ${C_CYAN}Examples:${C_RESET}
                           # desktop tools; existing owner also requires its PID
   ./setup.sh shell dev     # prepare subordinate IDs and fresh-Go inputs first
   ./setup.sh boot          # reconfigure GRUB/Plymouth only
+  ./setup.sh secure-boot   # tools and read-only checks; activation remains manual
 
 Groups run sequentially, not as a whole-installation transaction.
 See README.md and the component READMEs for downloads, activation and recovery.
@@ -91,11 +99,12 @@ main() {
   local group
   for group in "$@"; do
     case "$group" in
-      shell|auth|gui|dev|boot|all) ;;
+      shell|auth|gui|dev|boot|secure-boot|all) ;;
       *) die "Unknown group: '$group'. Run ./setup.sh for help." ;;
     esac
   done
   require_regular_user
+  preflight_secure_boot_request "$@" || exit $?
   for group in "$@"; do
     case "$group" in shell|auth|gui|all) preflight_stow_config ;; esac
   done
@@ -112,6 +121,7 @@ main() {
       gui)   group_gui   ;;
       dev)   group_dev   ;;
       boot)  configure_grub ;;
+      secure-boot) group_secure_boot ;;
       all)
         group_shell
         group_gui

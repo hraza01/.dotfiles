@@ -1,0 +1,41 @@
+[Trigger]
+Type = Path
+Operation = Install
+Operation = Upgrade
+Operation = Remove
+Target = usr/lib/initcpio/*
+Target = usr/lib/firmware/*
+Target = usr/lib/modules/*/extramodules/
+Target = usr/src/*/dkms.conf
+Target = usr/lib/systemd/systemd
+Target = usr/lib/systemd/systemd-udevd
+Target = usr/bin/cryptsetup
+Target = usr/bin/lvm
+Target = usr/bin/mdadm
+Target = usr/bin/pdata_tools
+Target = usr/lib/libcryptsetup.so
+Target = usr/lib/libp11-kit.so
+Target = usr/lib/libpcsclite.so
+Target = usr/lib/modprobe.d/
+Target = usr/lib/modules/*/vmlinuz
+Target = usr/lib/modules/*/pkgbase
+Target = usr/lib/systemd/boot/efi/*
+
+[Trigger]
+Type = Package
+Operation = Install
+Operation = Upgrade
+Operation = Remove
+Target = linux
+Target = linux-lts
+Target = systemd
+Target = mkinitcpio
+Target = mkinitcpio-git
+Target = systemd-ukify
+Target = ukify
+Target = sbctl
+
+[Action]
+Description = Staging and verifying signed boot artifacts...
+When = PostTransaction
+Exec = /usr/bin/python3 -I /usr/local/libexec/dotfiles-boot-artifacts.py
