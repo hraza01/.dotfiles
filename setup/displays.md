@@ -23,7 +23,8 @@ This moves all existing workspaces to that monitor and restores the previously
 focused workspace there. Other enabled screens retain empty replacement
 workspaces. The policy also runs when Kanshi is reloaded, including through
 `swaymsg reload`; workspaces can be moved elsewhere manually between reloads.
-The full dock layout is main Dell, laptop, other Dell from left to right.
+The full dock layout has the main Dell (DP-5) on the left, the other Dell (DP-6)
+on the right, and the laptop centered below the right Dell.
 
 nwg-displays applies output settings immediately through Sway IPC and writes
 `~/.config/sway/outputs`; workspace assignments are saved separately in
