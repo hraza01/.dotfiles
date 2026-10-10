@@ -124,9 +124,10 @@ NetworkManager/Bluetooth applets remain part of the desktop.
 - [Optional three-finger drag: private profile, build, activation and recovery](setup/three-finger-drag/README.md)
 - [Sway controls and spiral tiling](sway/README.md)
 
-Keep machine-specific display profiles and identifiers in private external
-configuration. The public display defaults do not force monitor identities,
-modes or subpixel order; review them for each machine.
+This checkout tracks the Dell dock and laptop display profiles, including
+monitor identities, modes and scaling. Review [display ownership](setup/displays.md)
+before using them on another machine. Keep recovery snapshots and separate
+private overrides outside the repository.
 
 ## Applications
 
