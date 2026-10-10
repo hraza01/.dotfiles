@@ -7,20 +7,23 @@ session (ten workspace slots, matching these dotfiles) or find **Displays
 Settings** in the application launcher. The stock launcher entry defaults to
 eight workspace slots. Do not use sudo to launch the GUI.
 
-## Optional private profiles and ownership
+## Tracked display profiles and ownership
 
-The public configuration contains no monitor-specific profiles, modes, scaling
-or subpixel choices. Without private profiles, the compositor retains its current
-or default layout. Preserve existing machine settings outside the repository
-before updating; never copy live identifiers or recovery snapshots into Git.
+Kanshi owns automatic layout selection on startup/hotplug. Profiles, monitor
+identities, modes, positions, and scales are tracked in
+`kanshi/.config/kanshi/config`. Sway also reloads kanshi after its own
+configuration reload. Review these machine-specific profiles before using this
+checkout on other hardware. Keep recovery snapshots and generated state outside
+Git. Separate subpixel/filter overrides can use Sway's private snippet include.
 
-Use the optional external include documented in `kanshi/.config/kanshi/config`
-for private profiles, and Sway's private snippet include for separate
-subpixel/filter settings. Keep those files outside the checkout and Stow. The
-kanshi include is opt-in and must name an existing file; the Sway glob may be absent.
-
-When private profiles are enabled, kanshi owns automatic layout selection on
-startup/hotplug. Sway also reloads kanshi after its own configuration reload.
+Both Dell U3223QE monitors use scale `1.35`; the laptop panel uses `1.20`. The main
+monitor is the Dell with serial `44MZ4P3`; profiles containing it run
+`~/.config/sway/scripts/dock-workspaces.py` after applying the display layout.
+This moves all existing workspaces to that monitor and restores the previously
+focused workspace there. Other enabled screens retain empty replacement
+workspaces. The policy also runs when Kanshi is reloaded, including through
+`swaymsg reload`; workspaces can be moved elsewhere manually between reloads.
+The full dock layout is main Dell, laptop, other Dell from left to right.
 
 nwg-displays applies output settings immediately through Sway IPC and writes
 `~/.config/sway/outputs`; workspace assignments are saved separately in
