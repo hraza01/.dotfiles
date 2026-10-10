@@ -10,14 +10,15 @@ output "Dell Inc. DELL U3223QE J4MZ4P3" mode 3840x2160 scale 1.35
 output "Dell Inc. DELL U3223QE 44MZ4P3" mode 3840x2160 scale 1.35
 output eDP-1 mode 1920x1200 scale 1.20
 
-# Both Dells + laptop, preserving the order: main Dell, laptop, other Dell.
+# Both Dells side by side: main Dell (DP-5) left, other Dell (DP-6) right.
+# Center the laptop below the right Dell (1600 logical pixels wide at 120%).
 # At 135%, each 4K display occupies approximately 2844x1600 logical pixels.
 # The Dell ending in 44MZ4P3 is the main monitor (formerly showing workspace 4).
 # Apply the workspace policy after the outputs have been configured.
 profile docked {
     output "Dell Inc. DELL U3223QE 44MZ4P3" position 0,0
-    output eDP-1 position 2844,0
-    output "Dell Inc. DELL U3223QE J4MZ4P3" position 4444,0
+    output "Dell Inc. DELL U3223QE J4MZ4P3" position 2844,0
+    output eDP-1 position 3466,1600
     exec python3 ~/.config/sway/scripts/dock-workspaces.py
 }
 
@@ -41,10 +42,10 @@ profile center-dell-only {
     exec python3 ~/.config/sway/scripts/dock-workspaces.py
 }
 
-# Other Dell + laptop (only one dock display connected).
+# Right Dell + laptop below it (only one dock display connected).
 profile other-dell {
     output "Dell Inc. DELL U3223QE J4MZ4P3" position 0,0
-    output eDP-1 position 2844,0
+    output eDP-1 position 622,1600
 }
 
 profile other-dell-only {
