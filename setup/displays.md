@@ -13,6 +13,15 @@ Kanshi owns automatic layout selection on startup/hotplug. Sway also reloads
 kanshi after its own configuration reload. Profiles live in
 `kanshi/.config/kanshi/config`; Sway holds the separate subpixel/filter settings.
 
+Both Dell U3223QE monitors use scale `1.35`; the laptop panel uses `1.20`. The main
+monitor is the Dell with serial `44MZ4P3`; profiles containing it run
+`~/.config/sway/scripts/dock-workspaces.py` after applying the display layout.
+This moves all existing workspaces to that monitor and restores the previously
+focused workspace there. Other enabled screens retain empty replacement
+workspaces. The policy also runs when Kanshi is reloaded, including through
+`swaymsg reload`; workspaces can be moved elsewhere manually between reloads.
+The full dock layout is main Dell, laptop, other Dell from left to right.
+
 nwg-displays applies output settings immediately through Sway IPC and writes
 `~/.config/sway/outputs`; workspace assignments are saved separately in
 `~/.config/sway/workspaces`. These machine-specific files are Git-ignored and
