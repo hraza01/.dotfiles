@@ -15,7 +15,10 @@ ShellRoot {
     id: root
     property var usableScreens: []
     property var activeScreen: null
-    readonly property var notificationScreen: usableScreens.find(screen =>
+    readonly property var notificationScreen: (NotificationService.historyVisible
+        && NotificationService.historyOutputName ? usableScreens.find(screen =>
+            screen && screen.name === NotificationService.historyOutputName) : null)
+        || usableScreens.find(screen =>
         screen && screen.name === ShellState.pointerScreenName) || activeScreen
 
     // Deployment/recovery is explicit, avoiding partial generations during sync.
@@ -68,6 +71,15 @@ ShellRoot {
         target: I3
         function onFocusedMonitorChanged() { root.selectActiveScreen(); }
         function onConnected() { root.invalidateScreens(); }
+    }
+    Connections {
+        target: NotificationService
+        function onHistoryVisibleChanged() {
+            // Freeze the fallback too, for service callers without an output name.
+            if (NotificationService.historyVisible && !NotificationService.historyOutputName
+                && root.notificationScreen)
+                NotificationService.historyOutputName = root.notificationScreen.name;
+        }
     }
     Variants {
         id: bars
@@ -137,7 +149,9 @@ ShellRoot {
     IpcHandler {
         target: "notifications"
         function dismissAll(): void { NotificationService.dismissAll(); }
-        function history(): void { if (ShellState.contentAllowed) NotificationService.toggleHistory(); }
+        function history(): void {
+            if (ShellState.contentAllowed) NotificationService.toggleHistory(root.notificationScreen ? root.notificationScreen.name : "");
+        }
         function recall(): void { if (ShellState.contentAllowed) NotificationService.recallLatest(); }
         function hideHistory(): void { NotificationService.hideHistory(); }
         function clearHistory(): void { NotificationService.clearHistory(); }

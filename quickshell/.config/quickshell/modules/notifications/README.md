@@ -26,13 +26,15 @@ not repair the native replacement limitations.
 - At most **20 tracked protocol objects**, one shared deadline timer and **20
   detached history records**. History contains bounded plain data, never native
   notification/action references. Transient notifications do not enter history.
-- Negative client timeouts select **10,000ms**; zero is sticky; positive values
-  are milliseconds. Critical notifications are sticky regardless of timeout.
+- Every desktop toast expires after **6,500ms**, including critical urgency and
+  client timeout zero, positive, negative or default values. Observable replacements
+  restart that fixed monotonic deadline; opening or expanding the menu does not.
 - Dismissal sends reason **2**, expiration reason **1**. Application close removes
   tracking without sending another close. Non-transient records retain a read-only
   history copy with their close status.
-- Capacity overflow expires the oldest non-sticky entry. If all slots are sticky,
-  a newcomer is rejected as Expired before tracking. Overflow is shown in the header.
+- Capacity overflow expires the oldest live entry regardless of urgency or client
+  timeout. History retains the most recent 20 non-transient records. Overflow alone
+  never keeps an empty toast surface or bell visible.
 - Exact actionless duplicates share a displayed card/count but retain independent
   protocol IDs and deadlines. Dismissing that card dismisses its grouped IDs.
   Action-bearing notifications remain separate.
@@ -42,14 +44,27 @@ not repair the native replacement limitations.
   non-residents through the native API; residents remain open.
 - Recall is a sticky read-only history copy, replacing the visible live stack.
   Live deadlines continue. Recall cannot invoke old actions or re-track an ID.
+- The bell immediately right of the clock opens individual menu cards, combining
+  live IDs (including live transients) with retained history, deduplicated by ID.
+  Live rows retain current actions; archived rows are read-only with no actions.
+  The bell is hidden exactly when this model is empty.
+- Menu body left-click is inert. Explicit × dismisses a live ID once with reason
+  **2** and suppresses re-archival, or removes an archived row without a protocol
+  close. Menu **Clear** removes all records. **Read more / Collapse** state is keyed
+  by ID, survives replacement/expiry, and is cleaned when that record disappears.
 - Reload uses `keepOnReload: false`: old protocol objects expire and history
   resets. Disabling the service expires live records; it is not a process-wide
   D-Bus ownership handoff.
 - Text is plain. Markup, hyperlinks, body images, replies, action icons and
   persistence are disabled. Application icons accept local files/theme names;
   network, data and arbitrary-provider URLs are rejected. Numeric progress hints
-  are clamped to 0–100. Cards use Barlow 12pt with bold summaries, bounded text
-  and action scrolling, and a nominal 300px width constrained by the output.
+  are clamped to 0–100. Cards use Barlow 12pt with bold summaries, neutral dark
+  `Theme.surface`, a subtle urgency rail, 1px frames and 3px corners. Width is
+  **360px**, horizontal/vertical padding **20px/12px**, icon/text separation 12px,
+  icons 32px, card gaps 8px and minimum height **84px**, all output-constrained.
+  Toast cards are at most 300px tall, menu cards 320px; text/actions scroll
+  independently with rails in the outer padding. The menu list is at most **480px**
+  plus its header/gap, bounded by output height. The top margin clears the 31px bar.
 
 ## Output selection and privacy
 
@@ -61,6 +76,12 @@ output. Qt screens are filtered against Sway's live monitor model; output change
 destroy output-bound windows before deferred re-creation. No usable output means
 no notification surface. This does not implement global pointer tracking over
 arbitrary client windows.
+
+Opening the menu requests the initiating bar's output name through
+`NotificationService.historyOutputName`. It takes precedence while the menu is
+open, freezing that output despite pointer/focus changes. Calls without a name
+freeze the fallback too. Closing or output invalidation releases the request;
+the service retains only a string, never a native screen wrapper.
 
 Surface visibility also requires enough output space, content to show and
 `ShellState.contentAllowed`. The production binding overrides the standalone
@@ -77,20 +98,27 @@ and Sway's secure session-lock protocol remain the security boundary.
 
 ## Controls and IPC
 
-Right-click the clock to toggle history. In the intended Sway environment, call
+Click the bell or right-click the clock to toggle the menu on that bar's output.
+The bell closes other menus, launcher and notes. In the intended Sway environment, call
 `qs ipc call notifications METHOD` with one of these zero-argument methods:
 
 | Method | Effect |
 |---|---|
-| `history` | Toggle history/recall view when content is allowed. |
+| `history` | Toggle menu/recall view when content is allowed. |
 | `recall` | Recall the latest record when content is allowed. |
-| `hideHistory` | Close history and recall views. |
-| `clearHistory` | Clear stored history and recall. |
-| `dismissAll` | Dismiss live records; reset views and overflow count. |
+| `hideHistory` | Close menu and recall views. |
+| `clearHistory` | Clear stored history and recall without dismissing live IDs. |
+| `dismissAll` | Dismiss live IDs; reset views/overflow, retaining non-transient history. |
 
 All IPC methods return void. The service's additional QML methods are not IPC
 names. Models are read-only; fabricated rows and legacy test-injection handlers
 are not supported protocol inputs.
+
+QML-only menu controls are `removeMenu(id)`, `clearMenu()` and
+`setExpanded(id, value)`. Menu **Clear** is deliberately distinct from the legacy
+`clearHistory` IPC: it dismisses live IDs and removes every record.
+`showHistory(outputName)` and `toggleHistory(outputName)` accept an optional output
+name. The `menu`, `history`, `toasts`, `recalled` and count models remain read-only.
 
 ## Validation
 
@@ -99,3 +127,7 @@ with deterministic clocks and protocol doubles, and protocol behavior with real
 senders on an isolated D-Bus bus. Physical outputs/scaling, long idle,
 suspend/resume and interactive actions/history need target-desktop acceptance;
 a parser or unit-test pass is not a live acceptance result.
+
+Earlier native checks covered the previous timeout/presentation policy, not the
+current 6,500ms menu changes. Isolated JS/static checks do not establish native
+expiry timing, interactive action/scroll behavior or multi-output acceptance.

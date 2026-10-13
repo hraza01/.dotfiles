@@ -5,34 +5,34 @@
 # Kanshi manages mode, position, and scale. Subpixel and scale_filter
 # are set in the sway config (kanshi does not support those directives).
 
-# Shared defaults: both 4K Dells use 135%; the laptop uses 120% scaling.
-output "Dell Inc. DELL U3223QE J4MZ4P3" mode 3840x2160 scale 1.35
-output "Dell Inc. DELL U3223QE 44MZ4P3" mode 3840x2160 scale 1.35
+# Shared defaults: both 4K Dells use 150%; the laptop uses 120% scaling.
+output "Dell Inc. DELL U3223QE J4MZ4P3" mode 3840x2160 scale 1.5
+output "Dell Inc. DELL U3223QE 44MZ4P3" mode 3840x2160 scale 1.5
 output eDP-1 mode 1920x1200 scale 1.20
 
 # Both Dells side by side: main Dell (DP-5) left, other Dell (DP-6) right.
-# Center the laptop below the right Dell (1600 logical pixels wide at 120%).
-# At 135%, each 4K display occupies approximately 2844x1600 logical pixels.
+# Keep the laptop below the right Dell at the chosen docked position.
+# At 150%, each 4K display occupies 2560x1440 logical pixels.
 # The Dell ending in 44MZ4P3 is the main monitor (formerly showing workspace 4).
 # Apply the workspace policy after the outputs have been configured.
 profile docked {
     output "Dell Inc. DELL U3223QE 44MZ4P3" position 0,0
-    output "Dell Inc. DELL U3223QE J4MZ4P3" position 2844,0
-    output eDP-1 position 3466,1600
+    output "Dell Inc. DELL U3223QE J4MZ4P3" position 2560,0
+    output eDP-1 position 3158,1440
     exec python3 ~/.config/sway/scripts/dock-workspaces.py
 }
 
 # Both Dells when the internal output is unavailable.
 profile docked-external {
     output "Dell Inc. DELL U3223QE 44MZ4P3" position 0,0
-    output "Dell Inc. DELL U3223QE J4MZ4P3" position 2844,0
+    output "Dell Inc. DELL U3223QE J4MZ4P3" position 2560,0
     exec python3 ~/.config/sway/scripts/dock-workspaces.py
 }
 
 # Center Dell + laptop
 profile center-dell {
     output "Dell Inc. DELL U3223QE 44MZ4P3" position 0,0
-    output eDP-1 position 2844,0
+    output eDP-1 position 2560,0
     exec python3 ~/.config/sway/scripts/dock-workspaces.py
 }
 
@@ -45,7 +45,7 @@ profile center-dell-only {
 # Right Dell + laptop below it (only one dock display connected).
 profile other-dell {
     output "Dell Inc. DELL U3223QE J4MZ4P3" position 0,0
-    output eDP-1 position 622,1600
+    output eDP-1 position 480,1440
 }
 
 profile other-dell-only {
