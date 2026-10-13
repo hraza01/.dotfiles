@@ -19,9 +19,11 @@ interruption, inspect any remaining `.barlow.*` directory. Existing fonts are pr
 
 ## Typography
 
-The panel and most proportional UI use **Barlow 12pt SemiBold**. The
-Quickshell launcher uses 12pt regular text in its 32px input and 28px result rows;
-notification summaries are bold.
+GTK uses **Barlow SemiBold 11pt** and Sway uses **Barlow SemiBold 11.5pt**.
+Qt general text uses **Barlow Regular 12pt**; Qt fixed-width text retains
+**JetBrainsMono Nerd Font Mono 13pt**. The Quickshell panel retains
+**Barlow 12pt DemiBold (600)**. The Quickshell launcher uses 12pt regular text
+in its 32px input and 28px result rows; notification summaries are bold.
 Panel icons remain 15px. The calendar uses an 11pt bold Barlow heading
 and a 9pt JetBrains Mono grid. Terminal/editor and boot fonts remain separate.
 Fontconfig maps family aliases only, not global size or weight.
@@ -29,7 +31,8 @@ Qt applications requesting generic sans use these aliases; explicit toolkit or
 application font preferences take precedence over aliases. GUI setup also
 publishes the managed GTK font preferences.
 WezTerm uses JetBrainsMono Nerd Font Mono first, with JetBrains Mono as fallback,
-at 15pt. Login and Hyprlock use their separate JetBrains font settings.
+at its existing 12pt size. Login and Hyprlock use their separate JetBrains font
+settings.
 
 On macOS with Homebrew coreutils already installed, expose its GNU command names:
 

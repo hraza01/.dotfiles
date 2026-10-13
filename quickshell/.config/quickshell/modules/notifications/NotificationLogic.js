@@ -10,11 +10,8 @@ function boundedText(value, limit) {
 }
 
 function timeoutMs(notification) {
-    // v0.3.1 notification.cpp assigns the D-Bus millisecond integer directly.
-    // The tagged docs/header incorrectly call this seconds. Do NOT multiply by 1000.
-    if (notification.urgency === 2 || notification.expireTimeout === 0) return 0;
-    var value = Number(notification.expireTimeout);
-    return !isFinite(value) || value < 0 ? 10000 : Math.min(2147483647, Math.max(1, value));
+    // Deliberate presentation policy: all urgencies and client timeouts expire.
+    return 6500;
 }
 
 function safeIcon(value) {
@@ -50,10 +47,10 @@ function snapshot(notification, timestamp) {
 function geometry(width, height, panelHeight) {
     width = Math.max(0, Number(width) || 0);
     height = Math.max(0, Number(height) || 0);
-    var right = Math.min(30, Math.max(0, (width - 300) / 2));
+    var right = Math.min(30, Math.max(0, (width - 360) / 2));
     var top = Math.min(height, Math.max(30, Number(panelHeight) || 0));
     var bottom = Math.min(30, Math.max(0, height - top));
-    return {width: Math.min(300, width), right: right, top: top,
+    return {width: Math.min(360, width), right: right, top: top,
         height: Math.max(0, height - top - bottom)};
 }
 
@@ -71,6 +68,7 @@ function createController(env, maxActive, maxHistory) {
     var recalled = null;
     var historyVisible = false;
     var overflowCount = 0;
+    var expanded = Object.create(null);
 
     function lookup(id) { return active.find(function(record) { return record.id === id; }); }
 
@@ -107,7 +105,21 @@ function createController(env, maxActive, maxHistory) {
                 toasts.push(Object.assign({}, data, {ids: [record.id], count: 1}));
             }
         });
-        env.publish({toasts: toasts, history: history.slice(), recalled: recalled,
+        // Menu cards are individual, including transient objects only while live.
+        // Prefer the live row (and its current actions) over its detached archive.
+        var menu = active.filter(function(record) { return !record.removing; }).map(function(record) {
+            return Object.assign({}, record.data, {ids: [record.id], count: 1,
+                readOnly: false, expanded: !!expanded[record.id]});
+        });
+        history.forEach(function(data) {
+            if (!lookup(data.id)) menu.push(Object.assign({}, data, {ids: [data.id], count: 1,
+                actions: [], readOnly: true, expanded: !!expanded[data.id]}));
+        });
+        Object.keys(expanded).forEach(function(id) {
+            if (!menu.some(function(data) { return String(data.id) === id; })) delete expanded[id];
+        });
+        if (menu.length === 0) historyVisible = false;
+        env.publish({toasts: toasts, history: history.slice(), menu: menu, recalled: recalled,
             historyVisible: historyVisible, overflowCount: overflowCount, trackedCount: active.length});
         arm();
     }
@@ -138,11 +150,10 @@ function createController(env, maxActive, maxHistory) {
             connect(record.actionConnections, action.textChanged, record.changed);
         }
         if (resetDeadline) {
-            var timeout = timeoutMs(notification);
-            record.deadline = timeout === 0 ? null : env.now() + timeout;
+            record.deadline = env.now() + timeoutMs(notification);
         }
-        archive(record.data);
-        if (recalled && recalled.id === record.id) {
+        if (!record.removing) archive(record.data);
+        if (!record.removing && recalled && recalled.id === record.id) {
             recalled = record.data.transient ? null
                 : Object.assign({}, record.data, {actions: [], recalled: true, count: 1});
         }
@@ -160,15 +171,22 @@ function createController(env, maxActive, maxHistory) {
         active = active.filter(function(item) { return item !== record; });
         record.data = Object.assign({}, record.data, {actions: [], closeReason: reason,
             closeCause: record.closeCause || ""});
-        archive(record.data);
+        if (record.removing) {
+            // Do not publish the previous live-history overlap as an archived row
+            // even briefly during the synchronous close callback.
+            history = history.filter(function(data) { return data.id !== record.id; });
+            if (recalled && recalled.id === record.id) recalled = null;
+            delete expanded[record.id];
+        } else archive(record.data);
         // A recalled item never holds protocol actions, even if its source was live.
-        if (recalled && recalled.id === record.id)
+        if (!record.removing && recalled && recalled.id === record.id)
             recalled = Object.assign({}, record.data, {recalled: true, count: 1});
         publish();
     }
 
     function close(record, reason, cause) {
-        if (!record || !record.live) return;
+        if (!record || !record.live || record.closing) return;
+        record.closing = true;
         record.closeCause = cause || "";
         // Never read the QObject again after either call; closed() may destroy it.
         if (reason === Expired) record.notification.expire();
@@ -177,23 +195,12 @@ function createController(env, maxActive, maxHistory) {
 
     function receive(notification) {
         if (lookup(notification.id)) return;
-        // A replacement can become sticky before its deferred publish runs.
+        // Flush any pending replacements before choosing the oldest live entry.
         active.forEach(function(record) { if (record.dirty) refresh(record, true); });
         if (active.length >= maxActive) {
-            // Never expire an already accepted critical or explicit zero-timeout
-            // alert to make room. Reject newcomers when every slot is sticky.
-            var victim = active.slice().reverse().find(function(record) { return record.deadline !== null; });
+            var victim = active[active.length - 1];
             overflowCount = Math.min(2147483647, overflowCount + 1);
-            if (victim) close(victim, Expired, "overflow");
-            else {
-                archive(Object.assign(snapshot(notification, env.wallNow()),
-                    {closeReason: Expired, closeCause: "overflow"}));
-                // During onNotification the new object is not in the server's map.
-                // expire() sets the untracked close reason; Notify emits it on return.
-                notification.expire();
-                publish();
-                return;
-            }
+            close(victim, Expired, "overflow");
         }
         notification.tracked = true;
         var record = {id: notification.id, notification: notification, live: true,
@@ -234,7 +241,7 @@ function createController(env, maxActive, maxHistory) {
 
     function invoke(id, identifier, closeAfter) {
         var record = lookup(id);
-        if (!record) return false;
+        if (!record || record.closing || record.removing) return false;
         var actions = record.notification.actions;
         for (var i = 0; i < actions.length; ++i) {
             if (actions[i].identifier === identifier) {
@@ -257,6 +264,32 @@ function createController(env, maxActive, maxHistory) {
 
     function hideHistory() { historyVisible = false; recalled = null; publish(); }
     function showHistory() { historyVisible = true; recalled = null; publish(); }
+    function removeMenu(id) {
+        var record = lookup(id);
+        if (record) {
+            // closed() refreshes synchronously: suppress both of its archive writes
+            // before dismissing, so deleting a live card cannot resurrect history.
+            record.removing = true;
+            close(record, Dismissed, "user");
+        }
+        history = history.filter(function(data) { return data.id !== id; });
+        if (recalled && recalled.id === id) recalled = null;
+        delete expanded[id];
+        publish();
+    }
+    function clearMenu() {
+        active.slice().forEach(function(record) { removeMenu(record.id); });
+        history = [];
+        recalled = null;
+        expanded = Object.create(null);
+        publish();
+    }
+    function setExpanded(id, value) {
+        if (!lookup(id) && !history.some(function(data) { return data.id === id; })) return;
+        if (value) expanded[id] = true;
+        else delete expanded[id];
+        publish();
+    }
     function recall(id) {
         var item = history.find(function(data) { return data.id === id; });
         if (!item) return false;
@@ -286,6 +319,7 @@ function createController(env, maxActive, maxHistory) {
     return {receive: receive, tick: tick, dismiss: dismiss, dismissMany: dismissMany,
         dismissAll: dismissAll, invoke: invoke, invokeDefault: invokeDefault,
         showHistory: showHistory, hideHistory: hideHistory, recall: recall,
+        removeMenu: removeMenu, clearMenu: clearMenu, setExpanded: setExpanded,
         recallLatest: function() { return history.length > 0 && recall(history[0].id); },
         clearHistory: function() { history = []; recalled = null; publish(); },
         shutdown: shutdown};

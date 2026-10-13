@@ -1,0 +1,35 @@
+{
+  "$schema": "https://opencode.ai/v2/cli.json",
+  "theme": {
+    "name": "system"
+  },
+  "plugins": [
+    "-opencode.sidebar.context"
+  ],
+  "session": {
+    "sidebar": "hide",
+    "image_preview": false,
+    "permissions": "autoaccept",
+    "verbosity": "low"
+  },
+  "tabs": {
+    "mode": "off",
+    "layout": "horizontal",
+    "indicators": "status"
+  },
+  "attention": {
+    "notifications": false
+  },
+  "terminal": {
+    "copy": "select"
+  },
+  "mini": {
+    "shell_output": "hide",
+    "splash": "hide",
+    "thinking": "show",
+    "tools": "hide",
+    "turn_summary": "show",
+    "footer": "hide",
+    "mono": false
+  }
+}

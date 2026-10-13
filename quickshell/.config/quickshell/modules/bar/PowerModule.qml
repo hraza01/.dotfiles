@@ -10,6 +10,8 @@ Rectangle {
     readonly property color batteryColor: PowerService.batteryPercent >= 0
         && PowerService.batteryPercent < 10 ? "#ff5555" : Theme.fg
     readonly property real pixelRatio: Math.max(1, Screen.devicePixelRatio)
+    readonly property string batteryStateIcon: PowerService.batteryPercent === 100
+        && PowerService.externalOnline ? "\uf1e6" : PowerService.batteryCharging ? "\uf0e7" : ""
 
     Row {
         id: batteryRow
@@ -19,6 +21,7 @@ Rectangle {
         Rectangle {
             id: batteryBody
             width: Math.ceil((batteryMetrics.advanceWidth("100") + 8) * root.pixelRatio) / root.pixelRatio
+                + (root.batteryStateIcon ? 9 : 0)
             height: Math.round(16 * root.pixelRatio) / root.pixelRatio
             radius: 4
             antialiasing: true
@@ -31,14 +34,30 @@ Rectangle {
                 font: batteryText.font
             }
 
-            BarIcon {
-                id: batteryText
+            Row {
                 anchors.centerIn: parent
-                text: PowerService.batteryPercent >= 0 ? String(PowerService.batteryPercent) : "?"
-                font.family: Theme.fontFamilyMono
-                font.pixelSize: 10
-                font.bold: true
-                color: root.batteryColor
+                spacing: 1
+
+                BarIcon {
+                    id: batteryText
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: PowerService.batteryPercent >= 0 ? String(PowerService.batteryPercent) : "?"
+                    font.family: Theme.fontFamilyMono
+                    font.pixelSize: 10
+                    font.bold: true
+                    color: root.batteryColor
+                }
+
+                BarIcon {
+                    visible: root.batteryStateIcon !== ""
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: 8
+                    text: root.batteryStateIcon
+                    font.family: Theme.fontFamilyIconFree
+                    font.pixelSize: 8
+                    font.weight: Font.Black
+                    color: root.batteryColor
+                }
             }
         }
 

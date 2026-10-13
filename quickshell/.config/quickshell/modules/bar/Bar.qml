@@ -83,6 +83,9 @@ PanelWindow {
             id: clockModule
             barWindow: barWindow
         }
+        NotificationModule {
+            barWindow: barWindow
+        }
     }
 
     // Translucent bottom border
@@ -95,7 +98,7 @@ PanelWindow {
     }
 
     Rectangle {
-        x: leftSection.x + archMark.x + (archMark.width - width) / 2
+        x: leftSection.x + archMark.x + (archMark.width - width) / 2 + archMark.glyphOffset
         anchors.bottom: parent.bottom
         width: archMark.underlineWidth
         height: 2

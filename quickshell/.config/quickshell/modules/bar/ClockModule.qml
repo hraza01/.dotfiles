@@ -78,7 +78,7 @@ Rectangle {
             } else {
                 root.pinned = false;
                 root.hoverOpen = false;
-                NotificationService.toggleHistory();
+                NotificationService.toggleHistory(root.barWindow ? root.barWindow.outputName : "");
             }
         }
     }

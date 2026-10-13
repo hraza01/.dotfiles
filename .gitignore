@@ -27,6 +27,9 @@ sway/.config/sway/workspaces
 # Application-generated state
 **/.config/dconf/
 
+# OpenCode regenerates this file with a private service password.
+**/.config/opencode/service.json
+
 # Private inputs are kept outside the checkout; these are accidental-copy guards.
 /private/
 /.private/

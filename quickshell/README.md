@@ -44,7 +44,8 @@ and `pgrep`.
   active/running. It reports daemon liveness, not tailnet login or connectivity.
   Read-only polling is shared across outputs; failed or stale status hides it.
 - **Battery:** the icon and percentage are red below 10%, white otherwise,
-  independently of power profile. On
+  independently of power profile. A bolt indicates charging; at 100% with external
+  power online it becomes a plug. On
   battery, hover shows `4h 35m Remaining` and the percentage, or an unavailable
   estimate notice. Estimates use kernel time-to-empty readings or matching
   energy/power or charge/current values, floored to minutes; load changes can
@@ -52,10 +53,12 @@ and `pgrep`.
   cycles power profiles, and pending operations/errors remain visible.
 - **Clock hover:** interactive calendar; hovering its popup keeps it open.
   Left-click pins it; arrows change month and the month title returns to today.
-  **Clock right click:** bounded notification history.
-  History entries are read-only, sticky copies, not retained callable app actions.
-- Notification left click dismisses one; right click dismisses all; middle click
-  invokes its `default` action then closes. Other actions have explicit buttons.
+  **Clock right click / bell immediately right of the clock:** bounded notification
+  menu on that output. The bell disappears when no live or retained records remain.
+- Notification toasts expire after 6,500ms, including critical and client-sticky
+  notifications. Toast left click dismisses one; right click dismisses all; middle
+  click invokes its `default` action then closes. Menu cards retain live actions
+  until expiry, then become read-only history; explicit ×/Clear removes records.
 - Audio click opens `pwvucontrol`; audio/backlight scrolling changes hardware
   in ordered 5% increments without adding an OSD. Hardware-key feedback uses a
   separate, click-through OSD; missing/hung IPC does not block hardware adjustment.
@@ -196,7 +199,8 @@ rollback without the corresponding ownership/helper rollback is incomplete.
   starts closed on reload. It never unlocks, replaces the lock command, or changes
   PAM, lid or pre-sleep policy. Process/logind checks are not an atomic lock protocol.
 - Launcher/OSD follow Sway's focused output. Notifications follow the pointer while
-  over a bar and otherwise use the focused-output fallback: Sway's public IPC does
+  over a bar and otherwise use the focused-output fallback; an open menu stays on
+  its initiating output until closed or invalidated. Sway's public IPC does
   not expose a global cursor position. Arbitrary-client mouse-output routing and
   physical multi-output hotplug/scale acceptance are not claimed by this fallback.
 - Notification markup, inline images, hyperlinks, persistence and inline replies

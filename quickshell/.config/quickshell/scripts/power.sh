@@ -2,6 +2,7 @@
 # Outputs JSON for Quickshell's power-profile service.
 #   text    -> icon in the bar (Font Awesome glyph)
 #   tooltip -> remaining time + percentage when discharging; profile/status otherwise
+#   charging / external_online -> explicit battery and adapter state
 #
 # Reads the active profile + driver via D-Bus (net.hadess.PowerProfiles)
 # and battery capacity/status from /sys/class/power_supply.
@@ -73,6 +74,23 @@ def read_battery_value(path, fallback):
         return fallback
 
 
+def external_power_online(supplies):
+    try:
+        for supply in supplies.iterdir():
+            supply_type = read_battery_value(supply / "type", "Unknown")
+            scope = read_battery_value(supply / "scope", "Unknown")
+            # Batteries can also report online=1; missing/unknown types are
+            # not evidence of external power. Ignore peripheral/device supplies
+            # and require an explicit online=1.
+            if (supply_type not in ("Battery", "Unknown")
+                    and scope != "Device"
+                    and read_battery_value(supply / "online", "0") == "1"):
+                return True
+    except OSError:
+        pass
+    return False
+
+
 def positive_battery_number(battery, name):
     try:
         value = float(read_battery_value(battery / name, ""))
@@ -122,11 +140,15 @@ if battery is not None and status == "Discharging":
     remaining = (f"{minutes // 60}h {minutes % 60}m Remaining" if minutes is not None
                  else "Remaining time unavailable")
     tooltip = f"{remaining}\n{capacity}%"
-battery_pct = int(capacity) if capacity.isdigit() else None
+battery_pct = int(capacity) if capacity.isascii() and capacity.isdigit() else None
+if battery_pct is not None and not 0 <= battery_pct <= 100:
+    battery_pct = None
 print(json.dumps({
     "text": ICONS.get(profile, "\uf0e7"),
     "tooltip": html.escape(tooltip, quote=False),
     "class": ["power-profiles-daemon", profile],
     "battery": battery_pct,
+    "charging": status == "Charging",
+    "external_online": external_power_online(supplies),
 }))
 PY

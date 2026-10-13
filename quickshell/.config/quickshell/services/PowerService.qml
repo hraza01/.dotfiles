@@ -9,6 +9,8 @@ Singleton {
     property string profile: "unknown"
     property string icon: "\uf24e"
     property int batteryPercent: -1
+    property bool batteryCharging: false
+    property bool externalOnline: false
     property bool available: false
     property string statusTooltip: "Power status pending"
     property string lastError: ""
@@ -16,6 +18,11 @@ Singleton {
     property bool refreshing: false
     readonly property string tooltip: statusTooltip + (busy ? "\nChanging profile…" : "")
         + (lastError ? "\n" + lastError : "")
+
+    function clearBatteryIndicators(): void {
+        batteryCharging = false;
+        externalOnline = false;
+    }
 
     function refresh(): void {
         if (refreshing) return;
@@ -41,7 +48,10 @@ Singleton {
                 if (code !== 0 || status !== 0) throw new Error("Power helper failed");
                 let d = JSON.parse(powerOutput.text);
                 root.icon = d.text || "\uf24e";
-                root.batteryPercent = (typeof d.battery === "number" && d.battery >= 0) ? d.battery : -1;
+                root.batteryPercent = (typeof d.battery === "number" && d.battery >= 0
+                    && d.battery <= 100 && d.battery % 1 === 0) ? d.battery : -1;
+                root.batteryCharging = d.charging === true;
+                root.externalOnline = d.external_online === true;
                 // Decode the helper's HTML entities for plain-text tooltips.
                 root.statusTooltip = (d.tooltip || "Power status unavailable")
                     .replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
@@ -54,6 +64,7 @@ Singleton {
                 root.available = false;
                 root.profile = "unknown";
                 root.batteryPercent = -1;
+                root.clearBatteryIndicators();
                 root.statusTooltip = "Power status response invalid";
             }
         }
@@ -63,6 +74,7 @@ Singleton {
             root.available = false;
             root.profile = "unknown"
             root.batteryPercent = -1
+            root.clearBatteryIndicators();
             root.statusTooltip = "Power status helper could not start";
         }
     }
@@ -75,6 +87,7 @@ Singleton {
             root.available = false;
             root.profile = "unknown"
             root.batteryPercent = -1
+            root.clearBatteryIndicators();
             root.statusTooltip = "Power status helper timed out";
         }
     }
@@ -87,11 +100,13 @@ Singleton {
             root.busy = false;
             root.lastError = code === 0 && status === 0 ? ""
                 : (cycleError.text.trim().slice(0, 500) || "Power profile change failed (exit " + code + ")");
+            if (code !== 0 || status !== 0) root.clearBatteryIndicators();
             refreshTimer.start();
         }
         onRunningChanged: if (!running && root.busy) {
             cycleWatchdog.stop();
             root.busy = false;
+            root.clearBatteryIndicators();
             root.lastError = "Power profile helper could not start";
         }
     }
@@ -101,6 +116,7 @@ Singleton {
         onTriggered: {
             cycleProc.signal(9);
             root.busy = false;
+            root.clearBatteryIndicators();
             root.lastError = "Power profile change timed out";
         }
     }

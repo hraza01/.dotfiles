@@ -1,7 +1,7 @@
 # Read `man 5 sway` for a complete reference.
 
 ### General
-font pango:Barlow SemiBold 12
+font pango:Barlow SemiBold 11.5
 default_border pixel 2
 default_floating_border pixel 2
 gaps inner 1
@@ -10,7 +10,7 @@ gaps outer 1
 # Docked: move workspaces off the internal panel. Undocked: also sleep.
 # Requires HandleLidSwitch=ignore in logind; repeat in each binding mode.
 bindswitch --locked lid:on  exec ~/.config/sway/scripts/lid-close.sh
-bindswitch --locked lid:off output eDP-1 enable
+bindswitch --locked lid:off exec python3 ~/.config/sway/scripts/lid-open.py
 
 ### Variables
 # Logo key. Use Mod1 for Alt.
@@ -223,7 +223,7 @@ exec swayidle -w \
 #
 mode "resize" {
     bindswitch --locked lid:on  exec ~/.config/sway/scripts/lid-close.sh
-    bindswitch --locked lid:off output eDP-1 enable
+    bindswitch --locked lid:off exec python3 ~/.config/sway/scripts/lid-open.py
 
     # left/right shrink/grow width, up/down shrink/grow height
     bindsym $left resize shrink width 10px
@@ -246,7 +246,7 @@ bindsym $mod+r mode "resize"
 # Exit confirmation mode: press e to exit, Esc/Return to cancel
 mode "exit" {
     bindswitch --locked lid:on  exec ~/.config/sway/scripts/lid-close.sh
-    bindswitch --locked lid:off output eDP-1 enable
+    bindswitch --locked lid:off exec python3 ~/.config/sway/scripts/lid-open.py
 
     bindsym e exec swaymsg exit
     bindsym Escape mode "default"
@@ -262,7 +262,7 @@ exec_always {
     gsettings set $gnome-schema icon-theme 'Adwaita'
     gsettings set $gnome-schema color-scheme 'prefer-dark'
     # GTK4/libadwaita use this preference rather than GTK3's settings.ini.
-    gsettings set $gnome-schema font-name 'Barlow SemiBold 12'
+    gsettings set $gnome-schema font-name 'Barlow SemiBold 11'
     # Reapply kanshi's mode/scale/position policy after a Sway reload.
     pkill -SIGHUP kanshi
 }

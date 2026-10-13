@@ -1,4 +1,5 @@
 pragma Singleton
+pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Services.Notifications
@@ -12,10 +13,12 @@ Singleton {
     readonly property int maxHistory: 20
     readonly property var toasts: _view.toasts || []
     readonly property var history: _view.history || []
+    readonly property var menu: _view.menu || []
     readonly property var recalled: _view.recalled || null
     readonly property bool historyVisible: _view.historyVisible || false
     readonly property int overflowCount: _view.overflowCount || 0
     readonly property int trackedCount: _view.trackedCount || 0
+    property string historyOutputName: ""
     property var _view: ({})
     property var _controller: null
 
@@ -47,15 +50,24 @@ Singleton {
     function dismissAll(): void { controller().dismissAll(); }
     function invokeAction(id, identifier): bool { return controller().invoke(id, identifier, false); }
     function invokeDefault(id): bool { return controller().invokeDefault(id); }
-    function showHistory(): void { controller().showHistory(); }
+    function showHistory(outputName): void {
+        if (!historyVisible) historyOutputName = outputName || "";
+        controller().showHistory();
+        if (!historyVisible) historyOutputName = "";
+    }
     function hideHistory(): void { controller().hideHistory(); }
-    function toggleHistory(): void {
+    function toggleHistory(outputName): void {
         if (historyVisible || recalled) hideHistory();
-        else showHistory();
+        else showHistory(outputName);
     }
     function recall(id): bool { return controller().recall(id); }
     function recallLatest(): bool { return controller().recallLatest(); }
     function clearHistory(): void { controller().clearHistory(); }
+    function removeMenu(id): void { controller().removeMenu(id); }
+    function clearMenu(): void { controller().clearMenu(); }
+    function setExpanded(id, value): void { controller().setExpanded(id, value); }
+
+    onHistoryVisibleChanged: if (!historyVisible) historyOutputName = ""
 
     onEnabledChanged: {
         if (!enabled && _controller) _controller.shutdown();

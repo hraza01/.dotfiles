@@ -8,6 +8,7 @@ Rectangle {
     property var window
     readonly property bool active: ShellState.idleInhibited
     readonly property real underlineWidth: archText.ink.width
+    readonly property real glyphOffset: -4
     implicitHeight: Theme.panelHeight
     implicitWidth: archText.implicitWidth + 12
     color: "transparent"
@@ -20,6 +21,7 @@ Rectangle {
     BarIcon {
         id: archText
         anchors.centerIn: parent
+        anchors.horizontalCenterOffset: root.glyphOffset
         text: "" // Font Awesome 7 Brands Arch glyph U+E867
         font.family: Theme.fontFamilyIconBrands
         font.pixelSize: Theme.panelIconSizePx
@@ -30,6 +32,7 @@ Rectangle {
     MouseArea {
         id: mouseArea
         anchors.fill: parent
+        anchors.leftMargin: -2
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
         onClicked: {
