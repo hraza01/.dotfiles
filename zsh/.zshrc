@@ -44,6 +44,24 @@ bindkey '^p' history-search-backward
 bindkey '^n' history-search-forward
 bindkey '^[w' kill-region
 
+# Keep Ctrl+V application-owned: Ghostty must pass it through for Neovim's
+# visual-block mode. On Wayland, paste into ZLE without accepting the line.
+paste-system-clipboard() {
+  emulate -L zsh
+  local clipboard
+  # The sentinel preserves original trailing newlines through substitution.
+  clipboard=$(wl-paste --no-newline --type text 2>/dev/null && printf '\001') || {
+    zle -M 'paste-system-clipboard: Wayland text clipboard unavailable'
+    return 0
+  }
+  LBUFFER+=${clipboard%$'\001'}
+}
+
+if [[ -n ${WAYLAND_DISPLAY:-} ]] && command -v wl-paste >/dev/null 2>&1; then
+  zle -N paste-system-clipboard
+  bindkey '^V' paste-system-clipboard
+fi
+
 fzf-cd-dev() {
   emulate -L zsh
   local selected fd_cmd

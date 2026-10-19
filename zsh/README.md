@@ -1,5 +1,20 @@
 # Zsh controls
 
+## Clipboard
+
+**Ctrl+V** inserts the Wayland text clipboard at the prompt, without executing
+the pending command. Original trailing newlines are preserved. This binding is
+enabled only with `WAYLAND_DISPLAY` and `wl-paste` available (`wl-clipboard` is
+already installed by the GUI group). Clipboard failures leave the line intact
+and show a ZLE message; other environments retain the usual quoted-insert key.
+Review pasted commands before pressing Enter.
+
+Ghostty passes Ctrl+V through rather than consuming it globally, so Neovim's
+normal-mode visual block still works. Its separate config maps Ctrl+V to paste
+in insert mode. **Ctrl+Shift+V** remains terminal-level paste in any application.
+
+## Directory picker
+
 **Ctrl+F** opens a full-height, reverse-layout directory picker rooted at
 `~/dev`, using `fd` (or `fdfind`) and `fzf`. It prefers `fd`, falling back to
 `fdfind` only when `fd` is unavailable. It searches recursively, including hidden
