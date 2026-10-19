@@ -21,7 +21,7 @@ background-opacity-cells = false
 # Native bottom tabs approximate the retro bar; dynamic number-only titles
 # and WezTerm's per-tab colors have no direct Ghostty equivalents.
 gtk-tabs-location = bottom
-window-show-tab-bar = always
+window-show-tab-bar = auto
 gtk-wide-tabs = false
 gtk-toolbar-style = flat
 # Compact square tabs; terminal content padding is unchanged.
@@ -32,7 +32,8 @@ gtk-custom-css = dialogs.css
 # Keep a steady block at the prompt, not shell integration's default bar.
 cursor-style = block
 cursor-style-blink = false
-shell-integration-features = no-cursor
+# Use xterm-256color over SSH without installing terminfo on remote hosts.
+shell-integration-features = no-cursor,ssh-env,no-ssh-terminfo
 cursor-color = #BCB8B4
 cursor-text = #000000
 split-divider-color = #555555

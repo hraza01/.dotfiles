@@ -50,6 +50,28 @@ The Neovim change is maintained separately from this repository. On another
 machine, update that config too; dotfiles setup preserves an existing Neovim
 checkout rather than pulling changes into it.
 
+## SSH compatibility
+
+`shell-integration-features = no-cursor,ssh-env,no-ssh-terminfo` enables
+Ghostty's built-in SSH compatibility wrapper while preserving the steady prompt
+cursor. Local terminals retain `TERM=xterm-ghostty`; plain `ssh` connections
+from an integrated shell use `TERM=xterm-256color`, which is widely available
+on servers. Remote terminfo installation is explicitly disabled: this feature
+does not install files on the server.
+
+After changing this setting, reload with **Alt+Shift+Z**, open a **new Ghostty
+tab/window with a fresh shell**, and reconnect using your normal `ssh` command.
+Existing shells and SSH sessions do not acquire the wrapper retroactively.
+In the new local shell, `whence -w ssh` should report a function; remotely,
+`printf '%s\n' "$TERM"` should report `xterm-256color` (unless a remote shell or
+multiplexer deliberately changes it). `command ssh`, `/usr/bin/ssh`, and tools
+that launch SSH directly bypass the shell wrapper.
+
+The wrapper also requests color/terminal metadata forwarding; acceptance of
+those optional variables depends on the server's SSH configuration. This does
+not copy local shell settings or clipboard access to the server. Use
+**Ctrl+Shift+V** for remote paste; the Ctrl+V ZLE widget remains local-only.
+
 ## Appearance and migration differences
 
 Retains JetBrainsMono Nerd Font Mono / JetBrains Mono fallback at 12pt, disabled
@@ -62,7 +84,8 @@ with server-side decorations so Sway supplies the borders.
 The terminal-size overlay is disabled, including when creating/closing panes
 or resizing windows (`resize-overlay = never`).
 
-- Bottom tabs use Ghostty's compact, flat native bar, always visible. WezTerm's
+- Bottom tabs use Ghostty's compact, flat native bar, hidden with one tab and
+  shown with two or more (`window-show-tab-bar = auto`). WezTerm's
   dynamic number-only retro tab titles, transparent bar and individual tab
   colors do not have direct equivalents. Ghostty-only stylesheets provide
   compact square tabs and minimal black alert dialogs, described below.
