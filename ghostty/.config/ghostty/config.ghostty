@@ -1,0 +1,99 @@
+# Migrated from wezterm/.config/wezterm/wezterm.lua; requires Ghostty 1.3+.
+# Keep unspecified Ghostty defaults, including its secondary keybindings.
+
+# Fonts: same primary/fallback families and disabled ligatures.
+font-family = JetBrainsMono Nerd Font Mono
+font-family = JetBrains Mono
+font-size = 12
+font-feature = calt=0
+font-feature = liga=0
+
+# GTK uses Wayland in the Sway session; let Sway draw its pixel borders.
+window-decoration = server
+gtk-titlebar = false
+# Ghostty uses integer points: 12pt is ~16px at 96 DPI, close to WezTerm's 15px.
+window-padding-x = 12
+window-padding-y = 12
+window-padding-balance = false
+background-opacity = 0.83
+background-opacity-cells = false
+
+# Native bottom tabs approximate the retro bar; dynamic number-only titles
+# and WezTerm's per-tab colors have no direct Ghostty equivalents.
+gtk-tabs-location = bottom
+window-show-tab-bar = always
+gtk-wide-tabs = false
+gtk-toolbar-style = flat
+# Compact square tabs; terminal content padding is unchanged.
+gtk-custom-css = tabs.css
+# Minimal black alerts, including the native tab-renaming prompt.
+gtk-custom-css = dialogs.css
+
+# Keep a steady block at the prompt, not shell integration's default bar.
+cursor-style = block
+cursor-style-blink = false
+shell-integration-features = no-cursor
+cursor-color = #BCB8B4
+cursor-text = #000000
+split-divider-color = #555555
+# Hide the dimensions popup when creating/closing panes or resizing windows.
+resize-overlay = never
+
+# WezTerm's default foreground/ANSI palette plus the explicit black override.
+# Ghostty's defaults (and its bundled "Wez" theme) are not an exact match.
+background = #000000
+foreground = #b2b2b2
+palette = 0=#000000
+palette = 1=#cc5555
+palette = 2=#55cc55
+palette = 3=#cdcd55
+palette = 4=#5455cb
+palette = 5=#cc55cc
+palette = 6=#7acaca
+palette = 7=#cccccc
+palette = 8=#555555
+palette = 9=#ff5555
+palette = 10=#55ff55
+palette = 11=#ffff55
+palette = 12=#5555ff
+palette = 13=#ff55ff
+palette = 14=#55ffff
+palette = 15=#ffffff
+palette-generate = false
+bold-color = bright
+minimum-contrast = 1
+
+# No confirmation for tab, pane, or window closes, even with running jobs.
+confirm-close-surface = false
+
+# Tabs and splits. Ctrl+D remains EOF; Alt+D replaces delete-next-word.
+keybind = ctrl+t=new_tab
+keybind = ctrl+w=close_tab:this
+keybind = alt+shift+r=prompt_tab_title
+keybind = alt+d=new_split:right
+keybind = alt+shift+d=new_split:down
+keybind = alt+w=close_surface
+
+# Readline navigation: Ctrl+arrows for line ends; Alt+arrows for words.
+keybind = ctrl+left=text:\x01
+keybind = ctrl+right=text:\x05
+keybind = alt+left=esc:b
+keybind = alt+right=esc:f
+keybind = alt+backspace=text:\x1b\x7f
+
+keybind = alt+h=goto_split:left
+keybind = alt+j=goto_split:down
+keybind = alt+k=goto_split:up
+keybind = alt+l=goto_split:right
+keybind = alt+shift+z=reload_config
+
+# Copy only when selected; otherwise Ctrl+C reaches the running program.
+keybind = performable:ctrl+c=copy_to_clipboard:mixed
+# Paste is handled in zsh / Neovim insert mode so normal-mode Ctrl+V still
+# enters visual block. Ctrl+Shift+V remains Ghostty's universal paste binding.
+keybind = ctrl+v=unbind
+
+# Leave these to the application/compositor, as in the WezTerm config.
+keybind = alt+enter=unbind
+keybind = super+w=unbind
+# Defaults retain Ctrl+Tab / Ctrl+Shift+Tab and Alt+1..8 / Alt+9 (last tab).

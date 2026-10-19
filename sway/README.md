@@ -6,7 +6,7 @@ Quickshell, kanshi, applets, spiral tiling and swayidle once per session.
 
 ## Controls and session changes
 
-- **Super+Return:** WezTerm; **Super+Shift+F:** Dolphin.
+- **Super+Return:** [Ghostty](../ghostty/README.md); **Super+Shift+F:** Dolphin.
 - **Alt+Space:** Quickshell launcher.
 - **Super+Shift+C:** reload Sway and the existing Quickshell generation.
 - **Super+Shift+Q:** lock through the Hyprlock readiness adapter, with swaylock fallback.

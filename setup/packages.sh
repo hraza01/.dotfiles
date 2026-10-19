@@ -431,7 +431,7 @@ group_gui() {
   python3 -c 'import hashlib, lzma, tarfile' || die "GUI setup requires Python's hashing and tar/xz standard-library modules"
   prepare_spiral_tiling
   local source
-  local stow_groups=(sway hyprlock quickshell wezterm kanshi fontconfig gtk opencode)
+  local stow_groups=(sway hyprlock quickshell ghostty kanshi fontconfig gtk opencode)
   check_stow_packages "${stow_groups[@]}"
   declare -F install_ui_font >/dev/null || die "Source setup/fonts.sh before installing the GUI group"
   declare -F group_auth >/dev/null || die "Source setup/auth.sh before installing the GUI group"
@@ -452,7 +452,7 @@ group_gui() {
     quickshell \
     kanshi nwg-displays \
     grim swappy wl-clipboard \
-    wezterm \
+    ghostty \
     dmenu \
     curl fontconfig ttf-jetbrains-mono ttf-jetbrains-mono-nerd otf-font-awesome \
     dolphin breeze qt6ct xdg-utils gnome-calendar mpv imv zathura zathura-pdf-mupdf poppler \

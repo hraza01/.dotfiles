@@ -131,6 +131,11 @@ private overrides outside the repository.
 
 ## Applications
 
+**Ghostty** is the default terminal for Sway, `TERMINAL`, and Quickshell's
+terminal applications. See [terminal controls and migration](ghostty/README.md)
+for clipboard behavior, activation, appearance differences, and the retained
+WezTerm fallback.
+
 GUI installs **Brave Origin** and **Dolphin**, plus Breeze Dark and `xdg-utils`.
 It merges browser/directory defaults and supplies a Dolphin color scheme only
 when none is selected. **Super+Shift+F** opens Dolphin. See
@@ -146,7 +151,8 @@ transaction behavior and migration from older applications.
 | `sway` | `~/.config/sway/` |
 | `hyprlock` | `~/.config/hypr/` |
 | `quickshell` | `~/.config/quickshell/` |
-| `wezterm` | `~/.config/wezterm/` |
+| [`ghostty`](ghostty/README.md) | `~/.config/ghostty/` |
+| `wezterm` (optional fallback) | `~/.config/wezterm/` |
 | `kanshi` | `~/.config/kanshi/` |
 | `fontconfig` | `~/.config/fontconfig/` |
 | `gtk` | GTK2/GTK3 settings |

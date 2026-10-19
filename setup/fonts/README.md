@@ -30,9 +30,9 @@ Fontconfig maps family aliases only, not global size or weight.
 Qt applications requesting generic sans use these aliases; explicit toolkit or
 application font preferences take precedence over aliases. GUI setup also
 publishes the managed GTK font preferences.
-WezTerm uses JetBrainsMono Nerd Font Mono first, with JetBrains Mono as fallback,
-at its existing 12pt size. Login and Hyprlock use their separate JetBrains font
-settings.
+Ghostty (and the retained WezTerm fallback) uses JetBrainsMono Nerd Font Mono
+first, with JetBrains Mono as fallback, at 12pt. Login and Hyprlock use their
+separate JetBrains font settings.
 
 On macOS with Homebrew coreutils already installed, expose its GNU command names:
 

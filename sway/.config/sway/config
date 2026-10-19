@@ -22,7 +22,7 @@ set $up k
 set $right l
 
 # Terminal
-set $term wezterm
+set $term ghostty
 
 ### Output configuration
 # Optional private kanshi profiles manage mode/position/scale (see its config).
@@ -98,7 +98,7 @@ exec swayidle -w \
     # Change normal to inverse to swap left/right mouse button roles.
     floating_modifier $mod normal
 
-    # Reload both owners without another shell process (WezTerm uses Alt+Z).
+    # Reload both owners without another shell process (Ghostty uses Alt+Shift+Z).
     bindsym $mod+Shift+c reload, exec qs ipc call shell reload
 
     # Lock screen

@@ -4,4 +4,4 @@ export XCURSOR_THEME=Bibata-Original-Classic
 export XCURSOR_SIZE=24
 
 # Default terminal for tools that honor TERMINAL.
-export TERMINAL=wezterm
+export TERMINAL=ghostty

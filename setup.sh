@@ -26,14 +26,14 @@ ${C_CYAN}Available groups:${C_RESET}
           Hyprlock 0.9.6 (Arch); Stows hyprlock. Activation remains manual.
 
   ${C_BOLD}gui${C_RESET}     sway, quickshell, kanshi, nwg-displays (Arch only),
-          Hyprlock, wezterm,
+          Hyprlock, ghostty,
           fonts (Barlow, JetBrains Mono, Font Awesome),
           Bibata cursor theme, grimshot, spiral tiling,
           adw-gtk3-dark, gnome-calendar, Dolphin (Breeze Dark), Brave Origin,
           greetd, Cage, Foot and patched tuigreet,
           plymouth, GRUB tooling, networking/bluetooth/audio/portals,
           GPU driver (runtime-detected), brightness/volume controls
-          Stows: sway, hyprlock, quickshell, wezterm, kanshi,
+          Stows: sway, hyprlock, quickshell, ghostty, kanshi,
                   fontconfig, gtk, opencode
           Includes auth. Enables Bluetooth/power-profiles without starting them.
           Publishes logind lid policy; reboot to activate after review.

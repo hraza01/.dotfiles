@@ -8,7 +8,9 @@ closed. No file/URL operands are supplied by this search launcher.
 
 DBusActivatable entries use their Exec fallback; D-Bus-only entries are omitted.
 No startup-notification/activation token is synthesized. Terminal entries use
-`wezterm start --cwd DIR -- ARGV` (https://wezterm.org/cli/start.html).
+`ghostty --working-directory=DIR -e ARGV` (Ghostty 1.3.1, ghostty(1)/ghostty(5)).
+`-e` preserves argv without shell expansion and forces gtk-single-instance=false
+so the command and working directory apply to a new instance.
 The child is independent of the short-lived helper and Quickshell's lifetime.
 """
 
@@ -291,10 +293,10 @@ def launch(identity, env):
         raise DesktopError("Application executable is unavailable")
     argv = [program, *argv[1:]]
     if entry["terminal"]:
-        terminal = executable("wezterm", env)
+        terminal = executable("ghostty", env)
         if not terminal:
-            raise DesktopError("WezTerm is unavailable")
-        argv = [terminal, "start", "--cwd", entry["cwd"], "--", *argv]
+            raise DesktopError("Ghostty is unavailable")
+        argv = [terminal, f"--working-directory={entry['cwd']}", "-e", *argv]
     # Popen's exec error pipe reports missing executable/cwd/permissions before
     # success. No shell, swaymsg command parser, inherited pipes or owned GUI.
     return subprocess.Popen(
