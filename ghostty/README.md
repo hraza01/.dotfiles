@@ -100,4 +100,6 @@ windows can run `exec ~/.local/bin/dotfiles-tmux`. For tmux configuration change
 prefix then `r` reloads the server; use fresh panes for updated shell integration.
 See [tmux setup](../tmux/README.md) for plugins and multi-monitor behavior.
 
-WezTerm remains an optional fallback (`stow -d ~/.dotfiles -t ~ wezterm`).
+WezTerm configuration is no longer bundled. Before updating an older checkout,
+preserve any wanted WezTerm config outside the repository and unstow `wezterm`
+if it is still linked.

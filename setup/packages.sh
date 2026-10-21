@@ -453,7 +453,6 @@ group_gui() {
     kanshi nwg-displays \
     grim swappy wl-clipboard \
     ghostty tmux fzf \
-    dmenu \
     curl fontconfig ttf-jetbrains-mono ttf-jetbrains-mono-nerd otf-font-awesome \
     dolphin breeze qt6ct xdg-utils gnome-calendar mpv imv zathura zathura-pdf-mupdf poppler \
     libnotify \

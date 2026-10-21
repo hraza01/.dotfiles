@@ -136,8 +136,7 @@ terminal applications. New windows offer a **tmux resume/create chooser** with
 named project sessions and independent grouped views for multiple monitors.
 Tmux handles the bottom window strip, splits and renaming. See
 [tmux sessions and setup](tmux/README.md) and [terminal controls](ghostty/README.md)
-for clipboard behavior, activation, appearance differences, and the retained
-WezTerm fallback.
+for clipboard behavior, activation and appearance.
 
 GUI installs **Brave Origin** and **Dolphin**, plus Breeze Dark and `xdg-utils`.
 It merges browser/directory defaults and supplies a Dolphin color scheme only
@@ -156,7 +155,6 @@ transaction behavior and migration from older applications.
 | `quickshell` | `~/.config/quickshell/` |
 | [`ghostty`](ghostty/README.md) | `~/.config/ghostty/` |
 | [`tmux`](tmux/README.md) | `~/.tmux.conf`, `~/.local/bin/dotfiles-tmux` |
-| `wezterm` (optional fallback) | `~/.config/wezterm/` |
 | `kanshi` | `~/.config/kanshi/` |
 | `fontconfig` | `~/.config/fontconfig/` |
 | `gtk` | GTK2/GTK3 settings |

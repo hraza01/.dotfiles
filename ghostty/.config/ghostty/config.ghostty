@@ -143,7 +143,7 @@ keybind = performable:ctrl+c=copy_to_clipboard:mixed
 # enters visual block. Ctrl+Shift+V remains Ghostty's universal paste binding.
 keybind = ctrl+v=unbind
 
-# Leave these to the application/compositor, as in the WezTerm config.
+# Leave these to the application/compositor.
 keybind = alt+enter=unbind
 keybind = super+w=unbind
 # Ctrl+Shift+N opens another outer Ghostty window with the session chooser.
