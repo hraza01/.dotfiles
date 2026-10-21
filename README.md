@@ -23,7 +23,7 @@ sh ~/.dotfiles/install.sh
 4. (Optional) Symlink the dotfiles into your home directory with GNU Stow.
 
    The repo is laid out as one stow package per app: `zsh/`, `git/`,
-   `hammerspoon/`, `wezterm/`, `opencode/`, `oh-my-posh/`. Stow mirrors each
+   `hammerspoon/`, `wezterm/`, `oh-my-posh/`. Stow mirrors each
    package's contents into `$HOME`, so `zsh/.zshrc` becomes `~/.zshrc`,
    `wezterm/.config/wezterm/` becomes `~/.config/wezterm/`, etc. The repo's own
    `.git/`, `.gitignore`, `Brewfile`, and `README.md` are not packages and are
@@ -32,14 +32,14 @@ sh ~/.dotfiles/install.sh
    Link **everything**:
 
    ```zsh
-   stow -d ~/.dotfiles -t ~ zsh git hammerspoon wezterm opencode oh-my-posh
+   stow -d ~/.dotfiles -t ~ zsh git hammerspoon wezterm oh-my-posh
    ```
 
    Or link **only specific packages** on a machine where you want to keep
    local versions of some files (e.g. a work `.zshrc` — drop `zsh`):
 
    ```zsh
-   stow -d ~/.dotfiles -t ~ git hammerspoon wezterm opencode oh-my-posh
+   stow -d ~/.dotfiles -t ~ git hammerspoon wezterm oh-my-posh
    ```
 
    If real files already exist at the targets (`~/.zshrc`, etc.), stow refuses
@@ -47,13 +47,13 @@ sh ~/.dotfiles/install.sh
    let stow take them over:
 
    ```zsh
-   stow --adopt -d ~/.dotfiles -t ~ zsh git hammerspoon wezterm opencode oh-my-posh
+   stow --adopt -d ~/.dotfiles -t ~ zsh git hammerspoon wezterm oh-my-posh
    ```
 
    To unlink everything later:
 
    ```zsh
-   stow -D -d ~/.dotfiles -t ~ zsh git hammerspoon wezterm opencode oh-my-posh
+   stow -D -d ~/.dotfiles -t ~ zsh git hammerspoon wezterm oh-my-posh
    ```
 
 5. Set up Hammerspoon (double-tap Control to toggle WezTerm). After stowing,
@@ -69,5 +69,4 @@ sh ~/.dotfiles/install.sh
 | `.gitconfig` | Git defaults |
 | `.config/wezterm/wezterm.lua` | WezTerm: font, transparency, tab bar, splits, keybinds |
 | `.hammerspoon/init.lua` | Hammerspoon: double-tap Control to toggle WezTerm |
-| `.config/opencode` | opencode: config, agents, themes, plugins |
 | `.config/oh-my-posh` | Prompt theme |

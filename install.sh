@@ -22,4 +22,5 @@ brew bundle --file "$(dirname "$0")/Brewfile"
 mkdir -p "$HOME/.nvm"
 
 echo
-echo "Done. Next: stow -d ~/.dotfiles -t ~ zsh git hammerspoon wezterm opencode oh-my-posh"
+echo "Done. Next: stow -d ~/.dotfiles -t ~ zsh git hammerspoon wezterm oh-my-posh"
+echo "CLI customizations: sh ~/.dotfiles/ai/setup.sh"
