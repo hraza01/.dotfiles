@@ -97,7 +97,7 @@ def main():
             break
 
         prev_times = curr_times
-        time.sleep(2.0)
+        time.sleep(5.0)
 
 if __name__ == "__main__":
     main()

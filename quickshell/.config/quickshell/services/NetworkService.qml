@@ -9,6 +9,7 @@ Singleton {
 
     property string state: "unavailable"
     property bool available: false
+    property bool snapshotReady: false
     // System daemon liveness, independent of NetworkManager and tailnet login.
     property bool tailscaleServiceRunning: false
     property string lastError: "Waiting for NetworkManager"
@@ -47,7 +48,8 @@ Singleton {
                     root.isWifi = !!d.is_wifi;
                     root.text = d.text || "";
                     root.tooltip = d.tooltip || "Network";
-                    staleTimer.restart();
+                    root.snapshotReady = true;
+                    root.staleTimer.restart();
                 } catch (e) {
                     root.fail("Invalid status response");
                 }
@@ -55,33 +57,54 @@ Singleton {
         }
         // Quickshell 0.3.1 emits this on FailedToStart too (without exited).
         onRunningChanged: {
+            root.snapshotReady = false;
             root.tailscaleServiceRunning = false;
             if (running) {
                 root.restartTimer.stop();
-                staleTimer.restart();
+                root.staleTimer.restart();
             }
             else {
-                staleTimer.stop();
+                root.staleTimer.stop();
                 root.fail("Status monitor stopped");
-                restartTimer.restart();
+                root.restartTimer.restart();
             }
         }
+    }
+
+    // Own the event client directly so reload/exit also cleans it up. The
+    // snapshot helper installs SIGUSR1 before its first response; never signal
+    // a newly started Python process before that readiness indication.
+    readonly property Process eventProc: Process {
+        command: ["nmcli", "monitor"]
+        running: true
+        stdout: SplitParser {
+            onRead: line => { if (root.snapshotReady) root.monitorProc.signal(10); }
+        }
+        onRunningChanged: {
+            if (running) root.eventRetry.stop();
+            else root.eventRetry.restart();
+        }
+    }
+
+    readonly property Timer eventRetry: Timer {
+        interval: 5000
+        onTriggered: root.eventProc.running = true
     }
 
     readonly property Timer restartTimer: Timer {
         interval: 3000
         repeat: false
-        onTriggered: monitorProc.running = true
+        onTriggered: root.monitorProc.running = true
     }
 
     readonly property Timer staleTimer: Timer {
         // Relative Qt timer: heartbeat expiry does not use the wall clock.
-        interval: 15000
+        interval: 45000
         running: true
         onTriggered: {
             root.fail("Status monitor timed out");
-            monitorProc.signal(9);
-            restartTimer.restart();
+            root.monitorProc.signal(9);
+            root.restartTimer.restart();
         }
     }
 }

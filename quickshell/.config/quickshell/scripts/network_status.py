@@ -5,6 +5,8 @@ import ipaddress
 import json
 import os
 import re
+import select
+import signal
 import subprocess
 import sys
 import time
@@ -149,13 +151,35 @@ def get_snapshot():
 
 
 def main():
-    while True:
+    if "-c" not in sys.argv:
         print(json.dumps(get_snapshot()), flush=True)
-        if "-c" not in sys.argv:
-            break
-        # Two nmcli calls (3s each) + systemctl (2s) + sleep = at most 13s
-        # of bounded waits between snapshots, below the QML 15s watchdog.
-        time.sleep(5)
+        return
+    # QML owns a persistent `nmcli monitor` process and sends SIGUSR1 on
+    # changes. A self-pipe wakes the wait without interrupting an active query
+    # or launching a subprocess from a signal handler. Periodic reconciliation
+    # also covers signal strength, tailscaled and a failed event monitor.
+    read_fd, write_fd = os.pipe2(os.O_NONBLOCK | os.O_CLOEXEC)
+    previous_handler = signal.signal(signal.SIGUSR1, lambda *_: None)
+    previous_fd = signal.set_wakeup_fd(write_fd, warn_on_full_buffer=False)
+    try:
+        while True:
+            # Coalesce events already queued; events during a snapshot remain
+            # pending for the next one. Limit event bursts to one query/second.
+            try:
+                while os.read(read_fd, 4096):
+                    pass
+            except BlockingIOError:
+                pass
+            started = time.monotonic()
+            print(json.dumps(get_snapshot()), flush=True)
+            time.sleep(max(0, 1 - (time.monotonic() - started)))
+            # At most 30s + 8s of bounded queries, below QML's 45s watchdog.
+            select.select([read_fd], [], [], 30)
+    finally:
+        signal.set_wakeup_fd(previous_fd)
+        signal.signal(signal.SIGUSR1, previous_handler)
+        os.close(read_fd)
+        os.close(write_fd)
 
 
 if __name__ == "__main__":

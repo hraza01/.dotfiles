@@ -44,8 +44,9 @@ On new hardware, review connector names, modes, scaling, panel subpixel layout
 and external monitor identities. Test dock/undock and lid-close/open, including
 while locked and in the resize/exit binding modes. Sway's lid handler requires
 `HandleLidSwitch=ignore` in logind: docked lid-close disables the internal panel;
-undocked lid-close also requests suspend-then-hibernate. Review the handler's
-internal connector assumption and local hibernation support. GUI setup publishes
+undocked lid-close also requests `systemctl --check-inhibitors=yes sleep`, letting
+logind select a supported sleep operation. Review the handler's internal connector
+assumption and local suspend/resume behavior. GUI setup publishes
 the logind policy without restarting logind; activate it by a deliberate reboot.
 
 Upstream: <https://github.com/nwg-piotr/nwg-displays>

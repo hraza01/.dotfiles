@@ -139,7 +139,10 @@ ShellRoot {
         target: "osd"
         function showBrightness(percent: string): void {
             const value = Number(percent);
-            if (Number.isFinite(value) && value >= 0) ShellState.showBrightnessOsd(Math.round(value));
+            if (Number.isFinite(value) && value >= 0) {
+                BrightnessService.refresh();
+                ShellState.showBrightnessOsd(Math.round(value));
+            }
         }
         function showVolume(percent: string, muted: string): void {
             const value = Number(percent);

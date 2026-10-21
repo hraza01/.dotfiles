@@ -25,7 +25,9 @@ if [ "$other_active" -eq 0 ]; then
     python3 "$HOME/.config/hypr/lock.py"
     python3 "$HOME/.config/hypr/lock.py" --check-ready
     swaymsg output eDP-1 disable
-    systemctl suspend-then-hibernate
+    # logind selects a supported operation (suspend when lockdown forbids
+    # hibernation). Do not force past another application's sleep inhibitor.
+    systemctl --check-inhibitors=yes sleep
 else
     swaymsg output eDP-1 disable
 fi

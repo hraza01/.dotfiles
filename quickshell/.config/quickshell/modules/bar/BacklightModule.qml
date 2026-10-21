@@ -21,6 +21,7 @@ Rectangle {
         id: ma
         anchors.fill: parent
         hoverEnabled: true
+        onEntered: BrightnessService.refresh()
         onWheel: (wheel) => {
             BrightnessService.scroll(wheel.angleDelta.y);
             wheel.accepted = true;

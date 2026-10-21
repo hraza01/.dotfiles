@@ -60,7 +60,7 @@ Singleton {
         stdout: StdioCollector { id: infoOutput }
         stderr: StdioCollector {}
         onExited: (code, status) => {
-            watchdog.stop();
+            root.watchdog.stop();
             root.busy = false;
             try {
                 let result = JSON.parse(infoOutput.text);
@@ -76,7 +76,7 @@ Singleton {
             Qt.callLater(root.drain);
         }
         onRunningChanged: if (!running && root.busy) {
-            watchdog.stop();
+            root.watchdog.stop();
             root.busy = false;
             root.pendingActions = [];
             root.refreshPending = false;
@@ -87,7 +87,7 @@ Singleton {
     readonly property Timer watchdog: Timer {
         interval: 4000
         onTriggered: {
-            infoProc.signal(9);
+            root.infoProc.signal(9);
             root.busy = false;
             root.pendingActions = [];
             root.refreshPending = false;
@@ -96,10 +96,17 @@ Singleton {
     }
 
     readonly property Timer pollTimer: Timer {
-        interval: 5000
-        running: true
+        // Keys, scrolling and hover refresh immediately; reconcile external
+        // changes occasionally rather than spawning a helper every five seconds.
+        interval: 30000
+        running: ShellState.contentAllowed
         repeat: true
         onTriggered: root.refresh()
+    }
+
+    readonly property Connections sessionConnection: Connections {
+        target: ShellState
+        function onContentAllowedChanged() { if (ShellState.contentAllowed) root.refresh(); }
     }
 
     Component.onCompleted: refresh()

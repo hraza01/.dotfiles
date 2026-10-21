@@ -24,12 +24,18 @@ or a normal new login for startup changes. See [locking](../hyprlock/README.md),
 Lid-close queries and validates outputs before making changes. Docked, it disables
 the internal panel and leaves the desktop awake. Undocked, it runs the Hyprlock
 adapter and read-only readiness check before disabling the panel and requesting
-suspend-then-hibernate. If readiness or the output query fails, it does neither.
+`systemctl --check-inhibitors=yes sleep`. Systemd selects a supported operation,
+including suspend when hibernation is unavailable. If readiness or the output
+query fails, it does neither.
 The pre-sleep hook skips swaylock only when `lock.py --check-ready` confirms an
 already acknowledged, live Hyprlock owner; otherwise it runs the existing direct
 `swaylock -f -c 000000`. Manual/idle launch fallback remains unchanged.
 Output topology and native lifetime can change after the readiness snapshot;
 see [the native contract and limits](../hyprlock/README.md).
+
+The idle launcher keeps the default 5-minute lock / 10-minute screen-off policy.
+An optional battery-only 5-minute screen-off / 20-minute sleep policy is described
+in [battery tuning](../setup/power/README.md), along with activation and measurement.
 
 ## Spiral tiling
 

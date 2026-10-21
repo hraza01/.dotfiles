@@ -13,8 +13,10 @@ Compatibility target: Quickshell **0.3.1**, Qt **6.11.2**, Arch. Setup installs
 repository packages, not enforced version pins. Keep Qt and Quickshell coherent
 when upgrading; review API compatibility before substituting another release.
 Runtime helpers use the Python standard library and the desktop's command-line
-tools, including `wpctl`, `brightnessctl`, `nmcli`, `busctl`, `systemctl`, `loginctl`
-and `pgrep`.
+tools, including `wpctl`, `brightnessctl`, `nmcli`, `busctl`, `systemctl` and `loginctl`.
+
+Battery-oriented polling intervals, the optional Sway idle policy and a read-only
+measurement helper are documented in [battery tuning](../setup/power/README.md).
 
 - Sway starts one `quickshell -n` per display/configuration. Do not additionally
   enable a Quickshell user service.

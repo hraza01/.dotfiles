@@ -5,3 +5,6 @@ export XCURSOR_SIZE=24
 
 # Default terminal for tools that honor TERMINAL.
 export TERMINAL=ghostty
+
+# Opt in on a future login: battery display-off at 5 min, sleep at 20 min.
+# export DOTFILES_BATTERY_IDLE=1
