@@ -308,9 +308,9 @@ group_shell() {
   log "Installing shell group"
 
   case "$DISTRO" in
-    arch)   pkg_group_install stow git git-crypt zsh fzf fd starship ;;
-    fedora) pkg_group_install stow git git-crypt zsh fzf fd-find starship ;;
-    debian) pkg_group_install stow git git-crypt zsh fzf fd-find starship ;;
+    arch)   pkg_group_install stow git git-crypt zsh fzf fd zoxide starship ;;
+    fedora) pkg_group_install stow git git-crypt zsh fzf fd-find zoxide starship ;;
+    debian) pkg_group_install stow git git-crypt zsh fzf fd-find zoxide starship ;;
     *)      die "Cannot install shell packages on this distro" ;;
   esac
 

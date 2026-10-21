@@ -30,7 +30,7 @@ incomplete tool installations are preserved for explicit reconciliation.
 
 | Group | Installation and activation |
 |---|---|
-| `shell` | Shell tools, zsh and Starship; selects and verifies the passwd login shell. |
+| `shell` | Shell tools, zsh, zoxide (`cd`) and Starship; selects and verifies the passwd login shell. |
 | `auth` | greetd/Cage/Foot/custom tuigreet and Hyprlock; activation remains manual. |
 | `gui` | Sway desktop and applications, including auth; enables Bluetooth and power-profiles services without starting them. |
 | `dev` | Development tools; enables/starts Tailscale and the rootless Docker socket, selects its context and enables user lingering. |

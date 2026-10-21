@@ -6,6 +6,21 @@ Ghostty opens the [tmux project chooser](../tmux/README.md). New tmux pane shell
 explicitly source Ghostty's Zsh integration for SSH compatibility and terminal
 metadata. Existing shells need a fresh pane to pick up this change.
 
+## Directory navigation
+
+The shell setup group installs **zoxide** and initializes it as `cd` in zsh:
+
+- `cd path`, `cd ..`, `cd -` and bare `cd` handle normal directory navigation.
+- `cd keyword` jumps to a matching directory after you have visited it.
+- `cd keyword another` narrows the match with multiple keywords.
+- `cdi` opens zoxide's interactive history picker using `fzf`.
+- `builtin cd path` explicitly uses zsh's original command.
+
+Directory changes from the `f` and **Ctrl+F** pickers also feed zoxide's history
+through its directory-change hook. New shells enable this automatically; run
+`eval "$(zoxide init zsh --cmd cd)"` to enable it in an existing shell.
+If zoxide is unavailable, `cd` remains the zsh builtin.
+
 ## Clipboard
 
 **Ctrl+V** inserts the Wayland text clipboard at the prompt, without executing

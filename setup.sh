@@ -19,7 +19,8 @@ ${C_CYAN}Usage:${C_RESET}  ./setup.sh <group> [group ...]
 
 ${C_CYAN}Available groups:${C_RESET}
 
-  ${C_BOLD}shell${C_RESET}   zsh, fzf, fd, stow, git, git-crypt, starship; selects the login shell
+  ${C_BOLD}shell${C_RESET}   zsh, fzf, fd, zoxide, stow, git, git-crypt, starship
+          Selects the login shell; cd uses zoxide.
           Stows: zsh, starship
 
   ${C_BOLD}auth${C_RESET}    Prepare greetd, Cage, Foot, patched tuigreet and

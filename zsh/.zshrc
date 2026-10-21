@@ -188,3 +188,9 @@ if [[ -n "$TMUX" && -n "$GHOSTTY_RESOURCES_DIR" &&
       -f "$GHOSTTY_RESOURCES_DIR/shell-integration/zsh/ghostty-integration" ]]; then
   source "$GHOSTTY_RESOURCES_DIR/shell-integration/zsh/ghostty-integration"
 fi
+
+# Initialize last so directory tracking follows the final shell hooks.
+# Use cd for path/keyword jumps and cdi for the interactive picker.
+if command -v zoxide &>/dev/null; then
+  eval "$(zoxide init zsh --cmd cd)"
+fi
