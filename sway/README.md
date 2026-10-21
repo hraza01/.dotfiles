@@ -6,7 +6,9 @@ Quickshell, kanshi, applets, spiral tiling and swayidle once per session.
 
 ## Controls and session changes
 
-- **Super+Return:** [Ghostty](../ghostty/README.md); **Super+Shift+F:** Dolphin.
+- **Super+Return:** [Ghostty's tmux resume/create chooser](../tmux/README.md);
+  **Super+Shift+F:** Dolphin. Use separate Ghostty windows/workspaces for different
+  projects or independent grouped views on multiple monitors.
 - **Alt+Space:** Quickshell launcher.
 - **Super+Shift+C:** reload Sway and the existing Quickshell generation.
 - **Super+Shift+Q:** lock through the Hyprlock readiness adapter, with swaylock fallback.

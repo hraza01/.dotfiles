@@ -1,5 +1,5 @@
-/* Ghostty 1.3 / libadwaita alert dialogs, including the tab-rename prompt.
- * Rename dialogs have no unique CSS class: these rules intentionally theme
+/* Ghostty 1.3 / libadwaita alert dialogs (tmux handles window renaming).
+ * These rules intentionally theme
  * all Ghostty alerts, not other applications. Keep all text and responses.
  */
 dialog.alert {

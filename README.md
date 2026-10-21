@@ -132,7 +132,10 @@ private overrides outside the repository.
 ## Applications
 
 **Ghostty** is the default terminal for Sway, `TERMINAL`, and Quickshell's
-terminal applications. See [terminal controls and migration](ghostty/README.md)
+terminal applications. New windows offer a **tmux resume/create chooser** with
+named project sessions and independent grouped views for multiple monitors.
+Tmux handles the bottom window strip, splits and renaming. See
+[tmux sessions and setup](tmux/README.md) and [terminal controls](ghostty/README.md)
 for clipboard behavior, activation, appearance differences, and the retained
 WezTerm fallback.
 
@@ -152,6 +155,7 @@ transaction behavior and migration from older applications.
 | `hyprlock` | `~/.config/hypr/` |
 | `quickshell` | `~/.config/quickshell/` |
 | [`ghostty`](ghostty/README.md) | `~/.config/ghostty/` |
+| [`tmux`](tmux/README.md) | `~/.tmux.conf`, `~/.local/bin/dotfiles-tmux` |
 | `wezterm` (optional fallback) | `~/.config/wezterm/` |
 | `kanshi` | `~/.config/kanshi/` |
 | `fontconfig` | `~/.config/fontconfig/` |

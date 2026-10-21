@@ -1,4 +1,4 @@
-# Migrated from wezterm/.config/wezterm/wezterm.lua; requires Ghostty 1.3+.
+# Arch Ghostty + tmux project sessions; requires Ghostty 1.3+.
 # Keep unspecified Ghostty defaults, including its secondary keybindings.
 
 # Fonts: same primary/fallback families and disabled ligatures.
@@ -11,6 +11,8 @@ font-feature = liga=0
 # GTK uses Wayland in the Sway session; let Sway draw its pixel borders.
 window-decoration = server
 gtk-titlebar = false
+# Applies to every new window, including Sway's Super+Return and Ctrl+Shift+N.
+command = shell:exec "$HOME/.local/bin/dotfiles-tmux"
 # Ghostty uses integer points: 12pt is ~16px at 96 DPI, close to WezTerm's 15px.
 window-padding-x = 12
 window-padding-y = 12
@@ -18,15 +20,9 @@ window-padding-balance = false
 background-opacity = 0.83
 background-opacity-cells = false
 
-# Native bottom tabs approximate the retro bar; dynamic number-only titles
-# and WezTerm's per-tab colors have no direct Ghostty equivalents.
-gtk-tabs-location = bottom
-window-show-tab-bar = auto
-gtk-wide-tabs = false
-gtk-toolbar-style = flat
-# Compact square tabs; terminal content padding is unchanged.
-gtk-custom-css = tabs.css
-# Minimal black alerts, including the native tab-renaming prompt.
+# tmux owns the bottom window strip and rename prompt.
+window-show-tab-bar = never
+# Minimal black native alerts (configuration errors, clipboard prompts, etc.).
 gtk-custom-css = dialogs.css
 
 # Keep a steady block at the prompt, not shell integration's default bar.
@@ -67,13 +63,43 @@ minimum-contrast = 1
 # No confirmation for tab, pane, or window closes, even with running jobs.
 confirm-close-surface = false
 
-# Tabs and splits. Ctrl+D remains EOF; Alt+D replaces delete-next-word.
-keybind = ctrl+t=new_tab
-keybind = ctrl+w=close_tab:this
-keybind = alt+shift+r=prompt_tab_title
-keybind = alt+d=new_split:right
-keybind = alt+shift+d=new_split:down
-keybind = alt+w=close_surface
+# tmux windows and splits. Each sequence sends the Ctrl+S prefix first.
+keybind = ctrl+t=text:\x13c
+keybind = ctrl+shift+t=text:\x13c
+keybind = ctrl+w=text:\x13&
+keybind = ctrl+shift+w=text:\x13x
+keybind = alt+shift+r=text:\x13,
+keybind = ctrl+shift+r=text:\x13,
+keybind = alt+d=text:\x13|
+keybind = alt+shift+d=text:\x13-
+keybind = ctrl+shift+o=text:\x13|
+keybind = ctrl+shift+e=text:\x13-
+keybind = alt+w=text:\x13x
+keybind = ctrl+shift+enter=text:\x13m
+keybind = ctrl+tab=text:\x13n
+keybind = ctrl+shift+tab=text:\x13p
+keybind = ctrl+page_down=text:\x13n
+keybind = ctrl+page_up=text:\x13p
+keybind = ctrl+shift+left=text:\x13p
+keybind = ctrl+shift+right=text:\x13n
+keybind = alt+1=text:\x131
+keybind = alt+2=text:\x132
+keybind = alt+3=text:\x133
+keybind = alt+4=text:\x134
+keybind = alt+5=text:\x135
+keybind = alt+6=text:\x136
+keybind = alt+7=text:\x137
+keybind = alt+8=text:\x138
+keybind = alt+9=text:\x139
+keybind = alt+digit_1=text:\x131
+keybind = alt+digit_2=text:\x132
+keybind = alt+digit_3=text:\x133
+keybind = alt+digit_4=text:\x134
+keybind = alt+digit_5=text:\x135
+keybind = alt+digit_6=text:\x136
+keybind = alt+digit_7=text:\x137
+keybind = alt+digit_8=text:\x138
+keybind = alt+digit_9=text:\x139
 
 # Readline navigation: Ctrl+arrows for line ends; Alt+arrows for words.
 keybind = ctrl+left=text:\x01
@@ -82,10 +108,28 @@ keybind = alt+left=esc:b
 keybind = alt+right=esc:f
 keybind = alt+backspace=text:\x1b\x7f
 
-keybind = alt+h=goto_split:left
-keybind = alt+j=goto_split:down
-keybind = alt+k=goto_split:up
-keybind = alt+l=goto_split:right
+keybind = alt+h=text:\x13h
+keybind = alt+j=text:\x13j
+keybind = alt+k=text:\x13k
+keybind = alt+l=text:\x13l
+keybind = alt+shift+h=text:\x13H
+keybind = alt+shift+j=text:\x13J
+keybind = alt+shift+k=text:\x13K
+keybind = alt+shift+l=text:\x13L
+keybind = ctrl+alt+left=text:\x13h
+keybind = ctrl+alt+down=text:\x13j
+keybind = ctrl+alt+up=text:\x13k
+keybind = ctrl+alt+right=text:\x13l
+keybind = ctrl+alt+shift+left=text:\x13H
+keybind = ctrl+alt+shift+down=text:\x13J
+keybind = ctrl+alt+shift+up=text:\x13K
+keybind = ctrl+alt+shift+right=text:\x13L
+keybind = super+ctrl+[=text:\x13;
+keybind = super+ctrl+]=text:\x13o
+keybind = super+ctrl+shift+left=text:\x13H
+keybind = super+ctrl+shift+down=text:\x13J
+keybind = super+ctrl+shift+up=text:\x13K
+keybind = super+ctrl+shift+right=text:\x13L
 keybind = alt+shift+z=reload_config
 
 # Copy only when selected; otherwise Ctrl+C reaches the running program.
@@ -97,4 +141,4 @@ keybind = ctrl+v=unbind
 # Leave these to the application/compositor, as in the WezTerm config.
 keybind = alt+enter=unbind
 keybind = super+w=unbind
-# Defaults retain Ctrl+Tab / Ctrl+Shift+Tab and Alt+1..8 / Alt+9 (last tab).
+# Ctrl+Shift+N opens another outer Ghostty window with the session chooser.

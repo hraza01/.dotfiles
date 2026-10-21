@@ -182,3 +182,9 @@ if [ -f "$GCLOUD_DIR/google-cloud-sdk/completion.zsh.inc" ]; then . "$GCLOUD_DIR
 if command -v starship &>/dev/null; then
   eval "$(starship init zsh)"
 fi
+
+# Ghostty starts tmux rather than zsh, so fresh pane shells need integration.
+if [[ -n "$TMUX" && -n "$GHOSTTY_RESOURCES_DIR" &&
+      -f "$GHOSTTY_RESOURCES_DIR/shell-integration/zsh/ghostty-integration" ]]; then
+  source "$GHOSTTY_RESOURCES_DIR/shell-integration/zsh/ghostty-integration"
+fi

@@ -1,5 +1,11 @@
 # Zsh controls
 
+## tmux integration
+
+Ghostty opens the [tmux project chooser](../tmux/README.md). New tmux pane shells
+explicitly source Ghostty's Zsh integration for SSH compatibility and terminal
+metadata. Existing shells need a fresh pane to pick up this change.
+
 ## Clipboard
 
 **Ctrl+V** inserts the Wayland text clipboard at the prompt, without executing

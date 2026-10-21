@@ -8,7 +8,7 @@ closed. No file/URL operands are supplied by this search launcher.
 
 DBusActivatable entries use their Exec fallback; D-Bus-only entries are omitted.
 No startup-notification/activation token is synthesized. Terminal entries use
-`ghostty --working-directory=DIR -e ARGV` (Ghostty 1.3.1, ghostty(1)/ghostty(5)).
+`ghostty --working-directory=DIR -e dotfiles-tmux -- ARGV` (Ghostty 1.3.1).
 `-e` preserves argv without shell expansion and forces gtk-single-instance=false
 so the command and working directory apply to a new instance.
 The child is independent of the short-lived helper and Quickshell's lifetime.
@@ -296,7 +296,10 @@ def launch(identity, env):
         terminal = executable("ghostty", env)
         if not terminal:
             raise DesktopError("Ghostty is unavailable")
-        argv = [terminal, f"--working-directory={entry['cwd']}", "-e", *argv]
+        launcher = os.path.join(env.get("HOME", str(Path.home())), ".local/bin/dotfiles-tmux")
+        if not executable(launcher, env):
+            raise DesktopError("tmux terminal launcher is unavailable; Stow the tmux package")
+        argv = [terminal, f"--working-directory={entry['cwd']}", "-e", launcher, "--", *argv]
     # Popen's exec error pipe reports missing executable/cwd/permissions before
     # success. No shell, swaymsg command parser, inherited pipes or owned GUI.
     return subprocess.Popen(

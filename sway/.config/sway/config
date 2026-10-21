@@ -21,7 +21,7 @@ set $down j
 set $up k
 set $right l
 
-# Terminal
+# Ghostty's command opens the tmux resume/create chooser for each new window.
 set $term ghostty
 
 ### Output configuration
@@ -77,7 +77,7 @@ exec python3 -B "$HOME/.config/sway/scripts/idle.py"
 #
 # Basics:
 #
-    # Start a terminal
+    # Open a terminal and resume/create a tmux project session.
     bindsym $mod+Return exec $term
 
     # Kill focused window
