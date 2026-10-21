@@ -19,7 +19,7 @@ ${C_CYAN}Usage:${C_RESET}  ./setup.sh <group> [group ...]
 
 ${C_CYAN}Available groups:${C_RESET}
 
-  ${C_BOLD}shell${C_RESET}   zsh, fzf, fd, stow, git, starship; selects the login shell
+  ${C_BOLD}shell${C_RESET}   zsh, fzf, fd, stow, git, git-crypt, starship; selects the login shell
           Stows: zsh, starship
 
   ${C_BOLD}auth${C_RESET}    Prepare greetd, Cage, Foot, patched tuigreet and
@@ -34,7 +34,7 @@ ${C_CYAN}Available groups:${C_RESET}
           plymouth, GRUB tooling, networking/bluetooth/audio/portals,
           GPU driver (runtime-detected), brightness/volume controls
           Stows: sway, hyprlock, quickshell, ghostty, kanshi,
-                  fontconfig, gtk, opencode
+                  fontconfig, gtk
           Includes auth. Enables Bluetooth/power-profiles without starting them.
           Publishes logind lid policy; reboot to activate after review.
 

@@ -156,7 +156,6 @@ transaction behavior and migration from older applications.
 | `kanshi` | `~/.config/kanshi/` |
 | `fontconfig` | `~/.config/fontconfig/` |
 | `gtk` | GTK2/GTK3 settings |
-| `opencode` | `~/.config/opencode/` |
 
 Keep validation suites, screenshots, deployment logs and recovery snapshots
 outside this repository. Generated application and monitor state is ignored.

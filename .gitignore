@@ -30,6 +30,18 @@ sway/.config/sway/workspaces
 # OpenCode regenerates this file with a private service password.
 **/.config/opencode/service.json
 
+# CLI configuration is local; only ai/agents and ai/skills are shared.
+/opencode/
+/.opencode/
+/.config/opencode/
+/pi/
+/.pi/
+/.claude/
+/.agents/
+/.gemini/
+/agents/
+/skills/
+
 # Private inputs are kept outside the checkout; these are accidental-copy guards.
 /private/
 /.private/

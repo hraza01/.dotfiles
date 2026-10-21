@@ -1,2 +1,4 @@
 # Empty context lines in unified diffs contain a significant leading space.
 setup/tuigreet/console.patch whitespace=-blank-at-eol
+
+ai/** filter=git-crypt diff=git-crypt

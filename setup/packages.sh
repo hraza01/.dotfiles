@@ -308,9 +308,9 @@ group_shell() {
   log "Installing shell group"
 
   case "$DISTRO" in
-    arch)   pkg_group_install stow git zsh fzf fd starship ;;
-    fedora) pkg_group_install stow git zsh fzf fd-find starship ;;
-    debian) pkg_group_install stow git zsh fzf fd-find starship ;;
+    arch)   pkg_group_install stow git git-crypt zsh fzf fd starship ;;
+    fedora) pkg_group_install stow git git-crypt zsh fzf fd-find starship ;;
+    debian) pkg_group_install stow git git-crypt zsh fzf fd-find starship ;;
     *)      die "Cannot install shell packages on this distro" ;;
   esac
 
@@ -431,7 +431,7 @@ group_gui() {
   python3 -c 'import hashlib, lzma, tarfile' || die "GUI setup requires Python's hashing and tar/xz standard-library modules"
   prepare_spiral_tiling
   local source
-  local stow_groups=(sway hyprlock quickshell ghostty kanshi fontconfig gtk opencode)
+  local stow_groups=(sway hyprlock quickshell ghostty kanshi fontconfig gtk)
   check_stow_packages "${stow_groups[@]}"
   declare -F install_ui_font >/dev/null || die "Source setup/fonts.sh before installing the GUI group"
   declare -F group_auth >/dev/null || die "Source setup/auth.sh before installing the GUI group"
