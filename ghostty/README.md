@@ -32,7 +32,11 @@ Sway and Ghostty's **Ctrl+Shift+N**.
 | Ctrl+Shift+C / Ctrl+Shift+V | Universal copy / paste |
 
 Tmux owns all windows, splits and the bottom status strip. Native tabs are hidden,
-their shortcuts are redirected, and renaming uses tmux's prompt. Ctrl+D remains
+their shortcuts are redirected, and renaming uses tmux's prompt. The command
+palette (**Ctrl+Shift+P**) replaces native tab/pane actions with tmux actions via
+`tmux-palette.ghostty`; Ghostty's native right-click menu is disabled. Ghostty 1.3
+has no global setting that disables the underlying native tab/split engine.
+Ctrl+D remains
 EOF and Ctrl+F remains the shell directory picker. Sway's **Super+W** closes the
 outer Ghostty window and detaches the client, preserving the project. The kill
 pane/window shortcuts end programs without confirmation.
@@ -66,11 +70,13 @@ their integration.
 
 ## Appearance
 
-JetBrainsMono Nerd Font Mono / JetBrains Mono at 12pt, disabled ligatures, 12pt
+JetBrainsMono Nerd Font Mono / JetBrains Mono at 12pt, disabled ligatures, 6pt
 padding, black background at 83% opacity, the explicit WezTerm ANSI palette,
 steady block cursor, and Sway-managed borders. The resize overlay is disabled.
 
 Tmux draws a single minimal bottom window strip and monochrome pane dividers.
+Tmux adds no padding around pane content; borders occupy one terminal cell, and
+window labels have one space on either side in the status bar.
 Ghostty's former `tabs.css` and GTK tab-placement settings are retired.
 `dialogs.css` still styles native configuration/clipboard alerts with a compact,
 square black panel. All messages, buttons and warning colors remain visible.

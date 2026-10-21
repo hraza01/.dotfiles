@@ -13,15 +13,19 @@ window-decoration = server
 gtk-titlebar = false
 # Applies to every new window, including Sway's Super+Return and Ctrl+Shift+N.
 command = shell:exec "$HOME/.local/bin/dotfiles-tmux"
-# Ghostty uses integer points: 12pt is ~16px at 96 DPI, close to WezTerm's 15px.
-window-padding-x = 12
-window-padding-y = 12
+# Outer terminal padding in points; tmux adds no padding inside its panes.
+window-padding-x = 6
+window-padding-y = 6
 window-padding-balance = false
 background-opacity = 0.83
 background-opacity-cells = false
 
 # tmux owns the bottom window strip and rename prompt.
 window-show-tab-bar = never
+# Remove native tab/split creation from the palette and context menu as well.
+# Ghostty has no global switch disabling the underlying native actions.
+right-click-action = ignore
+config-file = tmux-palette.ghostty
 # Minimal black native alerts (configuration errors, clipboard prompts, etc.).
 gtk-custom-css = dialogs.css
 

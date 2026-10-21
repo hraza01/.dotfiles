@@ -1,0 +1,45 @@
+# tmux window/pane controls plus Ghostty's terminal and outer-window controls.
+# The bare key is intentional: in Ghostty 1.3.1 an empty assignment restores
+# defaults, while a valueless option clears them. Verified with +show-config.
+command-palette-entry
+
+command-palette-entry = title:tmux - New window,action:text:\x13c
+command-palette-entry = title:tmux - Rename window,action:"text:\\x13,"
+command-palette-entry = title:tmux - Close window,action:text:\x13&
+command-palette-entry = title:tmux - Close pane,action:text:\x13x
+command-palette-entry = title:tmux - Split right,action:text:\x13|
+command-palette-entry = title:tmux - Split down,action:text:\x13-
+command-palette-entry = title:tmux - Focus left pane,action:text:\x13h
+command-palette-entry = title:tmux - Focus down pane,action:text:\x13j
+command-palette-entry = title:tmux - Focus up pane,action:text:\x13k
+command-palette-entry = title:tmux - Focus right pane,action:text:\x13l
+command-palette-entry = title:tmux - Zoom pane,action:text:\x13m
+command-palette-entry = title:tmux - Next window,action:text:\x13n
+command-palette-entry = title:tmux - Previous window,action:text:\x13p
+command-palette-entry = title:tmux - Choose session,action:text:\x13s
+command-palette-entry = title:tmux - Rename session,action:text:\x13$
+command-palette-entry = title:tmux - Detach session,action:text:\x13d
+
+command-palette-entry = title:New Ghostty window,action:new_window
+command-palette-entry = title:Close Ghostty window,action:close_window
+command-palette-entry = title:Quit Ghostty,action:quit
+command-palette-entry = title:Copy to clipboard,action:copy_to_clipboard:mixed
+command-palette-entry = title:Paste from clipboard,action:paste_from_clipboard
+command-palette-entry = title:Select all,action:select_all
+command-palette-entry = title:Search,action:start_search
+command-palette-entry = title:Search selection,action:search_selection
+command-palette-entry = title:Next search result,action:navigate_search:next
+command-palette-entry = title:Previous search result,action:navigate_search:previous
+command-palette-entry = title:End search,action:end_search
+command-palette-entry = title:Increase font size,action:increase_font_size:1
+command-palette-entry = title:Decrease font size,action:decrease_font_size:1
+command-palette-entry = title:Reset font size,action:reset_font_size
+command-palette-entry = title:Toggle fullscreen,action:toggle_fullscreen
+command-palette-entry = title:Toggle maximize,action:toggle_maximize
+command-palette-entry = title:Toggle background opacity,action:toggle_background_opacity
+command-palette-entry = title:Toggle mouse reporting,action:toggle_mouse_reporting
+command-palette-entry = title:Clear screen,action:clear_screen
+command-palette-entry = title:Reset terminal,action:reset
+command-palette-entry = title:Open config,action:open_config
+command-palette-entry = title:Reload config,action:reload_config
+command-palette-entry = title:Toggle inspector,action:inspector:toggle
