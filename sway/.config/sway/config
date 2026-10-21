@@ -73,6 +73,8 @@ exec swayidle -w \
 
 # Cursor theme (seat config for sway's own cursor).
   seat "seat0" xcursor_theme Bibata-Original-Classic 24
+# Hide the pointer after 10 seconds without pointer activity.
+  seat "seat0" hide_cursor 10000
 
 ### Key bindings
 #

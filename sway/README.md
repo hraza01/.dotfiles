@@ -12,6 +12,8 @@ Quickshell, kanshi, applets, spiral tiling and swayidle once per session.
 - **Super+Shift+Q:** lock through the Hyprlock readiness adapter, with swaylock fallback.
 - **Super+Shift+E:** exit confirmation; **Super+R:** resize mode.
 
+The pointer hides after 10 seconds of pointer inactivity; moving it shows it again.
+
 Reload updates configuration and bindings, but does not rerun startup `exec`
 commands or replace an existing swayidle process. Use a controlled helper handoff
 or a normal new login for startup changes. See [locking](../hyprlock/README.md),
