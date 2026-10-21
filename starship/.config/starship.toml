@@ -34,9 +34,9 @@ min_time = 5000
 format = "[$duration](yellow)"
 
 [character]
-success_symbol = "[󰁕](cyan) "
-error_symbol = "[󰁕](red) "
-vimcmd_symbol = "[󰁕](cyan) "
-vimcmd_replace_one_symbol = "[󰁕](purple) "
-vimcmd_replace_symbol = "[󰁕](purple) "
-vimcmd_visual_symbol = "[󰁕](yellow) "
+success_symbol = "[󰁕](cyan)"
+error_symbol = "[󰁕](red)"
+vimcmd_symbol = "[󰁕](cyan)"
+vimcmd_replace_one_symbol = "[󰁕](purple)"
+vimcmd_replace_symbol = "[󰁕](purple)"
+vimcmd_visual_symbol = "[󰁕](yellow)"
