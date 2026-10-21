@@ -70,7 +70,7 @@ their integration.
 
 ## Appearance
 
-JetBrainsMono Nerd Font Mono / JetBrains Mono at 12pt, disabled ligatures, 6pt
+JetBrainsMono Nerd Font Mono / JetBrains Mono at 12pt, disabled ligatures, 3pt
 top/side padding and no explicit bottom padding, black background at 83% opacity,
 the explicit WezTerm ANSI palette, steady block cursor, and Sway-managed borders.
 Leftover space from whole text cells is balanced between opposite edges, so a
