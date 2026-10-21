@@ -73,6 +73,8 @@ brew "openh264"
 brew "pkg-config"
 # Organize software neatly under a single directory tree (e.g. /usr/local)
 brew "stow"
+# Terminal multiplexer for Ghostty's windows, panes, and bottom status bar
+brew "tmux"
 # Display directories as trees (with optional color/HTML output)
 brew "tree"
 # Internet file retriever
@@ -93,9 +95,9 @@ cask "font-hack-nerd-font"
 cask "font-jetbrains-mono-nerd-font"
 # Set of tools to manage resources and applications hosted on Google Cloud
 cask "google-cloud-sdk"
-# GPU-accelerated terminal emulator
-cask "wezterm"
-# Automation tool for macOS (double-tap Control to toggle WezTerm)
+# Primary GPU-accelerated terminal emulator
+cask "ghostty"
+# Automation tool for macOS (Option+Return to toggle Ghostty)
 cask "hammerspoon"
 # ODBC administrator
 cask "odbc-manager"

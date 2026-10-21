@@ -15,12 +15,12 @@ if ! command -v brew >/dev/null 2>&1; then
   fi
 fi
 
-# Brews + casks (fzf, fd, neovim, stow, wezterm, hammerspoon, oh-my-posh, ...)
+# Brews + casks (fzf, fd, neovim, stow, tmux, ghostty, hammerspoon, oh-my-posh, ...)
 brew bundle --file "$(dirname "$0")/Brewfile"
 
 # NVM's data directory (brew's nvm stores node versions here)
 mkdir -p "$HOME/.nvm"
 
 echo
-echo "Done. Next: stow -d ~/.dotfiles -t ~ zsh git hammerspoon wezterm oh-my-posh"
+echo "Done. Next: stow -d ~/.dotfiles -t ~ zsh git hammerspoon ghostty tmux oh-my-posh"
 echo "CLI customizations: sh ~/.dotfiles/ai/setup.sh"

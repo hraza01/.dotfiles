@@ -1,0 +1,127 @@
+# macOS port of origin/arch's Ghostty setup at fb91de8; requires Ghostty 1.3+.
+# Keep unspecified Ghostty defaults, including its secondary keybindings.
+
+# Fonts: Arch's monospace families, sized for the existing Mac setup.
+font-family = JetBrainsMono Nerd Font Mono
+font-family = JetBrains Mono
+font-size = 15
+font-feature = calt=0
+font-feature = liga=0
+
+# Borderless macOS windows: no titlebar, window buttons, frame, or shadow.
+# macOS disables native tabs without decorations; bottom tabs are GTK-only.
+window-decoration = none
+macos-window-shadow = false
+# Each Ghostty window attaches to the persistent main tmux session.
+# Explicit Homebrew paths work on both Apple Silicon and Intel Macs.
+command = /bin/zsh -lc 'export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"; exec tmux new-session -A -s main'
+window-padding-x = 15
+window-padding-y = 15
+window-padding-balance = false
+background-opacity = 0.83
+background-opacity-cells = false
+background-blur-radius = 2
+resize-overlay = never
+
+# Keep a steady block at the prompt. Use xterm-256color over SSH without
+# installing terminfo on remote hosts. The outer terminal is xterm-ghostty;
+# applications inside tmux use tmux-256color.
+cursor-style = block
+cursor-style-blink = false
+shell-integration-features = no-cursor,ssh-env,no-ssh-terminfo
+cursor-color = #BCB8B4
+cursor-text = #000000
+split-divider-color = #555555
+
+# WezTerm's default foreground/ANSI palette plus the explicit black override.
+background = #000000
+foreground = #b2b2b2
+palette = 0=#000000
+palette = 1=#cc5555
+palette = 2=#55cc55
+palette = 3=#cdcd55
+palette = 4=#5455cb
+palette = 5=#cc55cc
+palette = 6=#7acaca
+palette = 7=#cccccc
+palette = 8=#555555
+palette = 9=#ff5555
+palette = 10=#55ff55
+palette = 11=#ffff55
+palette = 12=#5555ff
+palette = 13=#ff55ff
+palette = 14=#55ffff
+palette = 15=#ffffff
+palette-generate = false
+bold-color = bright
+minimum-contrast = 1
+
+# No confirmation for pane or window closes, even with running jobs.
+confirm-close-surface = false
+
+# tmux owns windows and panes. Each sequence sends its Ctrl+S prefix first.
+# Cmd+N / Cmd+Shift+W still open/close the outer Ghostty window.
+keybind = super+t=text:\x13c
+keybind = super+w=text:\x13x
+keybind = super+alt+w=text:\x13&
+keybind = super+d=text:\x13|
+keybind = super+shift+d=text:\x13-
+keybind = super+shift+enter=text:\x13m
+keybind = super+c=copy_to_clipboard:mixed
+keybind = super+v=paste_from_clipboard
+keybind = ctrl+shift+r=text:\x13,
+keybind = alt+shift+r=text:\x13,
+
+# Replace Ghostty's native tab navigation, including physical digit bindings.
+keybind = ctrl+tab=text:\x13n
+keybind = ctrl+shift+tab=text:\x13p
+keybind = super+shift+]=text:\x13n
+keybind = super+shift+[=text:\x13p
+keybind = super+digit_1=text:\x131
+keybind = super+digit_2=text:\x132
+keybind = super+digit_3=text:\x133
+keybind = super+digit_4=text:\x134
+keybind = super+digit_5=text:\x135
+keybind = super+digit_6=text:\x136
+keybind = super+digit_7=text:\x137
+keybind = super+digit_8=text:\x138
+keybind = super+digit_9=text:\x139
+keybind = super+1=text:\x131
+keybind = super+2=text:\x132
+keybind = super+3=text:\x133
+keybind = super+4=text:\x134
+keybind = super+5=text:\x135
+keybind = super+6=text:\x136
+keybind = super+7=text:\x137
+keybind = super+8=text:\x138
+keybind = super+9=text:\x139
+
+# Readline navigation and word deletion; preserve Ctrl+C/V for applications.
+keybind = super+left=text:\x01
+keybind = super+right=text:\x05
+keybind = alt+left=esc:b
+keybind = alt+right=esc:f
+keybind = alt+backspace=text:\x1b\x7f
+keybind = alt+d=esc:d
+
+# Pane navigation and resizing go to tmux, not Ghostty's native splits.
+keybind = alt+h=text:\x13h
+keybind = alt+j=text:\x13j
+keybind = alt+k=text:\x13k
+keybind = alt+l=text:\x13l
+keybind = alt+shift+h=text:\x13H
+keybind = alt+shift+j=text:\x13J
+keybind = alt+shift+k=text:\x13K
+keybind = alt+shift+l=text:\x13L
+keybind = super+alt+left=text:\x13h
+keybind = super+alt+down=text:\x13j
+keybind = super+alt+up=text:\x13k
+keybind = super+alt+right=text:\x13l
+keybind = super+ctrl+left=text:\x13H
+keybind = super+ctrl+down=text:\x13J
+keybind = super+ctrl+up=text:\x13K
+keybind = super+ctrl+right=text:\x13L
+keybind = alt+shift+z=reload_config
+
+# Hammerspoon owns the global Option+Return launch/focus/hide shortcut.
+keybind = alt+enter=unbind

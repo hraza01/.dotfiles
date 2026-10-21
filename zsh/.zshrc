@@ -195,3 +195,9 @@ lazy_load_nvm() {
 }
 
 nvm() { lazy_load_nvm; nvm "$@" }
+
+# Ghostty does not automatically inject shell integration into tmux panes.
+if [[ -n "$TMUX" && -n "$GHOSTTY_RESOURCES_DIR" &&
+      -f "$GHOSTTY_RESOURCES_DIR/shell-integration/zsh/ghostty-integration" ]]; then
+  source "$GHOSTTY_RESOURCES_DIR/shell-integration/zsh/ghostty-integration"
+fi

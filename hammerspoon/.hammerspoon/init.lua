@@ -1,33 +1,37 @@
--- opt+enter to toggle WezTerm (launch / focus / hide)
+-- opt+enter to toggle Ghostty (launch / focus / hide)
 -- requires Accessibility permission for Hammerspoon
 
-local wezterm = 'com.github.wez.wezterm'
+local ghostty = 'com.mitchellh.ghostty'
 
-local function toggle_wezterm()
-  local app = hs.application.find(wezterm)
-  if not app then
-    hs.application.open(wezterm)
+local function toggle_ghostty()
+  local app = hs.application.get(ghostty)
+  local win = app and app:mainWindow()
+  if not win then
+    -- Reopening also creates a window if Ghostty is running without one.
+    hs.application.open(ghostty)
     return
   end
   local front = hs.application.frontmostApplication()
-  local win = app:mainWindow()
-  if front and front:bundleID() == wezterm and win and win:isStandard() then
+  if front and front:bundleID() == ghostty and win:isStandard() then
     app:hide()
   else
     app:activate(true)
-    if win then win:focus() end
+    win:unminimize()
+    win:focus()
   end
 end
 
--- pre-launch WezTerm hidden on startup so the first toggle is instant
-local function launch_wezterm_hidden()
-  if hs.application.find(wezterm) then return end
+-- pre-launch Ghostty hidden on startup so the first toggle is instant
+local function launch_ghostty_hidden()
+  if hs.application.get(ghostty) then return end
   hs.timer.doAfter(1, function()
-    hs.application.open(wezterm)
+    if hs.application.get(ghostty) then return end
+    hs.application.open(ghostty)
     local attempts = 0
-    local timer = hs.timer.doEvery(0.3, function()
+    local timer
+    timer = hs.timer.doEvery(0.3, function()
       attempts = attempts + 1
-      local app = hs.application.find(wezterm)
+      local app = hs.application.get(ghostty)
       if app and app:mainWindow() then
         app:hide()
         timer:stop()
@@ -38,6 +42,6 @@ local function launch_wezterm_hidden()
   end)
 end
 
-hs.hotkey.bind({ 'alt' }, 'return', toggle_wezterm)
+hs.hotkey.bind({ 'alt' }, 'return', toggle_ghostty)
 
-launch_wezterm_hidden()
+launch_ghostty_hidden()
