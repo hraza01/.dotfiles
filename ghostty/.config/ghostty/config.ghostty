@@ -16,7 +16,7 @@ command = shell:exec "$HOME/.local/bin/dotfiles-tmux"
 # Outer terminal padding in points; tmux adds no padding inside its panes.
 window-padding-x = 6
 window-padding-y = 6
-window-padding-balance = false
+window-padding-balance = true
 background-opacity = 0.83
 background-opacity-cells = false
 
