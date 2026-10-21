@@ -71,8 +71,10 @@ their integration.
 ## Appearance
 
 JetBrainsMono Nerd Font Mono / JetBrains Mono at 12pt, disabled ligatures, 6pt
-padding, black background at 83% opacity, the explicit WezTerm ANSI palette,
-steady block cursor, and Sway-managed borders. The resize overlay is disabled.
+top/side padding and no explicit bottom padding, black background at 83% opacity,
+the explicit WezTerm ANSI palette, steady block cursor, and Sway-managed borders.
+Leftover space from whole text cells is balanced between opposite edges, so a
+small bottom gap can remain. The resize overlay is disabled.
 
 Tmux draws a single minimal bottom window strip and monochrome pane dividers.
 Tmux adds no padding around pane content; borders occupy one terminal cell, and
