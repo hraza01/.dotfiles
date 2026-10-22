@@ -36,6 +36,19 @@ unchanged: the two tools can overwrite each other's settings. GUI-selected value
 must be carried into the appropriate kanshi profile if kanshi remains the owner.
 An unsynchronized GUI layout can be replaced on the next Sway reload/hotplug.
 
+## XR glasses
+
+The optional [XR group](../xr/README.md) temporarily takes over output layout
+while XR mode runs. `sway-xr start` snapshots the physical outputs, repositions
+them, adds `HEADLESS-*` virtual outputs and moves workspaces onto the virtual
+center monitor. `sway-xr stop` returns workspaces to their original monitors,
+unplugs the virtual outputs, restores the snapshot and runs `kanshictl reload`.
+
+The tracked kanshi profiles do not list the glasses, so none matches while they
+stay connected. After disconnecting them, kanshi applies the matching profile
+again; docked profiles then run `dock-workspaces.py`, which moves all workspaces
+to the main Dell. Stop XR before disconnecting the glasses or changing docks.
+
 Before experimenting with output changes, save a known-good baseline: the GUI's
 Apply/countdown rollback reuses the previous outputs-file contents, not a snapshot
 of kanshi's current live layout. An empty or stale file is not a reliable rollback.

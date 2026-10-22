@@ -13,6 +13,9 @@ Quickshell, kanshi, applets, spiral tiling and swayidle once per session.
 - **Super+Shift+C:** reload Sway and the existing Quickshell generation.
 - **Super+Shift+Q:** lock through the Hyprlock readiness adapter, with swaylock fallback.
 - **Super+Shift+E:** exit confirmation; **Super+R:** resize mode.
+- **Super+Ctrl+X:** start/stop XR glasses mode; **Super+Ctrl+R:** recenter;
+  **Ctrl+Alt+Shift+1/2:** toggle the left/right virtual monitor. Present only
+  after the optional [XR group](../xr/README.md).
 
 The pointer hides after 10 seconds of pointer inactivity; moving it shows it again.
 

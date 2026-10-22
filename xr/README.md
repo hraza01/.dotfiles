@@ -59,6 +59,8 @@ origins and `~/.config/xr_driver/config.ini`. Stop (or a viewer exit, through
 the transient `sway-xr.service` stop hook) returns workspaces, unplugs every
 `HEADLESS-*` output it created, restores those settings and reloads kanshi.
 Stop XR before changing docks: kanshi profiles do not include the glasses.
+See [display ownership](../setup/displays.md#xr-glasses) for how this
+interacts with kanshi and the docked workspace policy.
 
 ## How it works
 
