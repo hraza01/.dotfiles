@@ -129,6 +129,8 @@ alias ls='ls --color'
 alias vim='nvim'
 alias c='clear'
 alias oc='opencode'
+alias ai-unlock='git -C "$HOME/.dotfiles" crypt unlock "$HOME/.config/git-crypt/.agents.key"'
+alias ai-lock='git -C "$HOME/.dotfiles" crypt lock'
 
 # NUL delimiters preserve spaces/newlines; cancellation leaves the shell alone.
 unalias f v 2>/dev/null || true
