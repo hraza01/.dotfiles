@@ -2,8 +2,8 @@
 
 **Arch Linux + Sway + Quickshell** configuration managed with GNU Stow on the
 `arch` branch. Desktop and boot installation on this branch require Arch Linux.
-Shared shell/dev helpers retain Fedora/Debian handling; the `linux` branch
-preserves the Fedora desktop setup.
+Shared shell/dev helpers retain Fedora/Debian handling. For servers and Cloud
+Shell, the `shell` branch carries this shell layer for any Debian-based host.
 
 ## Setup
 
