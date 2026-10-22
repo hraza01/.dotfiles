@@ -1,0 +1,487 @@
+#!/usr/bin/env python3
+"""Control the experimental Sway XR viewer (built by ./setup.sh xr)."""
+import json
+import math
+import os
+from pathlib import Path
+import subprocess
+import sys
+import re
+import shutil
+import fcntl
+import socket
+import time
+import uuid
+
+UNIT = "sway-xr.service"
+VIEWER = Path.home() / ".local/share/sway-xr/sway-xr-viewer"
+STATE = Path(os.environ.get("XDG_RUNTIME_DIR", f"/run/user/{os.getuid()}")) / "sway-xr-layout.json"
+CONFIG = Path.home() / ".config/sway-xr/config.json"
+CONTROL = STATE.with_name("sway-xr-control.sock")
+LOCK = STATE.with_name("sway-xr.lock")
+DEFAULTS = {"resolution": "1920x1200", "scale": 1, "refresh_hz": 60,
+            "diagonal_inches": 24, "distance_m": 0.9, "gap_degrees": 1}
+
+
+def validate_settings(config):
+    match = re.fullmatch(r"([0-9]+)x([0-9]+)", str(config["resolution"]))
+    if not match or not (640 <= int(match[1]) <= 7680 and 480 <= int(match[2]) <= 4320):
+        raise ValueError("Resolution must be WIDTHxHEIGHT, between 640x480 and 7680x4320.")
+    for name, low, high in (("scale", 0.5, 4), ("refresh_hz", 30, 120),
+                            ("diagonal_inches", 8, 100), ("distance_m", 0.25, 5),
+                            ("gap_degrees", 0, 10)):
+        value = float(config[name])
+        if not math.isfinite(value) or not low <= value <= high:
+            raise ValueError(f"{name} must be between {low} and {high}.")
+        config[name] = value
+    return config
+
+
+def settings():
+    config = DEFAULTS | (json.loads(CONFIG.read_text()) if CONFIG.exists() else {})
+    return validate_settings(config)
+
+
+def change_setting(key, value):
+    config = settings()
+    config[key] = value
+    validate_settings(config)
+    CONFIG.parent.mkdir(parents=True, exist_ok=True)
+    temporary = CONFIG.with_suffix(".tmp")
+    temporary.write_text(json.dumps(config, indent=2) + "\n")
+    temporary.replace(CONFIG)
+    print(f"Saved {key}={config[key]}")
+    if active():
+        state = load_state()
+        sides = [side for side in ("left", "right") if side in state.get("screens", {})]
+        workspaces = query("get_workspaces")
+        parked = {side: [w["name"] for w in workspaces if w["output"] == state["screens"][side]]
+                  for side in sides}
+        main("stop")
+        main(state.get("mode", "start"))
+        if sides:
+            restarted = load_state()
+            restarted["parked"] = parked
+            save_state(restarted)
+        for side in sides:
+            add_screen(side)
+
+
+def run(*args, **kwargs):
+    return subprocess.run(args, check=True, **kwargs)
+
+
+def active():
+    return subprocess.run(
+        ["systemctl", "--user", "is-active", "--quiet", UNIT]
+    ).returncode == 0
+
+
+def query(kind):
+    return json.loads(run("swaymsg", "-t", kind, "-r", capture_output=True, text=True).stdout)
+
+
+def sway(command):
+    results = json.loads(run("swaymsg", "-r", command, capture_output=True, text=True).stdout)
+    errors = [r.get("error", "Sway command failed") for r in results if not r.get("success")]
+    if errors:
+        raise RuntimeError("; ".join(errors))
+
+
+def load_state():
+    state = json.loads(STATE.read_text()) if STATE.exists() else {}
+    if state.get("socket") != os.environ.get("SWAYSOCK"):
+        return {"socket": os.environ.get("SWAYSOCK"), "owned": [], "active": False}
+    return state
+
+
+def save_state(state):
+    temporary = STATE.with_suffix(f".{os.getpid()}.tmp")
+    temporary.write_text(json.dumps(state, indent=2) + "\n")
+    temporary.chmod(0o600)
+    temporary.replace(STATE)
+
+
+def focused_node():
+    def find(node):
+        if node.get("focused"):
+            return node
+        for child in node.get("nodes", []) + node.get("floating_nodes", []):
+            found = find(child)
+            if found:
+                return found
+        return None
+    return find(query("get_tree"))
+
+
+def restore_focus(node, fallback):
+    if node and node.get("type") == "con":
+        sway(f"[con_id={int(node['id'])}] focus")
+    else:
+        sway(f"focus output {json.dumps(fallback)}")
+
+
+def output_identity(output):
+    return [output.get(k) for k in ("make", "model", "serial")]
+
+
+def output_snapshot(output):
+    return {"identity": output_identity(output), "position": [output["rect"]["x"], output["rect"]["y"]],
+            "mode": output.get("current_mode"), "scale": output.get("scale", 1),
+            "transform": output.get("transform", "normal"), "power": output.get("power", True)}
+
+
+def viewer_command(command):
+    with socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM) as client:
+        client.settimeout(4)
+        client.bind(f"\0sway-xr-{os.getpid()}-{uuid.uuid4().hex}")
+        client.connect(str(CONTROL))
+        client.send(command.encode())
+        reply = client.recv(256).decode()
+        if reply != "OK":
+            raise RuntimeError(f"Viewer: {reply}")
+
+
+def wait_for_viewer():
+    deadline = time.monotonic() + 5
+    while True:
+        try:
+            viewer_command("ping")
+            return
+        except (FileNotFoundError, ConnectionRefusedError):
+            if time.monotonic() >= deadline:
+                raise RuntimeError("XR viewer control socket did not become ready.")
+            time.sleep(0.05)
+
+
+def cleanup():
+    state = load_state()
+    if not state.get("active") or not Path(state.get("socket") or "/nonexistent").exists():
+        return
+    outputs = query("get_outputs")
+    owned = state.get("owned", [])
+    candidates = [o for o in outputs if o["active"] and o["name"] not in owned
+                  and "VITURE" not in o.get("model", "").upper()]
+    # If the laptop has been disabled, bring it back before returning workspaces.
+    if not candidates:
+        center = next((o for o in outputs if o["name"] == state.get("fallback", state.get("center"))), None)
+        if center:
+            sway(f"output {json.dumps(center['name'])} enable")
+            candidates = [center]
+    fallback = next((o for o in candidates if o["name"] == state.get("fallback", state.get("center"))),
+                    candidates[0] if candidates else None)
+    focus = focused_node()
+    if fallback:
+        for workspace in query("get_workspaces"):
+            if workspace["output"] in owned:
+                name = json.dumps(workspace["name"])
+                original = state.get("workspace_origins", {}).get(workspace["name"], {})
+                destination = next((o for o in candidates if output_identity(o) == original.get("identity")), fallback)
+                target = json.dumps(destination["name"])
+                sway(f"workspace {name} output {target}; workspace {name}; move workspace to output {target}")
+    for name in owned:
+        if any(o["name"] == name for o in outputs):
+            # Disabling leaves a head that prevents Kanshi's exact profile matching.
+            # Unplug removes only our developer-created headless outputs entirely.
+            sway(f"output {json.dumps(name)} unplug")
+    for name, saved in state.get("restore", {}).items():
+        if isinstance(saved, list):  # transition from the initial single-screen profile
+            if any(o["name"] == name and o["active"] for o in outputs):
+                sway(f"output {json.dumps(name)} position {saved[0]} {saved[1]}")
+            continue
+        target = next((o for o in outputs if o["active"] and output_identity(o) == saved["identity"]), None)
+        if target:
+            command = f"output {json.dumps(target['name'])}"
+            mode = saved.get("mode")
+            if mode:
+                command += f" mode {mode['width']}x{mode['height']}@{mode['refresh'] / 1000:g}Hz"
+            command += f" scale {saved['scale']} transform {saved['transform']} position {saved['position'][0]} {saved['position'][1]}"
+            command += " power on" if saved["power"] else " power off"
+            sway(command)
+    if "driver_before" in state:
+        (Path.home() / ".config/xr_driver/config.ini").write_text(state.pop("driver_before"))
+    state["active"] = False
+    state["owned"] = []
+    state["screens"] = {}
+    CONTROL.unlink(missing_ok=True)
+    save_state(state)
+    if fallback:
+        restore_focus(focus, fallback["name"])
+    if shutil.which("kanshictl"):
+        subprocess.run(["kanshictl", "reload"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
+def create_virtual_output(state, config):
+    before = {o["name"] for o in query("get_outputs")}
+    sway("create_output")
+    new = [o for o in query("get_outputs") if o["name"] not in before]
+    if len(new) != 1 or not new[0]["name"].startswith("HEADLESS-"):
+        raise RuntimeError("Sway did not create the expected headless output.")
+    name = new[0]["name"]
+    state["owned"].append(name)
+    save_state(state)  # Record ownership before any configuration can fail.
+    sway(f"output {json.dumps(name)} enable mode --custom {config['resolution']}@{config['refresh_hz']:g}Hz scale {config['scale']:g}")
+    return name
+
+
+def unused_workspace_name():
+    used = {w["num"] for w in query("get_workspaces")}
+    number = 1
+    while number in used:
+        number += 1
+    return str(number)
+
+
+def create_layout(source, glasses, config):
+    state = load_state()
+    outputs = query("get_outputs")
+    focus = focused_node()
+    physical = {o["name"]: o for o in outputs if o["active"] and o["name"] not in state.get("owned", [])
+                and "VITURE" not in o.get("model", "").upper()}
+    workspaces = [w for w in query("get_workspaces") if w["output"] in physical]
+    names = {o["name"] for o in outputs}
+    state["owned"] = [n for n in state.get("owned", []) if n in names]
+    driver_config = Path.home() / ".config/xr_driver/config.ini"
+    state.update(active=True, mode="start", screens={}, parked={}, config=config,
+        fallback=source["name"], restore={
+        o["name"]: output_snapshot(o) for o in [glasses, *physical.values()]},
+        workspace_origins={w["name"]: {"identity": output_identity(physical[w["output"]])} for w in workspaces},
+        driver_before=driver_config.read_text() if driver_config.exists() else "")
+    save_state(state)
+    try:
+        x, y = source["rect"]["x"], source["rect"]["y"]
+        for output in physical.values():
+            rect = output["rect"]
+            sway(f"output {json.dumps(output['name'])} position {rect['x']} {rect['y']}")
+        sway(f"output {json.dumps(glasses['name'])} mode 1920x1080@120Hz scale 1 transform normal")
+        center = create_virtual_output(state, config)
+        state["center"] = center
+        state["screens"] = {"center": center}
+        save_state(state)
+        virtuals = {o["name"]: o for o in query("get_outputs")}
+        logical_h = virtuals[center]["rect"]["height"]
+        # Side monitors will occupy the same contiguous pointer row on demand.
+        # Physical outputs remain reachable by explicit focus and are restored on stop.
+        bottom = max(y + logical_h, *(o["rect"]["y"] + o["rect"]["height"] for o in outputs if o["active"]))
+        physical_top = min(o["rect"]["y"] for o in physical.values())
+        physical_bottom = bottom
+        for output in physical.values():
+            rect = output["rect"]
+            physical_y = bottom + 200 + rect["y"] - physical_top
+            physical_bottom = max(physical_bottom, physical_y + rect["height"])
+            sway(f"output {json.dumps(output['name'])} position {rect['x']} {physical_y}")
+        sway(f"output {json.dumps(glasses['name'])} position {x} {physical_bottom + 2000}")
+        target = json.dumps(center)
+        sway(f"output {target} position {x} {y}")
+        # Sway creates a normal numbered workspace on the new output already.
+        # Sway has no primary-output flag: move the working desktop to center
+        # and focus it so new applications open there.
+        for workspace in workspaces:
+            ws, target = json.dumps(workspace["name"]), json.dumps(center)
+            sway(f"workspace {ws} output {target}; workspace {ws}; move workspace to output {target}")
+        restore_focus(focus, center)
+        sway(f"focus output {json.dumps(center)}")
+        return [center]
+    except Exception:
+        cleanup()
+        raise
+
+
+def require_layout():
+    state = load_state()
+    if not active() or not state.get("active") or state.get("mode") != "start":
+        raise RuntimeError("Run sway-xr start first to use on-demand virtual monitors.")
+    return state
+
+
+def add_screen(side):
+    state = require_layout()
+    if side in state["screens"]:
+        return state["screens"][side]
+    focus = focused_node()
+    try:
+        name = create_virtual_output(state, state["config"])
+        outputs = {o["name"]: o for o in query("get_outputs")}
+        center = outputs[state["center"]]["rect"]
+        x = center["x"] - outputs[name]["rect"]["width"] if side == "left" else center["x"] + center["width"]
+        target = json.dumps(name)
+        sway(f"output {target} position {x} {center['y']}")
+        state["screens"][side] = name
+        save_state(state)
+        current = query("get_workspaces")
+        workspaces = {w["name"]: w["output"] for w in current}
+        parked = [w for w in state.get("parked", {}).get(side, [])
+                  if w not in ("XR-left", "XR-center", "XR-right")
+                  and (w not in workspaces or workspaces[w] == state["center"])]
+        # Reuse parked workspaces, including an empty one that Sway discarded.
+        # Otherwise use the ordinary numbered workspace Sway gave this output.
+        selected = parked or [w["name"] for w in current if w["output"] == name and w["num"] > 0]
+        if not selected:
+            selected = [unused_workspace_name()]
+        for workspace in dict.fromkeys(selected):
+            ws = json.dumps(workspace)
+            sway(f"workspace {ws} output {target}; workspace {ws}; move workspace to output {target}")
+        viewer_command(f"add {side} {name}")
+        restore_focus(focus, state["center"])
+        print(f"Added {side} monitor: {name}, workspace(s) {', '.join(selected)}.")
+        return name
+    except Exception:
+        # Stop also invokes cleanup, including any partially created output.
+        main("stop")
+        raise
+
+
+def remove_screen(side):
+    state = require_layout()
+    name = state["screens"].get(side)
+    if not name:
+        return
+    focus = focused_node()
+    try:
+        workspaces = [w["name"] for w in query("get_workspaces") if w["output"] == name]
+        state.setdefault("parked", {})[side] = workspaces
+        save_state(state)
+        target = json.dumps(state["center"])
+        for workspace in workspaces:
+            ws = json.dumps(workspace)
+            sway(f"workspace {ws} output {target}; workspace {ws}; move workspace to output {target}")
+        # Wait for capture/texture teardown before unplugging its Wayland output.
+        viewer_command(f"remove {side}")
+        sway(f"output {json.dumps(name)} unplug")
+        state["owned"].remove(name)
+        del state["screens"][side]
+        save_state(state)
+        restore_focus(focus, state["center"])
+        print(f"Removed {side} monitor; its workspaces are on the center.")
+    except Exception:
+        main("stop")
+        raise
+
+
+def single_layout(source, glasses, mode):
+    state = load_state()
+    driver_config = Path.home() / ".config/xr_driver/config.ini"
+    state.update(active=True, mode=mode, owned=[], screens={}, fallback=source["name"] if source else None,
+                 restore={glasses["name"]: output_snapshot(glasses)}, workspace_origins={},
+                 driver_before=driver_config.read_text() if driver_config.exists() else "")
+    save_state(state)
+    try:
+        sway(f"output {json.dumps(glasses['name'])} mode 1920x1080@120Hz scale 1 transform normal")
+    except Exception:
+        cleanup()
+        raise
+
+
+def main(action=None):
+    action = action or (sys.argv[1] if len(sys.argv) >= 2 else "help")
+    if action == "workstation":
+        action = "stop"
+    if action == "toggle":
+        action = "stop" if active() else "start"
+    if action in ("start", "single", "test"):
+        if active():
+            print("Sway XR is already running.")
+            return
+        if not os.environ.get("WAYLAND_DISPLAY") or not os.environ.get("SWAYSOCK"):
+            raise RuntimeError("Run this inside your Sway session.")
+        cleanup()  # recover an interrupted previous launch
+        outputs = query("get_outputs")
+        glasses = next((o for o in outputs if o["active"] and "VITURE" in o.get("model", "").upper()), None)
+        if not glasses:
+            raise RuntimeError("Connect the VITURE glasses first.")
+        sources = [o for o in outputs if o["active"] and "VITURE" not in o.get("model", "").upper()
+                   and o["name"] not in load_state().get("owned", [])]
+        requested = os.environ.get("SWAY_XR_SOURCE")
+        source = next((o for o in sources if o["name"] == requested), None)
+        if not source and sources and "SWAY_XR_SOURCE" not in os.environ:
+            source = next((o for o in sources if o.get("focused")), sources[0])
+        if not source and action != "test":
+            raise RuntimeError("No source output available. Set SWAY_XR_SOURCE to an active non-VITURE output.")
+        if not VIEWER.is_file():
+            raise RuntimeError("Build the viewer first: run ./setup.sh xr in your dotfiles checkout.")
+        config = settings()
+        env_args = [f"--setenv={name}={os.environ[name]}" for name in
+                    ("WAYLAND_DISPLAY", "SWAYSOCK", "XDG_CURRENT_DESKTOP") if name in os.environ]
+        env_args += [f"--setenv=SWAY_XR_DIAGONAL_INCHES={config['diagonal_inches']}",
+                     f"--setenv=SWAY_XR_DISTANCE_M={config['distance_m']}",
+                     f"--setenv=SWAY_XR_GAP_DEGREES={config['gap_degrees']}"]
+        screen_names = create_layout(source, glasses, config) if action == "start" else ([] if action == "test" else [source["name"]])
+        if action != "start":
+            single_layout(source, glasses, action)
+        viewer_args = [arg for name in screen_names for arg in ("--output", name)]
+        if action == "start":
+            viewer_args += ["--control", str(CONTROL)]
+        try:
+            run("systemctl", "--user", "start", "xr-driver.service")
+            run("xr_driver_cli", "--opentrack-app", "--opentrack-app-ip", "127.0.0.1", "--opentrack-app-port", "4243")
+            run("xr_driver_cli", "--enable")
+            run("systemd-run", "--user", "--collect", "--unit=sway-xr", "--description=Experimental Sway XR viewer",
+                "--property=TimeoutStopSec=5s", f"--property=ExecStopPost={Path.home()}/.local/bin/sway-xr cleanup",
+                "--setenv=SDL_VIDEODRIVER=wayland", "--setenv=SDL_APP_ID=sway-xr",
+                *env_args, str(VIEWER), *(["--test-pattern"] if action == "test" else viewer_args))
+            if action == "start":
+                wait_for_viewer()
+        except Exception:
+            main("stop")
+            raise
+        if action == "test":
+            print("Test grid started. Super+Ctrl+R recenters the screen.")
+        else:
+            print(f"Capturing {' / '.join(screen_names)}. Super+Ctrl+R recenters the screens.")
+    elif action == "stop":
+        if active():
+            run("systemctl", "--user", "stop", UNIT)
+        cleanup()
+    elif action == "cleanup":
+        cleanup()
+    elif action in ("add", "remove", "toggle-screen"):
+        side = sys.argv[2] if len(sys.argv) == 3 else ""
+        if side not in ("left", "right"):
+            raise ValueError(f"Usage: sway-xr {action} left|right (center stays active)")
+        state = require_layout()
+        if action == "toggle-screen":
+            action = "remove" if side in state["screens"] else "add"
+        (add_screen if action == "add" else remove_screen)(side)
+    elif action == "recenter":
+        run("xr_driver_cli", "--recenter")
+    elif action in ("larger", "smaller"):
+        if active():
+            run("systemctl", "--user", "kill", "--kill-whom=main",
+                "--signal=SIGUSR1" if action == "larger" else "--signal=SIGUSR2", UNIT)
+    elif action in ("resolution", "scale", "size", "distance", "gap"):
+        if len(sys.argv) != 3:
+            raise ValueError(f"Usage: sway-xr {action} VALUE")
+        key = {"size": "diagonal_inches", "distance": "distance_m", "gap": "gap_degrees"}.get(action, action)
+        change_setting(key, sys.argv[2])
+    elif action == "settings":
+        print(json.dumps(settings(), indent=2))
+    elif action == "status":
+        print("Viewer:", "running" if active() else "stopped")
+        state = load_state()
+        if state.get("active"):
+            print("Screens:", state.get("screens"))
+            workspaces = query("get_workspaces")
+            for side, output in state.get("screens", {}).items():
+                print(f"  {side}: workspaces " + ", ".join(w["name"] for w in workspaces if w["output"] == output))
+        subprocess.run(["systemctl", "--user", "status", "xr-driver.service", "--no-pager"])
+    elif action == "logs":
+        run("journalctl", "--user", "-u", UNIT, "-n", "60", "--no-pager")
+    else:
+        print("Usage: sway-xr {start|stop|workstation|toggle|single|test|recenter|larger|smaller|status|logs}")
+        print("       sway-xr {add|remove|toggle-screen} {left|right}")
+        print("       sway-xr resolution 1920x1200 | scale 1 | size 24 | distance 0.9 | gap 1 | settings")
+        print("Start creates a center virtual monitor; add sides on demand and use normal numbered-workspace bindings.")
+
+
+if __name__ == "__main__":
+    try:
+        # ExecStopPost must run while a stop command holds the client lock.
+        if len(sys.argv) > 1 and sys.argv[1] == "cleanup":
+            main()
+        else:
+            with LOCK.open("w") as lock:
+                fcntl.flock(lock, fcntl.LOCK_EX)
+                main()
+    except (RuntimeError, ValueError, OSError, subprocess.CalledProcessError) as error:
+        print(f"sway-xr: {error}", file=sys.stderr)
+        sys.exit(1)

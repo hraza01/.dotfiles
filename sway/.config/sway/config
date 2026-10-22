@@ -266,5 +266,9 @@ exec_always {
     pkill -SIGHUP kanshi
 }
 
+# Optional XR shortcuts and viewer rules from the xr package (./setup.sh xr).
+# Absent on machines without it; Sway skips a missing include.
+include ~/.config/sway-xr/sway.conf
+
 include /etc/sway/config.d/*
 include ~/.config/sway/config.d/*.conf

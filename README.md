@@ -18,6 +18,7 @@ DOTFILES_NOTIFICATION_OWNER=quickshell ./setup.sh gui
 ./setup.sh dev           # requires subordinate IDs; fresh Go also needs version/hash
 # Optional: read setup/secure-boot/README.md before this preparation-only group.
 ./setup.sh secure-boot   # checks + tools; boot/trust configuration remains manual
+./setup.sh xr            # optional VITURE XR glasses viewer; run after gui
 ```
 
 Run from the installing user's own login session, without `sudo ./setup.sh`.
@@ -36,7 +37,8 @@ incomplete tool installations are preserved for explicit reconciliation.
 | `dev` | Development tools; enables/starts Tailscale and the rootless Docker socket, selects its context and enables user lingering. |
 | `boot` | GRUB/Plymouth configuration and initramfs rebuilds on a prepared system. |
 | `secure-boot` | Opt-in Arch x86_64 UEFI checks and missing official tools; requires an ESP at `/boot`. No direct boot/trust configuration or activation. Package hooks may rebuild/re-sign boot files. |
-| `all` | `shell + gui + dev + boot`, in that order; excludes `secure-boot`. |
+| `xr` | Opt-in [VITURE XR glasses viewer](xr/README.md): XR driver (AUR), viewer build and shortcuts; enables `xr-driver.service` without starting it. |
+| `all` | `shell + gui + dev + boot`, in that order; excludes `secure-boot` and `xr`. |
 
 Run `shell` before `auth` or `gui`. Auth requires the Hyprlock repository candidate
 and any installed Hyprlock to be upstream **0.9.6**; setup checks this before package
@@ -123,6 +125,7 @@ NetworkManager/Bluetooth applets remain part of the desktop.
 - [Monitor ownership and nwg-displays](setup/displays.md)
 - [Optional three-finger drag: private profile, build, activation and recovery](setup/three-finger-drag/README.md)
 - [Sway controls and spiral tiling](sway/README.md)
+- [Optional VITURE XR glasses: virtual monitors, controls and removal](xr/README.md)
 
 This checkout tracks the Dell dock and laptop display profiles, including
 monitor identities, modes and scaling. Review [display ownership](setup/displays.md)
@@ -158,6 +161,7 @@ transaction behavior and migration from older applications.
 | `kanshi` | `~/.config/kanshi/` |
 | `fontconfig` | `~/.config/fontconfig/` |
 | `gtk` | GTK2/GTK3 settings |
+| [`xr`](xr/README.md) | `~/.local/bin/sway-xr`, `~/.config/sway-xr/sway.conf` |
 
 Keep validation suites, screenshots, deployment logs and recovery snapshots
 outside this repository. Generated application and monitor state is ignored.

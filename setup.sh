@@ -10,6 +10,7 @@ source "$SETUP_DIR/auth.sh"
 source "$SETUP_DIR/fonts.sh"
 source "$SETUP_DIR/packages.sh"
 source "$SETUP_DIR/grub.sh"
+source "$SETUP_DIR/xr.sh"
 
 show_help() {
   cat <<EOF
@@ -57,7 +58,13 @@ ${C_CYAN}Available groups:${C_RESET}
           No migration, key enrollment, boot-order change or reboot by this group.
           Read setup/secure-boot/README.md; request separately from boot or all.
 
-  ${C_BOLD}all${C_RESET}     shell + gui + dev + boot (excludes secure-boot)
+  ${C_BOLD}xr${C_RESET}      Opt-in VITURE XR glasses viewer for Sway (Arch only):
+          xr-driver-git (AUR), viewer build tools, sway-xr controller
+          Builds the viewer into ~/.local/share/sway-xr; Stows: xr
+          Enables xr-driver.service for future logins without starting it.
+          Run gui first. Read xr/README.md.
+
+  ${C_BOLD}all${C_RESET}     shell + gui + dev + boot (excludes secure-boot and xr)
 
 Prerequisites: installing user's own login session, sudo, working Arch,
   Bash, Python 3.11+, curl and GNU coreutils; paru for GUI/Arch dev.
@@ -79,6 +86,7 @@ ${C_CYAN}Examples:${C_RESET}
   ./setup.sh shell dev     # prepare subordinate IDs and fresh-Go inputs first
   ./setup.sh boot          # reconfigure GRUB/Plymouth only
   ./setup.sh secure-boot   # tools and read-only checks; activation remains manual
+  ./setup.sh xr            # optional VITURE glasses viewer (after gui)
 
 Groups run sequentially, not as a whole-installation transaction.
 See README.md and the component READMEs for downloads, activation and recovery.
@@ -100,14 +108,14 @@ main() {
   local group
   for group in "$@"; do
     case "$group" in
-      shell|auth|gui|dev|boot|secure-boot|all) ;;
+      shell|auth|gui|dev|boot|secure-boot|xr|all) ;;
       *) die "Unknown group: '$group'. Run ./setup.sh for help." ;;
     esac
   done
   require_regular_user
   preflight_secure_boot_request "$@" || exit $?
   for group in "$@"; do
-    case "$group" in shell|auth|gui|all) preflight_stow_config ;; esac
+    case "$group" in shell|auth|gui|xr|all) preflight_stow_config ;; esac
   done
   preflight_quickshell_request "$@"
   for group in "$@"; do
@@ -123,6 +131,7 @@ main() {
       dev)   group_dev   ;;
       boot)  configure_grub ;;
       secure-boot) group_secure_boot ;;
+      xr)    group_xr ;;
       all)
         group_shell
         group_gui

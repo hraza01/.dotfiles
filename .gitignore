@@ -25,6 +25,8 @@ sway/.config/sway/outputs
 sway/.config/sway/workspaces
 
 # Application-generated state
+# sway-xr saves per-machine display settings beside its Stow-linked shortcuts.
+**/.config/sway-xr/config.json
 **/.config/dconf/
 
 # OpenCode regenerates this file with a private service password.
