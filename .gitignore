@@ -1,0 +1,58 @@
+# Compiled Python files
+*.pyc
+__pycache__/
+
+# Validation belongs outside this repository.
+/tests/
+
+# Editor/OS clutter
+.DS_Store
+._*
+*.bak
+*.swp
+
+# CLI configuration is local; only ai/agents and ai/skills are shared.
+/opencode/
+/.opencode/
+/.config/opencode/
+/pi/
+/.pi/
+/.claude/
+/.agents/
+/.gemini/
+/agents/
+/skills/
+
+# Private inputs are kept outside the checkout; these are accidental-copy guards.
+/private/
+/.private/
+**/.config/dotfiles-private/
+**/.zshrc.local
+.env
+.env.*
+!.env.example
+!.env.sample
+**/.ssh/
+**/.aws/credentials
+**/.kube/config
+**/.config/gcloud/
+**/.netrc
+**/.npmrc
+**/.pypirc
+**/id_rsa
+**/id_ed25519
+*.key
+*.pem
+!*.example.pem
+*.p12
+*.pfx
+*.kdbx
+**/credentials.json
+**/auth.json
+**/.zsh_history
+**/.bash_history
+
+# Recovery copies
+*.before-dotfiles*
+*.orig
+*.rej

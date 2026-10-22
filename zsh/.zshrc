@@ -1,0 +1,186 @@
+# XDG_CONFIG
+export XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
+
+# Make local tools available before bootstrap and completion checks.
+# ~/.local/bin holds the pinned tools from setup and wins over distro builds.
+export GCLOUD_DIR="$HOME/.gcloud"
+typeset -U path
+path=("$HOME/.local/bin" "${PIPX_BIN_DIR:-$HOME/.local/bin}"
+      "$GCLOUD_DIR/google-cloud-sdk/bin" $path)
+export PATH
+
+# Remote hosts often lack the local terminal's terminfo (e.g. xterm-ghostty).
+if [[ -n ${TERM:-} ]] && (( $+commands[infocmp] )) && ! infocmp -- "$TERM" &>/dev/null; then
+  export TERM=xterm-256color
+fi
+
+# zinit directory
+ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
+
+# Download zinit if not present
+if [ ! -d "$ZINIT_HOME" ]; then
+   if ! { mkdir -p "${ZINIT_HOME:h}" &&
+          git clone https://github.com/zdharma-continuum/zinit.git "$ZINIT_HOME"; }; then
+      print -u2 'zinit bootstrap failed; continuing without plugins.'
+   fi
+fi
+
+# Keep a usable shell if bootstrap is incomplete or initialization fails.
+_zinit_loaded=0
+if [[ -r "$ZINIT_HOME/zinit.zsh" ]] && source "$ZINIT_HOME/zinit.zsh" &&
+   (( $+functions[zinit] )); then
+   _zinit_loaded=1
+   zinit light zsh-users/zsh-syntax-highlighting
+   zinit light zsh-users/zsh-completions
+   zinit light zsh-users/zsh-autosuggestions
+   zinit light Aloxaf/fzf-tab
+else
+   print -u2 "zinit unavailable: $ZINIT_HOME/zinit.zsh"
+fi
+
+# Completions
+autoload -Uz compinit && compinit
+(( _zinit_loaded )) && zinit cdreplay -q
+unset _zinit_loaded
+
+# Keybindings
+bindkey -e
+bindkey '^p' history-search-backward
+bindkey '^n' history-search-forward
+bindkey '^[w' kill-region
+
+fzf-cd-dev() {
+  emulate -L zsh
+  local selected fd_cmd
+
+  if [[ ! -d "$HOME/dev" ]]; then
+    zle -M 'fzf-cd-dev: ~/dev does not exist'
+    return 0
+  fi
+  if command -v fd >/dev/null 2>&1; then
+    fd_cmd=fd
+  elif command -v fdfind >/dev/null 2>&1; then
+    fd_cmd=fdfind
+  else
+    zle -M 'fzf-cd-dev: missing dependency: fd or fdfind'
+    return 0
+  fi
+  if ! command -v fzf >/dev/null 2>&1; then
+    zle -M 'fzf-cd-dev: missing dependency: fzf'
+    return 0
+  fi
+
+  # Use fzf's status: early selection may close the producer pipe successfully.
+  selected=$("$fd_cmd" --type directory --hidden --absolute-path --print0 \
+    --exclude .git --exclude node_modules --exclude __pycache__ \
+    --exclude logs --exclude .venv --exclude venv --exclude .tox \
+    --exclude .nox --exclude .pytest_cache --exclude .mypy_cache \
+    --exclude .ruff_cache --exclude .next --exclude .nuxt \
+    --exclude dist --exclude build --exclude target . "$HOME/dev" |
+    fzf --height=100% --layout=reverse --border=none --info=hidden \
+      --prompt='' --read0 --print0 --no-multi) || return 0
+  selected=${selected%$'\0'}
+  [[ -n "$selected" ]] || return 0
+
+  if ! builtin cd -- "$selected" 2>/dev/null; then
+    zle -M "fzf-cd-dev: cannot change directory to ${(q)selected}"
+    return 0
+  fi
+  # Starship's PROMPT_SUBST renders the new directory on redraw.
+  zle reset-prompt
+}
+
+zle -N fzf-cd-dev
+bindkey '^F' fzf-cd-dev
+
+# History
+HISTSIZE=5000
+HISTFILE=~/.zsh_history
+SAVEHIST=$HISTSIZE
+setopt appendhistory
+setopt sharehistory
+setopt hist_ignore_space
+setopt hist_ignore_all_dups
+setopt hist_save_no_dups
+setopt hist_ignore_dups
+setopt hist_find_no_dups
+
+# Completion styling
+zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
+zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
+zstyle ':completion:*' menu no
+zstyle ':fzf-tab:complete:cd:*' fzf-preview 'ls --color $realpath'
+
+# Aliases
+alias ls='ls --color'
+(( $+commands[nvim] )) && alias vim='nvim'
+alias c='clear'
+alias t='dotfiles-tmux'
+
+# NUL delimiters preserve spaces/newlines; cancellation leaves the shell alone.
+unalias f v 2>/dev/null || true
+v() {
+  emulate -L zsh
+  local selected
+  # Use fzf's status: early selection may close the producer pipe successfully.
+  selected=$(fd --type f --hidden --exclude .git --print0 |
+    fzf --reverse --read0 --print0 --no-multi) || return
+  selected=${selected%$'\0'}
+  [[ -n "$selected" ]] || return
+  nvim -- "$selected"
+}
+
+f() {
+  emulate -L zsh
+  local selected
+  selected=$(find "$HOME/dev" -mindepth 1 -maxdepth 1 -type d -print0 |
+    fzf --reverse --read0 --print0 --no-multi) || return
+  selected=${selected%$'\0'}
+  [[ -n "$selected" ]] || return
+  builtin cd -- "$selected"
+}
+
+# uv (Python package manager)
+if command -v uv &>/dev/null; then
+  eval "$(uv generate-shell-completion zsh)"
+fi
+
+# NVM
+if [[ -z "${NVM_DIR:-}" ]]; then
+  if [[ -e "$HOME/.nvm" && -e "$XDG_CONFIG_HOME/nvm" ]]; then
+    print -u2 'Both legacy and XDG nvm directories exist; set NVM_DIR explicitly.'
+  elif [[ -e "$HOME/.nvm" ]]; then
+    export NVM_DIR="$HOME/.nvm"
+  else
+    export NVM_DIR="$XDG_CONFIG_HOME/nvm"
+  fi
+fi
+if [[ -n "${NVM_DIR:-}" ]]; then
+  export NVM_DIR
+  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+  [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+fi
+
+# Google Cloud SDK (Cloud Shell ships its own on the system PATH)
+if [ -f "$GCLOUD_DIR/google-cloud-sdk/path.zsh.inc" ]; then . "$GCLOUD_DIR/google-cloud-sdk/path.zsh.inc"; fi
+if [ -f "$GCLOUD_DIR/google-cloud-sdk/completion.zsh.inc" ]; then . "$GCLOUD_DIR/google-cloud-sdk/completion.zsh.inc"; fi
+
+# Theme. Browser terminals (Cloud Shell) lack Nerd Font glyphs, so they use the
+# plain prompt; set DOTFILES_PLAIN_PROMPT=1 or 0 to choose explicitly.
+if [[ ${DOTFILES_PLAIN_PROMPT:-} == 1 || ( -z ${DOTFILES_PLAIN_PROMPT:-} && ${CLOUD_SHELL:-} == true ) ]]; then
+  export STARSHIP_CONFIG="$XDG_CONFIG_HOME/starship-plain.toml"
+fi
+if command -v starship &>/dev/null; then
+  eval "$(starship init zsh)"
+fi
+
+# Initialize last so directory tracking follows the final shell hooks.
+# Use cd for path/keyword jumps and cdi for the interactive picker.
+if command -v zoxide &>/dev/null; then
+  eval "$(zoxide init zsh --cmd cd)"
+fi
+
+# Host-specific settings (work aliases, env) stay out of this public repo.
+if [[ -r "$HOME/.zshrc.local" ]]; then
+  source "$HOME/.zshrc.local"
+fi
