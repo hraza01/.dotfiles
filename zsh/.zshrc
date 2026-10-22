@@ -136,6 +136,8 @@ alias ls='ls --color'
 alias vim='nvim'
 alias c='clear'
 alias v="fd --type f --hidden --exclude .git | fzf-tmux -p --reverse | xargs nvim"
+alias ai-unlock='git -C "$HOME/.dotfiles" crypt unlock "$HOME/.config/git-crypt/dotfiles.key"'
+alias ai-lock='git -C "$HOME/.dotfiles" crypt lock'
 
 unset MAILCHECK
 
