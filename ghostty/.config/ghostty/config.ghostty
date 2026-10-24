@@ -81,12 +81,12 @@ keybind = ctrl+shift+o=text:\x13|
 keybind = ctrl+shift+e=text:\x13-
 keybind = alt+w=text:\x13x
 keybind = ctrl+shift+enter=text:\x13m
-keybind = ctrl+tab=text:\x13n
+keybind = ctrl+tab=text:\x13\x0e
 keybind = ctrl+shift+tab=text:\x13p
-keybind = ctrl+page_down=text:\x13n
+keybind = ctrl+page_down=text:\x13\x0e
 keybind = ctrl+page_up=text:\x13p
 keybind = ctrl+shift+left=text:\x13p
-keybind = ctrl+shift+right=text:\x13n
+keybind = ctrl+shift+right=text:\x13\x0e
 keybind = alt+1=text:\x131
 keybind = alt+2=text:\x132
 keybind = alt+3=text:\x133

@@ -47,7 +47,8 @@ Press **Ctrl+S**, release it, then the command key:
 | `h/j/k/l` | Focus left/down/up/right pane |
 | `H/J/K/L` | Resize left/down/up/right by five cells |
 | `m` | Zoom/unzoom pane |
-| `1`…`9`, `n` / `p` | Numbered, next / previous window |
+| `n` | New session (prompts for a name) in the focused pane's directory |
+| `1`…`9`, Ctrl+N / `p` | Numbered, next / previous window |
 | `,` | Rename window |
 | `$` | Rename session |
 | `x` / `&` | Kill pane / window without confirmation |
