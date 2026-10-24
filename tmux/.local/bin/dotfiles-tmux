@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-"""Ghostty entry point: resume/create project sessions, or run an explicit app."""
+"""Ghostty entry point: attach the most recent project session, or run an explicit app."""
 
+import fcntl
 import os
 from pathlib import Path
 import re
@@ -9,6 +10,13 @@ import shutil
 import subprocess
 import sys
 import uuid
+
+RESTORE_SCRIPT = Path.home() / '.tmux/plugins/tmux-resurrect/scripts/restore.sh'
+# Same lookup as tmux-resurrect's default @resurrect-dir.
+SAVE_DIR = (Path.home() / '.tmux/resurrect' if (Path.home() / '.tmux/resurrect').is_dir()
+            else Path(os.environ.get('XDG_DATA_HOME') or Path.home() / '.local/share') / 'tmux/resurrect')
+# Dedicated app windows and leftover grouped views are not projects to resume.
+NON_PROJECT_PREFIXES = ('app-', 'view-')
 
 
 def tmux(*args):
@@ -20,67 +28,77 @@ def execute(*args):
 
 
 def sessions():
-    result = tmux('list-sessions', '-F',
-                  '#{session_id}\t#{session_name}\t#{session_attached}\t#{session_windows}\t#{session_group}\t#{@dotfiles-view}')
+    """Return (name, last_attached, activity) rows, or None without a tmux server."""
+    result = tmux('list-sessions', '-F', '#{session_name}\t#{session_last_attached}\t#{session_activity}')
     if result.returncode:
         if any(message in result.stderr for message in ('no server running', 'No such file or directory')):
-            return []
+            return None
         raise RuntimeError(result.stderr.strip())
     rows = []
     for line in result.stdout.splitlines():
-        identity, name, attached, windows, group, view = line.split('\t')
-        rows.append(dict(id=identity, name=name, attached=int(attached),
-                         windows=int(windows), group=group, view=view == '1'))
-    for row in rows:
-        row['busy'] = sum(other['attached'] for other in rows
-                          if other['id'] == row['id'] or
-                          (row['group'] and other['group'] == row['group']))
-    return [row for row in rows if not row['view']]
+        name, attached, activity = line.split('\t')
+        rows.append((name, int(attached or 0), int(activity or 0)))
+    return rows
 
 
-def choose(options, prompt, header):
-    # User fzf defaults must not change the output format or bind extra actions.
-    env = dict(os.environ, FZF_DEFAULT_OPTS='', FZF_DEFAULT_OPTS_FILE='')
-    result = subprocess.run(
-        ['fzf', '--sync', '--no-multi', '--no-sort', '--layout=reverse', '--border=none',
-         '--color=bw', '--no-separator',
-         '--info=hidden', '--delimiter=\t', '--with-nth=2..',
-         '--bind=ctrl-c:abort,esc:abort', f'--prompt={prompt}', f'--header={header}'],
-        input=''.join(f'{key}\t{label}\n' for key, label in options),
-        stdout=subprocess.PIPE, text=True, env=env)
-    if result.returncode in (1, 130):
+def saved_session():
+    """The session that was current when tmux-resurrect last saved."""
+    try:
+        for line in (SAVE_DIR / 'last').read_text().splitlines():
+            fields = line.split('\t')
+            if fields[0] == 'state' and len(fields) > 1:
+                return fields[1]
+    except OSError:
+        pass
+    return None
+
+
+def ensure_server():
+    """Start tmux in its own cgroup scope and restore the last save, once per boot."""
+    runtime = Path(os.environ.get('XDG_RUNTIME_DIR') or '/tmp')
+    # Windows opening together must not both start a server or restore twice.
+    with open(runtime / 'dotfiles-tmux.lock', 'w') as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        if sessions() is not None:
+            return False
+        # Outside Ghostty's per-window scope, closing that window cannot stop tmux.
+        # exit-empty is off in ~/.tmux.conf, so the server stays up with no sessions.
+        scoped = shutil.which('systemd-run') and subprocess.run(
+            ['systemd-run', '--user', '--scope', '--collect', '--quiet',
+             '--unit=tmux-server', '--', 'tmux', 'start-server'],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0
+        if not scoped:
+            tmux('start-server')
+        if RESTORE_SCRIPT.is_file() and (SAVE_DIR / 'last').exists():
+            # run-shell gives the script $TMUX and blocks until the restore ends.
+            tmux('run-shell', shlex.quote(str(RESTORE_SCRIPT)))
+        return True
+
+
+def most_recent(rows, preferred=None):
+    projects = [row for row in rows if not row[0].startswith(NON_PROJECT_PREFIXES)]
+    if preferred in {row[0] for row in projects}:
+        return preferred
+    if not projects:
         return None
-    if result.returncode:
-        raise RuntimeError(f'Session chooser exited with status {result.returncode}')
-    selected = result.stdout.rstrip('\n').split('\t', 1)[0]
-    if selected not in {key for key, _ in options}:
-        raise RuntimeError('Unexpected session chooser selection')
-    return selected
+    return max(projects, key=lambda row: (row[1], row[2]))[0]
 
 
-def create_session():
-    default = re.sub(r'[^A-Za-z0-9_-]+', '-', Path.cwd().name).strip('-_') or 'project'
-    existing = {row['name'] for row in sessions()}
-    base, suffix = default, 2
-    while default in existing:
-        default = f'{base}-{suffix}'
+def create_session(rows):
+    name = re.sub(r'[^A-Za-z0-9_-]+', '-', Path.cwd().name).strip('-_') or 'project'
+    existing = {row[0] for row in rows}
+    base, suffix = name, 2
+    while name in existing:
+        name = f'{base}-{suffix}'
         suffix += 1
-    while True:
-        name = input(f'Session name [{default}]: ').strip() or default
-        if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_-]*', name):
-            print('Use letters, numbers, hyphens or underscores; start with a letter or number.')
-            continue
-        if name in {row['name'] for row in sessions()}:
-            print('That session already exists. Choose another name.')
-            continue
-        # No -A: a concurrent creator must not silently attach us to their session.
-        execute('new-session', '-s', name, '-c', str(Path.cwd()))
+    # -A: if a window opened concurrently made this session, join it.
+    execute('new-session', '-A', '-s', name, '-c', str(Path.cwd()))
 
 
 def main():
     if sys.argv[1:] == ['--help']:
         print('Usage: dotfiles-tmux [-- COMMAND [ARG ...]]\n'
-              'No arguments: resume/create chooser. -- COMMAND: dedicated app session.')
+              'No arguments: attach the most recent session. -- COMMAND: dedicated app session.')
         return
     if not shutil.which('tmux'):
         raise RuntimeError('Missing dependency: tmux')
@@ -89,48 +107,21 @@ def main():
     os.environ.pop('TMUX', None)
     os.environ.pop('TMUX_PANE', None)
     args = sys.argv[1:]
+    if args and (args[0] != '--' or len(args) == 1):
+        raise RuntimeError('Expected -- COMMAND [ARG ...]; use --help for usage')
+    restored = ensure_server()
     if args:
-        if args[0] != '--' or len(args) == 1:
-            raise RuntimeError('Expected -- COMMAND [ARG ...]; use --help for usage')
         # tmux treats bare/trailing semicolons as its own command separators even
         # after --. Pass one shell-command with every application argument quoted.
         # Desktop Exec text is never evaluated as shell syntax.
         execute('new-session', '-s', 'app-' + uuid.uuid4().hex[:12],
                 '-c', str(Path.cwd()), '--', 'exec ' + shlex.join(args[1:]))
-    if not shutil.which('fzf'):
-        raise RuntimeError('Missing dependency: fzf')
-    available = sessions()
-    if not available:
-        create_session()
-        return
-    options = [(row['id'], f"{row['name']}  ({row['windows']} windows; "
-                f"{str(row['busy']) + ' attached' if row['busy'] else 'detached'})")
-               for row in available]
-    options.append(('new', '+ Create new session'))
-    selected = choose(options, 'Session > ', 'Resume a project or create one · Esc closes this terminal')
-    if selected is None:
-        return
-    if selected == 'new':
-        create_session()
-        return
-    # Refresh attachment state after the chooser; sessions can change meanwhile.
-    session = next((row for row in sessions() if row['id'] == selected), None)
-    if session is None:
-        raise RuntimeError('That session ended. Open the terminal again to refresh.')
-    if session['busy']:
-        action = choose([('view', 'Independent view — shared tabs, independent tab selection'),
-                         ('join', 'Join existing session — synchronized tab selection')],
-                        'Open > ', f"{session['name']} is already attached")
-        if action is None:
-            return
-        if action == 'view':
-            name = 'view-' + uuid.uuid4().hex[:12]
-            # Configure the view after the new client attaches. Setting
-            # destroy-unattached on a detached session would destroy it at once.
-            execute('new-session', '-t', selected, '-s', name,
-                    ';', 'set-option', '-t', name, '@dotfiles-view', '1',
-                    ';', 'set-option', '-t', name, 'destroy-unattached', 'on')
-    execute('attach-session', '-t', selected)
+    rows = sessions() or []
+    # Restored sessions have never been attached; prefer the one active at save time.
+    target = most_recent(rows, saved_session() if restored else None)
+    if target is None:
+        create_session(rows)
+    execute('attach-session', '-t', '=' + target)
 
 
 if __name__ == '__main__':

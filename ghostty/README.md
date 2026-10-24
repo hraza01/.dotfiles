@@ -1,9 +1,9 @@
 # Ghostty + tmux (Arch)
 
 Ghostty is the default terminal for Sway, tools honoring `TERMINAL`, and
-Quickshell terminal applications. Requires **Ghostty 1.3+**, tmux, fzf and Python
-3.11+. The GUI group installs/stows Ghostty and tmux. New windows open the
-[tmux resume/create chooser](../tmux/README.md), including **Super+Return** in
+Quickshell terminal applications. Requires **Ghostty 1.3+**, tmux and Python
+3.11+. The GUI group installs/stows Ghostty and tmux. New windows attach the
+[most recent tmux session](../tmux/README.md), including **Super+Return** in
 Sway and Ghostty's **Ctrl+Shift+N**.
 
 ## Controls
@@ -22,7 +22,7 @@ Sway and Ghostty's **Ctrl+Shift+N**.
 | Ctrl+Tab / Ctrl+Shift+Tab | Next/previous tmux window |
 | Ctrl+PageDown / Ctrl+PageUp | Next/previous tmux window |
 | Alt+1…9 | Select numbered tmux window (9 means window 9) |
-| Ctrl+Shift+N | New Ghostty window with session chooser |
+| Ctrl+Shift+N | New Ghostty window on the most recent session |
 | Ctrl+S, then `s` / `$` | Choose / rename tmux session |
 | Ctrl+Left / Ctrl+Right | Beginning/end of line |
 | Alt+Left / Alt+Right | Previous/next word |

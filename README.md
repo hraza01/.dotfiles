@@ -135,8 +135,8 @@ private overrides outside the repository.
 ## Applications
 
 **Ghostty** is the default terminal for Sway, `TERMINAL`, and Quickshell's
-terminal applications. New windows offer a **tmux resume/create chooser** with
-named project sessions and independent grouped views for multiple monitors.
+terminal applications. New windows attach to the most recent **tmux project
+session**, which survives closing Ghostty and is restored after a reboot.
 Tmux handles the bottom window strip, splits and renaming. See
 [tmux sessions and setup](tmux/README.md) and [terminal controls](ghostty/README.md)
 for clipboard behavior, activation and appearance.
