@@ -12,6 +12,7 @@ Rectangle {
     Row {
         id: contentRow
         anchors.centerIn: parent
+        anchors.verticalCenterOffset: Theme.panelContentOffset
         spacing: 4
 
         Text {

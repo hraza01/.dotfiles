@@ -45,15 +45,21 @@ PanelWindow {
         anchors.leftMargin: 4
         anchors.verticalCenter: parent.verticalCenter
         height: Theme.panelHeight
-        spacing: Theme.panelSpacing
+        // Workspaces sit directly against the Arch mark's own padding.
+        spacing: 0
 
         ArchMark {
             id: archMark
             window: barWindow
         }
-        Workspaces { screen: barWindow.screen }
-        BindingMode {}
-        Scratchpad {}
+        Row {
+            height: Theme.panelHeight
+            spacing: Theme.panelSpacing
+
+            Workspaces { screen: barWindow.screen }
+            BindingMode {}
+            Scratchpad {}
+        }
     }
 
     // Right section

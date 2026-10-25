@@ -13,6 +13,7 @@ Rectangle {
     BarIcon {
         id: bell
         anchors.centerIn: parent
+        anchors.verticalCenterOffset: Theme.panelContentOffset
         text: "\uf0f3"
         font.family: Theme.fontFamilyIconFree
         font.pixelSize: Theme.panelIconSizePx

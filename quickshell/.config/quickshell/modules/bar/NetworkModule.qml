@@ -12,6 +12,7 @@ Rectangle {
     BarIcon {
         id: netText
         anchors.centerIn: parent
+        anchors.verticalCenterOffset: Theme.panelContentOffset
         text: NetworkService.text
         textFormat: Text.PlainText
         font.family: NetworkService.isWifi ? Theme.fontFamilyIconFree : Theme.fontFamily

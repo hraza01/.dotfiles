@@ -48,7 +48,7 @@ function geometry(width, height, panelHeight) {
     width = Math.max(0, Number(width) || 0);
     height = Math.max(0, Number(height) || 0);
     var right = Math.min(30, Math.max(0, (width - 360) / 2));
-    var top = Math.min(height, Math.max(30, Number(panelHeight) || 0));
+    var top = Math.min(height, Number(panelHeight) > 0 ? Number(panelHeight) : 30);
     var bottom = Math.min(30, Math.max(0, height - top));
     return {width: Math.min(360, width), right: right, top: top,
         height: Math.max(0, height - top - bottom)};

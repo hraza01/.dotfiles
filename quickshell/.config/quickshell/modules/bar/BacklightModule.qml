@@ -11,6 +11,7 @@ Rectangle {
     BarIcon {
         id: blIcon
         anchors.centerIn: parent
+        anchors.verticalCenterOffset: Theme.panelContentOffset
         text: BrightnessService.icon
         font.family: Theme.fontFamilyIconFree
         font.pixelSize: Theme.panelIconSizePx

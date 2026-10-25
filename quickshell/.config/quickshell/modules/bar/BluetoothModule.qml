@@ -12,6 +12,7 @@ Rectangle {
     BarIcon {
         id: btIcon
         anchors.centerIn: parent
+        anchors.verticalCenterOffset: Theme.panelContentOffset
         text: BluetoothService.icon
         font.family: Theme.fontFamilyIconBrands
         font.pixelSize: Theme.panelIconSizePx

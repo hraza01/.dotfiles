@@ -25,17 +25,12 @@ Row {
                 return "transparent";
             }
 
-            Text {
+            BarText {
                 id: wsLabel
-                anchors.centerIn: parent
+                anchors.horizontalCenter: parent.horizontalCenter
                 text: ws.name || ""
-                textFormat: Text.PlainText
                 width: parent.width - 16
                 elide: Text.ElideRight
-                font.family: Theme.fontFamily
-                font.pointSize: Theme.panelFontSizePt
-                font.weight: Theme.panelFontWeight
-                color: Theme.fg
             }
 
             // White underline for focused workspace

@@ -30,6 +30,7 @@ Row {
             }
             Image {
                 anchors.centerIn: parent
+                anchors.verticalCenterOffset: Theme.panelContentOffset
                 width: 15; height: 15
                 sourceSize.width: Math.ceil(width * Screen.devicePixelRatio)
                 sourceSize.height: Math.ceil(height * Screen.devicePixelRatio)

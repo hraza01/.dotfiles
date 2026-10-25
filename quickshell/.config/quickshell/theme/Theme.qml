@@ -44,7 +44,9 @@ Singleton {
     readonly property int notificationIconSizePx: 32
 
     // Sizing & Geometry
-    readonly property int panelHeight: 31
+    readonly property int panelHeight: 25
+    // Lift bar text/icons so they centre above the 2px bottom border.
+    readonly property int panelContentOffset: -1
     readonly property int panelSpacing: 2
 
     readonly property int launcherWidth: 480

@@ -11,6 +11,7 @@ Item {
     // Independently drawn nine-dot Tailscale-style mark, not an official asset.
     Item {
         anchors.centerIn: parent
+        anchors.verticalCenterOffset: Theme.panelContentOffset
         width: Theme.panelIconSizePx
         height: Theme.panelIconSizePx
         Repeater {

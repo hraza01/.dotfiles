@@ -16,6 +16,7 @@ Rectangle {
     Row {
         id: batteryRow
         anchors.centerIn: parent
+        anchors.verticalCenterOffset: Theme.panelContentOffset
         spacing: 1
 
         Rectangle {

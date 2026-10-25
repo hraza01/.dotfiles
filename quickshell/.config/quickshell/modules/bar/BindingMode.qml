@@ -9,18 +9,13 @@ Rectangle {
     width: visible ? Math.min(240, modeText.implicitWidth + 14) : 0
     color: Theme.workspaceFocused
 
-    Text {
+    BarText {
         id: modeText
-        anchors.centerIn: parent
+        anchors.horizontalCenter: parent.horizontalCenter
         text: SwayService.modeAvailable ? SwayService.currentMode : "Mode ?"
-        textFormat: Text.PlainText
         width: parent.width - 14
         elide: Text.ElideRight
-        font.family: Theme.fontFamily
-        font.pointSize: Theme.panelFontSizePt
-        font.weight: Theme.panelFontWeight
         font.italic: true
-        color: Theme.fg
     }
 
     Rectangle {

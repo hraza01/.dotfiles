@@ -49,14 +49,10 @@ Rectangle {
         }
     }
 
-    Text {
+    BarText {
         id: timeLabel
-        anchors.centerIn: parent
+        anchors.horizontalCenter: parent.horizontalCenter
         text: root.timeStr
-        font.family: Theme.fontFamily
-        font.pointSize: Theme.panelFontSizePt
-        font.weight: Theme.panelFontWeight
-        color: Theme.fg
     }
 
     MouseArea {

@@ -11,6 +11,7 @@ Rectangle {
     BarIcon {
         id: audioIcon
         anchors.centerIn: parent
+        anchors.verticalCenterOffset: Theme.panelContentOffset
         text: AudioService.icon
         font.family: Theme.fontFamilyIconFree
         font.pixelSize: Theme.panelIconSizePx

@@ -11,6 +11,7 @@ Rectangle {
     BarIcon {
         id: cpuIcon
         anchors.centerIn: parent
+        anchors.verticalCenterOffset: Theme.panelContentOffset
         text: SystemStatusService.cpuIcon
         font.family: Theme.fontFamilyIconFree
         font.pixelSize: Theme.panelIconSizePx
