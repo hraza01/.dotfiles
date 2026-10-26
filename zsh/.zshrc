@@ -106,6 +106,38 @@ fzf-cd-dev() {
 zle -N fzf-cd-dev
 bindkey '^F' fzf-cd-dev
 
+# Alt+Shift+F: pick a tmux session (inside tmux, a tmux popup binding wins).
+# Detaching (Ctrl+S, then d) returns to this shell.
+tmux-session-picker() {
+  emulate -L zsh
+  if [[ ! -x "$HOME/.local/bin/dotfiles-tmux" ]]; then
+    zle -M 'tmux-session-picker: missing ~/.local/bin/dotfiles-tmux'
+    return 0
+  fi
+  zle -I
+  # tmux needs the real device (/dev/pts/N), not /dev/tty, opened read-write:
+  # it also draws through this descriptor.
+  "$HOME/.local/bin/dotfiles-tmux" <>"$TTY"
+  zle reset-prompt
+}
+
+zle -N tmux-session-picker
+bindkey '^[F' tmux-session-picker
+
+# Ghostty's tmux shortcuts (Ctrl+T, Ctrl+W, Alt+1…) send Ctrl+S, then a key.
+# Outside tmux, swallow that pair instead of freezing output (XOFF) or typing it.
+if [[ -z "$TMUX" ]]; then
+  unsetopt flow_control
+  [[ -t 0 ]] && stty -ixon 2>/dev/null
+  tmux-shortcut-outside-tmux() {
+    # Consume the shortcut's second key through ZLE, then explain.
+    zle read-command
+    zle -M 'Not in tmux: Alt+Shift+F opens a session'
+  }
+  zle -N tmux-shortcut-outside-tmux
+  bindkey '^S' tmux-shortcut-outside-tmux
+fi
+
 # History
 HISTSIZE=5000
 HISTFILE=~/.zsh_history
@@ -185,7 +217,7 @@ if command -v starship &>/dev/null; then
   eval "$(starship init zsh)"
 fi
 
-# Ghostty starts tmux rather than zsh, so fresh pane shells need integration.
+# Ghostty integrates only its own shell; tmux pane shells source it here.
 if [[ -n "$TMUX" && -n "$GHOSTTY_RESOURCES_DIR" &&
       -f "$GHOSTTY_RESOURCES_DIR/shell-integration/zsh/ghostty-integration" ]]; then
   source "$GHOSTTY_RESOURCES_DIR/shell-integration/zsh/ghostty-integration"

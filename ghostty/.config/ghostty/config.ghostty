@@ -11,8 +11,8 @@ font-feature = liga=0
 # GTK uses Wayland in the Sway session; let Sway draw its pixel borders.
 window-decoration = server
 gtk-titlebar = false
-# Applies to every new window, including Sway's Super+Return and Ctrl+Shift+N.
-command = shell:exec "$HOME/.local/bin/dotfiles-tmux"
+# New windows (Super+Return, Ctrl+Shift+N) open a plain shell. Alt+Shift+F
+# picks a tmux session; zsh and tmux both bind it.
 # Outer terminal padding in points; tmux adds no padding inside its panes.
 window-padding-x = 3
 # Keep top padding but bring tmux's bottom status bar closer to the window edge.
@@ -146,4 +146,4 @@ keybind = ctrl+v=unbind
 # Leave these to the application/compositor.
 keybind = alt+enter=unbind
 keybind = super+w=unbind
-# Ctrl+Shift+N opens another outer Ghostty window on the most recent session.
+# Ctrl+Shift+N opens another outer Ghostty window with a plain shell.

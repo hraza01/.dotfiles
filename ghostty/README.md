@@ -2,9 +2,10 @@
 
 Ghostty is the default terminal for Sway, tools honoring `TERMINAL`, and
 Quickshell terminal applications. Requires **Ghostty 1.3+**, tmux and Python
-3.11+. The GUI group installs/stows Ghostty and tmux. New windows attach the
-[most recent tmux session](../tmux/README.md), including **Super+Return** in
-Sway and Ghostty's **Ctrl+Shift+N**.
+3.11+. The GUI group installs/stows Ghostty and tmux. New windows, including
+**Super+Return** in Sway and Ghostty's **Ctrl+Shift+N**, open a plain zsh;
+**Alt+Shift+F** opens the [tmux session picker](../tmux/README.md). The tmux
+shortcuts below need an attached tmux session.
 
 ## Controls
 
@@ -22,7 +23,8 @@ Sway and Ghostty's **Ctrl+Shift+N**.
 | Ctrl+Tab / Ctrl+Shift+Tab | Next/previous tmux window |
 | Ctrl+PageDown / Ctrl+PageUp | Next/previous tmux window |
 | Alt+1…9 | Select numbered tmux window (9 means window 9) |
-| Ctrl+Shift+N | New Ghostty window on the most recent session |
+| Ctrl+Shift+N | New Ghostty window (plain shell) |
+| Alt+Shift+F | Pick/create a tmux session (fzf) |
 | Ctrl+S, then `s` / `$` | Choose / rename tmux session |
 | Ctrl+Left / Ctrl+Right | Beginning/end of line |
 | Alt+Left / Alt+Right | Previous/next word |
@@ -95,8 +97,8 @@ Reconcile real files and legacy `~/.config/ghostty/config` before linking; Ghost
 reads both config filenames. Preserve private originals outside the checkout.
 Remove the old managed `tabs.css` link if left over from the native-tab setup.
 
-Reload Ghostty with **Alt+Shift+Z**, then open a new window. Existing plain-shell
-windows can run `exec ~/.local/bin/dotfiles-tmux`. For tmux configuration changes,
+Reload Ghostty with **Alt+Shift+Z**, then open a new window and press
+**Alt+Shift+F**. For tmux configuration changes,
 prefix then `r` reloads the server; use fresh panes for updated shell integration.
 See [tmux setup](../tmux/README.md) for plugins and multi-monitor behavior.
 

@@ -1,38 +1,51 @@
 # tmux project sessions
 
-Ghostty runs `~/.local/bin/dotfiles-tmux` on every new window. This Stow package
-installs that launcher and `~/.tmux.conf`; GUI setup installs tmux and fzf.
+**Alt+Shift+F** runs the `~/.local/bin/dotfiles-tmux` session picker. This Stow
+package installs that launcher and `~/.tmux.conf`; GUI setup installs tmux and fzf.
 The launcher requires Python 3.11+. The configuration is adapted from Darwin's
 `0ead44c`, whose historical tmux baseline was `fa43273`.
 
-## Opening a terminal
+## Session picker
 
-- Every new Ghostty window attaches to the most recently used project session.
-  Switch sessions with **Ctrl+S, then `s`**.
-- With no project sessions, it creates one named after the current directory
-  (letters, digits, hyphens and underscores). Rename it with **Ctrl+S, then `$`**.
-- Dedicated `app-*` sessions (below) are never picked.
-- A second window on an already attached session joins it, so both windows
-  show the same current tmux window. Switch one of them with Ctrl+S, then `s`.
-- Closing Ghostty only detaches. The tmux server keeps running with no
-  terminals open, and even with no sessions (`exit-empty off`). Killing a tmux
-  pane/window actually ends its programs.
+New Ghostty windows open a plain zsh, not tmux. Press **Alt+Shift+F** to pick a
+session with fzf, in a plain shell or inside tmux:
 
-The launcher starts the tmux server in its own systemd user scope,
-`tmux-server.scope`. Otherwise the server lands in the cgroup scope of the
-Ghostty window that started it, and that scope can take tmux down with it.
+- Sessions are listed most recently used first, with window counts and whether
+  another terminal is attached. The session you are in is left out.
+- **Enter** attaches (plain shell) or switches this tmux client (inside tmux).
+- Typing a name nothing matches and pressing **Enter** creates that session in
+  the current directory. **Alt+Enter** creates it even when the name matches.
+  Names are reduced to letters, digits, hyphens and underscores.
+- **Esc** cancels. Dedicated `app-*` sessions (below) are not listed.
+- Detaching (**Ctrl+S, then `d`**) returns a plain-shell window to its shell.
 
-After a reboot, the first window starts the server, restores the last
-tmux-resurrect save (see below) and attaches the session that was current when
-it was saved. Concurrent windows wait for that restore instead of repeating it.
+In a plain shell, zsh binds the key and runs `~/.local/bin/dotfiles-tmux`. Inside
+tmux, a root-table binding opens the same picker in a popup over the pane, so it
+takes Alt+Shift+F from every program. Ghostty's tmux shortcuts (Ctrl+T, Ctrl+W,
+Alt+1…) do nothing outside tmux: zsh swallows their Ctrl+S sequence and shows a
+hint instead of freezing output with XOFF. Other programs in a plain window
+receive the raw Ctrl+S sequence.
 
-New windows and splits start in the current directory. Launching Ghostty from
-an existing tmux shell still creates a separate client.
+## Background server
+
+Closing Ghostty only detaches. The tmux server keeps running with no terminals
+open, and even with no sessions (`exit-empty off`). Killing a tmux pane/window
+actually ends its programs.
+
+The launcher starts the server in its own systemd user scope, `tmux-server.scope`.
+Otherwise the server lands in the cgroup scope of the Ghostty window that started
+it, and that scope can take tmux down with it.
+
+After a reboot, the first picker (or app launch) starts the server and restores
+the last tmux-resurrect save (see below) before listing sessions. Concurrent
+launches wait for that restore instead of repeating it. New windows and splits
+start in the current directory.
 
 ## Multiple monitors
 
-Use one Ghostty window per Sway workspace/output and switch each to its project
-with **Ctrl+S, then `s`**. Sway workspaces can move between monitors without
+Use one Ghostty window per Sway workspace/output and pick each one's project
+with **Alt+Shift+F**. Picking a session another window shows makes both windows
+show the same current tmux window. Sway workspaces can move between monitors without
 moving or restarting tmux processes.
 
 ## Controls
@@ -48,6 +61,7 @@ Press **Ctrl+S**, release it, then the command key:
 | `H/J/K/L` | Resize left/down/up/right by five cells |
 | `m` | Zoom/unzoom pane |
 | `n` | New session (prompts for a name) in the focused pane's directory |
+| Alt+Shift+F (no prefix) | fzf session picker popup |
 | `1`…`9`, Ctrl+N / `p` | Numbered, next / previous window |
 | `,` | Rename window |
 | `$` | Rename session |
@@ -66,7 +80,7 @@ square charcoal highlight. Renaming uses tmux's prompt, not a GTK dialog.
 ## Terminal applications and integration
 
 Quickshell `Terminal=true` apps launch as `ghostty -e dotfiles-tmux -- COMMAND …`.
-This skips the most-recent-session attach and runs the exact command/arguments in a dedicated
+This skips the picker and runs the exact command/arguments in a dedicated
 `app-*` session, in the desktop entry's working directory. Ending the last pane
 closes that client rather than switching to an unrelated project. Manually use
 `ghostty -e ~/.local/bin/dotfiles-tmux -- COMMAND ARG …` for the same behavior.
@@ -87,8 +101,8 @@ stow -d ~/.dotfiles -t ~ tmux ghostty zsh
 
 After migrating from GTK tabs, remove the old `~/.config/ghostty/tabs.css` link
 only if it points to the retired dotfiles stylesheet. Reload Ghostty with
-**Alt+Shift+Z** and open a new window. An existing plain-shell terminal can enter
-its most recent session with `exec ~/.local/bin/dotfiles-tmux`.
+**Alt+Shift+Z** and open a new window, then press **Alt+Shift+F**. Existing
+shells need `exec zsh` for the new key bindings.
 
 The basic workflow works without plugins. To enable the restored TPM plugin set:
 

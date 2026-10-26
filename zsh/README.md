@@ -2,9 +2,15 @@
 
 ## tmux integration
 
-Ghostty opens the [tmux project chooser](../tmux/README.md). New tmux pane shells
-explicitly source Ghostty's Zsh integration for SSH compatibility and terminal
-metadata. Existing shells need a fresh pane to pick up this change.
+Ghostty opens a plain zsh. **Alt+Shift+F** runs the
+[tmux session picker](../tmux/README.md) and attaches the chosen session;
+detaching returns to this shell. Inside tmux, tmux's own popup binding handles
+the key. New tmux pane shells explicitly source Ghostty's Zsh integration for
+SSH compatibility and terminal metadata. Existing shells need a fresh pane to
+pick up this change.
+
+Outside tmux, zsh turns off XOFF flow control and swallows **Ctrl+S, then any
+key**, which Ghostty's tmux shortcuts send, showing a hint instead.
 
 ## Directory navigation
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Ghostty entry point: attach the most recent project session, or run an explicit app."""
+"""Pick a tmux session with fzf and attach/switch to it, or run an explicit app."""
 
 import fcntl
 import os
@@ -15,7 +15,7 @@ RESTORE_SCRIPT = Path.home() / '.tmux/plugins/tmux-resurrect/scripts/restore.sh'
 # Same lookup as tmux-resurrect's default @resurrect-dir.
 SAVE_DIR = (Path.home() / '.tmux/resurrect' if (Path.home() / '.tmux/resurrect').is_dir()
             else Path(os.environ.get('XDG_DATA_HOME') or Path.home() / '.local/share') / 'tmux/resurrect')
-# Dedicated app windows and leftover grouped views are not projects to resume.
+# Dedicated app windows and leftover grouped views are not projects to pick.
 NON_PROJECT_PREFIXES = ('app-', 'view-')
 
 
@@ -28,39 +28,29 @@ def execute(*args):
 
 
 def sessions():
-    """Return (name, last_attached, activity) rows, or None without a tmux server."""
-    result = tmux('list-sessions', '-F', '#{session_name}\t#{session_last_attached}\t#{session_activity}')
+    """Return session rows, or None without a tmux server."""
+    result = tmux('list-sessions', '-F', '#{session_name}\t#{session_last_attached}\t'
+                  '#{session_activity}\t#{session_windows}\t#{session_attached}')
     if result.returncode:
         if any(message in result.stderr for message in ('no server running', 'No such file or directory')):
             return None
         raise RuntimeError(result.stderr.strip())
     rows = []
     for line in result.stdout.splitlines():
-        name, attached, activity = line.split('\t')
-        rows.append((name, int(attached or 0), int(activity or 0)))
+        name, last, activity, windows, attached = line.split('\t')
+        rows.append(dict(name=name, last=int(last or 0), activity=int(activity or 0),
+                         windows=int(windows), attached=int(attached)))
     return rows
-
-
-def saved_session():
-    """The session that was current when tmux-resurrect last saved."""
-    try:
-        for line in (SAVE_DIR / 'last').read_text().splitlines():
-            fields = line.split('\t')
-            if fields[0] == 'state' and len(fields) > 1:
-                return fields[1]
-    except OSError:
-        pass
-    return None
 
 
 def ensure_server():
     """Start tmux in its own cgroup scope and restore the last save, once per boot."""
     runtime = Path(os.environ.get('XDG_RUNTIME_DIR') or '/tmp')
-    # Windows opening together must not both start a server or restore twice.
+    # Pickers opening together must not both start a server or restore twice.
     with open(runtime / 'dotfiles-tmux.lock', 'w') as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
         if sessions() is not None:
-            return False
+            return
         # Outside Ghostty's per-window scope, closing that window cannot stop tmux.
         # exit-empty is off in ~/.tmux.conf, so the server stays up with no sessions.
         scoped = shutil.which('systemd-run') and subprocess.run(
@@ -72,56 +62,133 @@ def ensure_server():
         if RESTORE_SCRIPT.is_file() and (SAVE_DIR / 'last').exists():
             # run-shell gives the script $TMUX and blocks until the restore ends.
             tmux('run-shell', shlex.quote(str(RESTORE_SCRIPT)))
-        return True
 
 
-def most_recent(rows, preferred=None):
-    projects = [row for row in rows if not row[0].startswith(NON_PROJECT_PREFIXES)]
-    if preferred in {row[0] for row in projects}:
-        return preferred
-    if not projects:
-        return None
-    return max(projects, key=lambda row: (row[1], row[2]))[0]
+def tmux_client():
+    """The client to switch when running inside tmux ('' = current), or None outside it."""
+    # Set by the Alt+Shift+F popup binding in ~/.tmux.conf.
+    if os.environ.get('DOTFILES_TMUX_CLIENT'):
+        return os.environ['DOTFILES_TMUX_CLIENT']
+    # A terminal started from a tmux pane inherits $TMUX; trust it only on that pane's tty.
+    pane = os.environ.get('TMUX_PANE')
+    if os.environ.get('TMUX') and pane:
+        try:
+            tty = os.ttyname(0)
+        except OSError:
+            return None
+        if tmux('display-message', '-p', '-t', pane, '#{pane_tty}').stdout.strip() == tty:
+            return ''
+    return None
 
 
-def create_session(rows):
-    name = re.sub(r'[^A-Za-z0-9_-]+', '-', Path.cwd().name).strip('-_') or 'project'
-    existing = {row[0] for row in rows}
-    base, suffix = name, 2
-    while name in existing:
-        name = f'{base}-{suffix}'
-        suffix += 1
-    # -A: if a window opened concurrently made this session, join it.
-    execute('new-session', '-A', '-s', name, '-c', str(Path.cwd()))
+def use_real_tty():
+    """Give tmux stdin as the terminal's real device, opened read-write.
+
+    tmux refuses /dev/tty, and it draws through stdin: a read-only stdin
+    (e.g. a shell's `<"$TTY"`) attaches but never displays anything.
+    """
+    try:
+        path = os.ttyname(0)
+        writable = (fcntl.fcntl(0, fcntl.F_GETFL) & os.O_ACCMODE) == os.O_RDWR
+    except OSError:
+        return
+    if path == '/dev/tty':
+        for fd in (1, 2):
+            try:
+                path = os.ttyname(fd)
+            except OSError:
+                continue
+            if path != '/dev/tty':
+                break
+        else:
+            return
+    elif writable:
+        return
+    real = os.open(path, os.O_RDWR)
+    os.dup2(real, 0)
+    os.close(real)
+
+
+def choose(rows):
+    """Return ('open' | 'create', name), or None when cancelled."""
+    options = [(row['name'], f"{row['name']}  ({row['windows']} window{'s' * (row['windows'] != 1)}"
+                f"{', attached' if row['attached'] else ''})") for row in rows]
+    # User fzf defaults must not change the output format or bind extra actions.
+    env = dict(os.environ, FZF_DEFAULT_OPTS='', FZF_DEFAULT_OPTS_FILE='')
+    result = subprocess.run(
+        ['fzf', '--no-multi', '--layout=reverse', '--border=none', '--info=hidden',
+         '--tiebreak=index', '--prompt=', '--delimiter=\t', '--with-nth=2..',
+         '--print-query', '--expect=alt-enter', '--bind=ctrl-c:abort,esc:abort',
+         '--header=Enter opens · type a new name, Enter or Alt+Enter creates it'],
+        input=''.join(f'{key}\t{label}\n' for key, label in options),
+        stdout=subprocess.PIPE, text=True, env=env)
+    # 0: selected, 1: no match (Enter on a new name), 130: cancelled.
+    if result.returncode not in (0, 1):
+        if result.returncode == 130:
+            return None
+        raise RuntimeError(f'Session picker exited with status {result.returncode}')
+    query, key, *selection = result.stdout.split('\n') + ['', '']
+    selected = selection[0].split('\t', 1)[0] if selection and selection[0] else ''
+    if key != 'alt-enter' and selected:
+        return 'open', selected
+    name = re.sub(r'[^A-Za-z0-9_-]+', '-', query.strip()).strip('-_')
+    return ('create', name) if name else None
+
+
+def pick():
+    if not shutil.which('fzf'):
+        raise RuntimeError('Missing dependency: fzf')
+    client = tmux_client()
+    if client is None:
+        os.environ.pop('TMUX', None)
+        os.environ.pop('TMUX_PANE', None)
+    ensure_server()
+    current = None
+    if client is not None:
+        current = tmux('display-message', '-p', *(['-c', client] if client else []),
+                       '#{client_session}').stdout.strip()
+    rows = [row for row in sessions() or []
+            if not row['name'].startswith(NON_PROJECT_PREFIXES) and row['name'] != current]
+    rows.sort(key=lambda row: (row['last'], row['activity']), reverse=True)
+    choice = choose(rows)
+    if choice is None:
+        return
+    action, name = choice
+    if action == 'create' and name not in {row['name'] for row in sessions() or []}:
+        result = tmux('new-session', '-d', '-s', name, '-c', str(Path.cwd()))
+        if result.returncode:
+            raise RuntimeError(result.stderr.strip())
+    if client is None:
+        use_real_tty()
+        execute('attach-session', '-t', '=' + name)
+    result = tmux('switch-client', *(['-c', client] if client else []), '-t', '=' + name)
+    if result.returncode:
+        raise RuntimeError(result.stderr.strip())
 
 
 def main():
     if sys.argv[1:] == ['--help']:
         print('Usage: dotfiles-tmux [-- COMMAND [ARG ...]]\n'
-              'No arguments: attach the most recent session. -- COMMAND: dedicated app session.')
+              'No arguments: pick a session with fzf. -- COMMAND: dedicated app session.')
         return
     if not shutil.which('tmux'):
         raise RuntimeError('Missing dependency: tmux')
+    args = sys.argv[1:]
+    if not args:
+        pick()
+        return
+    if args[0] != '--' or len(args) == 1:
+        raise RuntimeError('Expected -- COMMAND [ARG ...]; use --help for usage')
     # Ghostty may itself have been launched from a tmux pane. Its new terminal
     # is a new client, not a nested tmux instance in the inherited pane.
     os.environ.pop('TMUX', None)
     os.environ.pop('TMUX_PANE', None)
-    args = sys.argv[1:]
-    if args and (args[0] != '--' or len(args) == 1):
-        raise RuntimeError('Expected -- COMMAND [ARG ...]; use --help for usage')
-    restored = ensure_server()
-    if args:
-        # tmux treats bare/trailing semicolons as its own command separators even
-        # after --. Pass one shell-command with every application argument quoted.
-        # Desktop Exec text is never evaluated as shell syntax.
-        execute('new-session', '-s', 'app-' + uuid.uuid4().hex[:12],
-                '-c', str(Path.cwd()), '--', 'exec ' + shlex.join(args[1:]))
-    rows = sessions() or []
-    # Restored sessions have never been attached; prefer the one active at save time.
-    target = most_recent(rows, saved_session() if restored else None)
-    if target is None:
-        create_session(rows)
-    execute('attach-session', '-t', '=' + target)
+    ensure_server()
+    # tmux treats bare/trailing semicolons as its own command separators even
+    # after --. Pass one shell-command with every application argument quoted.
+    # Desktop Exec text is never evaluated as shell syntax.
+    execute('new-session', '-s', 'app-' + uuid.uuid4().hex[:12],
+            '-c', str(Path.cwd()), '--', 'exec ' + shlex.join(args[1:]))
 
 
 if __name__ == '__main__':
