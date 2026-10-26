@@ -110,11 +110,11 @@ The basic workflow works without plugins. To enable the restored TPM plugin set:
 git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
 ```
 
-In a tmux session, press prefix then `r`, then prefix then **Shift+I** to install
-plugins, and prefix then `r` again. Plugins include sensible defaults, Vim
-navigation, yank, resurrect/continuum, thumbs, fzf and URL selection. Resurrect
-uses uppercase `S` to avoid the Ctrl+S prefix-forwarding binding. Continuum
-saves layouts every 15 minutes while a terminal is attached. Its own
-auto-restore is off because `dotfiles-tmux` restores when it starts the server.
-A server shutdown/reboot ends live programs; restoring a saved layout is
-different from resuming them.
+In a tmux session, press prefix then `r`, then prefix then **Shift+I** to
+install plugins, and prefix then `r` again. Plugins include sensible defaults,
+yank, resurrect/continuum, thumbs, fzf and URL selection. Resurrect uses
+uppercase `S` to avoid the Ctrl+S prefix-forwarding binding. Continuum saves
+layouts every 15 minutes while a terminal is attached. Its own auto-restore is
+off because `dotfiles-tmux` restores when it starts the server. A server
+shutdown/reboot ends live programs; restoring a saved layout is different from
+resuming them.
