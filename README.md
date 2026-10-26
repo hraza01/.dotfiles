@@ -111,6 +111,10 @@ backups externally; former sources remain in Git history for inspection.
 The GUI group installs logind's Sway lid policy without restarting logind; activate
 it with a deliberate reboot after checking locked/docked lid behavior.
 
+Date and time follow NTP (`systemd-timesyncd`). The GUI group also sets the
+[time zone automatically](setup/timezone/README.md) from the public IP address on
+each NetworkManager connection, skipping while traffic goes through a VPN.
+
 ## Desktop
 
 Quickshell provides the panel, application/run launcher, notifications and hardware

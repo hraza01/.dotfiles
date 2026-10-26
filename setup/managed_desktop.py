@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Preflight and publish the setup-managed greetd and logind files."""
+"""Preflight and publish the setup-managed greetd, logind and time zone files."""
 
 import os
 import shutil
@@ -11,6 +11,10 @@ from pathlib import Path
 
 
 LID_POLICY = "60-dotfiles-sway-lid.conf"
+# Components whose root-owned destinations other services trust or execute.
+SECURED_KINDS = ("greetd", "timezone")
+# Destinations NetworkManager or systemd execute; everything else is 0644.
+EXECUTABLES = ("dotfiles-auto-timezone", "90-dotfiles-auto-timezone")
 
 
 def plain_path(path):
@@ -50,7 +54,7 @@ def check_greeter_file(path, root):
     metadata = path.stat()
     if (not path.is_file() or (root == Path("/") and metadata.st_uid != 0)
             or metadata.st_mode & 0o022 or not metadata.st_mode & 0o004):
-        raise ValueError(f"Greeter destination ownership/readability requires review: {path}")
+        raise ValueError(f"Destination ownership/permissions require review: {path}")
 
 
 def make_greeter_parents(path):
@@ -140,11 +144,18 @@ def preflight(kind, repo, root=Path("/")):
         config = repo / "setup/logind" / LID_POLICY
         target = root / "etc/systemd/logind.conf.d" / LID_POLICY
         pairs = [(config, target)]
+    elif kind == "timezone":
+        source = repo / "setup/timezone"
+        pairs = [
+            (source / "dotfiles-auto-timezone", root / "usr/local/libexec/dotfiles-auto-timezone"),
+            (source / "dotfiles-auto-timezone.service", root / "etc/systemd/system/dotfiles-auto-timezone.service"),
+            (source / "90-dotfiles-auto-timezone", root / "etc/NetworkManager/dispatcher.d/90-dotfiles-auto-timezone"),
+        ]
     else:
         raise ValueError(f"Unknown managed desktop component: {kind}")
     snapshots = []
     for source, target in pairs:
-        if kind == "greetd":
+        if kind in SECURED_KINDS:
             secure_system_parents(target, root)
             plain_path(target)
             check_greeter_file(target, root)
@@ -168,7 +179,7 @@ def install(kind, repo, root=Path("/")):
         for source, target, new, old in snapshots:
             if new == old:
                 continue
-            if kind == "greetd":
+            if kind in SECURED_KINDS:
                 make_greeter_parents(target)
                 secure_system_parents(target, root)
             else:
@@ -177,12 +188,12 @@ def install(kind, repo, root=Path("/")):
             staged.append((directory, target, old))
             replacement = directory / "replacement"
             shutil.copyfile(source, replacement)
-            replacement.chmod(0o644)
+            replacement.chmod(0o755 if target.name in EXECUTABLES else 0o644)
             if contents(replacement) != new:
                 raise ValueError(f"Source changed while staging: {source}")
         preflight(kind, repo, root)
         for directory, target, old in staged:
-            if kind == "greetd":
+            if kind in SECURED_KINDS:
                 secure_system_parents(target, root)
             if contents(target) != old:
                 raise ValueError(f"Destination changed during staging: {target}")
@@ -192,7 +203,7 @@ def install(kind, repo, root=Path("/")):
             (directory / "replacement").rename(target)
             published.append(target)
         for _, target, new, _ in snapshots:
-            if kind == "greetd":
+            if kind in SECURED_KINDS:
                 secure_system_parents(target, root)
                 check_greeter_file(target, root)
             if contents(target) != new:
@@ -243,7 +254,7 @@ if __name__ == "__main__":
     signal.signal(signal.SIGHUP, interrupted)
     try:
         kind, action, repo = sys.argv[1:]
-        if kind not in ("greetd", "logind"):
+        if kind not in ("greetd", "logind", "timezone"):
             raise ValueError(f"Unknown managed desktop component: {kind}")
         if action == "--check":
             preflight(kind, repo)

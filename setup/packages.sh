@@ -488,6 +488,7 @@ group_gui() {
 
   require_commands curl gsettings
   install_logind_policy
+  install_auto_timezone
   # Install the pinned, checksum-verified Barlow UI family.
   install_ui_font
   install_cursor_theme
@@ -576,6 +577,29 @@ install_logind_policy() {
   python3 "$DOTFILES_DIR/setup/managed_desktop.py" logind --check "$DOTFILES_DIR" || die "logind policy preflight failed"
   sudo python3 "$DOTFILES_DIR/setup/managed_desktop.py" logind --install "$DOTFILES_DIR" || die "Cannot install logind policy"
   ok "logind lid policy installed; activate by rebooting after reviewing Sway lid handling"
+}
+
+install_auto_timezone() {
+  require_regular_user
+  require_commands python3 systemctl timedatectl sudo
+  local state
+  python3 "$DOTFILES_DIR/setup/managed_desktop.py" timezone --check "$DOTFILES_DIR" ||
+    die "Automatic time zone preflight failed"
+  # NetworkManager runs dispatcher hooks only through this D-Bus-activated service.
+  state="$(systemctl is-enabled NetworkManager-dispatcher.service)" || :
+  case "$state" in
+    enabled|enabled-runtime|static) ;;
+    disabled) sudo systemctl enable NetworkManager-dispatcher.service ||
+      die "Cannot enable NetworkManager-dispatcher.service" ;;
+    *) die "Conflicting NetworkManager-dispatcher.service state preserved: $state" ;;
+  esac
+  sudo python3 "$DOTFILES_DIR/setup/managed_desktop.py" timezone --install "$DOTFILES_DIR" ||
+    die "Cannot install automatic time zone"
+  sudo systemctl daemon-reload || die "Cannot reload systemd units"
+  sudo timedatectl set-ntp true || die "Cannot enable network time synchronization"
+  sudo systemctl start dotfiles-auto-timezone.service ||
+    warn "Time zone check failed; see journalctl -u dotfiles-auto-timezone"
+  ok "Automatic time zone installed; NetworkManager rechecks it on each connection"
 }
 
 # --- Group: dev --------------------------------------------------

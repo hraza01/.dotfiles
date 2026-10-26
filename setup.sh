@@ -28,7 +28,8 @@ ${C_CYAN}Available groups:${C_RESET}
           Hyprlock 0.9.6 (Arch); Stows hyprlock. Activation remains manual.
 
   ${C_BOLD}gui${C_RESET}     sway, quickshell, kanshi, nwg-displays (Arch only),
-          Hyprlock, ghostty, tmux (project-session chooser),
+          Hyprlock, ghostty, tmux (Alt+Shift+F session picker),
+          automatic time zone (IP location) and NTP time,
           fonts (Barlow, JetBrains Mono, Font Awesome),
           Bibata cursor theme, grimshot, spiral tiling,
           adw-gtk3-dark, gnome-calendar, Dolphin (Breeze Dark), Brave Origin,

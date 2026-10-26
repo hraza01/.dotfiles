@@ -1,0 +1,29 @@
+[Unit]
+Description=Set the time zone from the public IP location
+After=network-online.target NetworkManager.service
+
+# Started by /etc/NetworkManager/dispatcher.d/90-dotfiles-auto-timezone; no [Install].
+[Service]
+Type=oneshot
+ExecStart=/usr/local/libexec/dotfiles-auto-timezone
+TimeoutStartSec=2min
+# Root only so timedated authorizes set-timezone without a prompt; no capabilities.
+CapabilityBoundingSet=
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectClock=yes
+ProtectHostname=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+SystemCallArchitectures=native
+SystemCallFilter=@system-service

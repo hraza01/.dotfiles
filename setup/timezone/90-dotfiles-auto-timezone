@@ -1,0 +1,10 @@
+#!/bin/sh
+# NetworkManager dispatcher hook (runs as root): $1 is the interface, $2 the action.
+# Recheck the time zone when a connection comes up or gains full internet access.
+# Starts while the check is already running merge into that run.
+case "$2" in
+  up) ;;
+  connectivity-change) [ "${CONNECTIVITY_STATE:-}" = FULL ] || exit 0 ;;
+  *) exit 0 ;;
+esac
+exec systemctl start --no-block dotfiles-auto-timezone.service

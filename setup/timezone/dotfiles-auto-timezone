@@ -1,0 +1,102 @@
+#!/usr/bin/python3 -I
+"""Set the system time zone from the public IP address's location.
+
+Started by dotfiles-auto-timezone.service, which NetworkManager's dispatcher
+hook starts on each connection. Traffic leaving through a tunnel (VPN,
+Tailscale exit node) says nothing about this machine's location, so it skips.
+"""
+
+import json
+import re
+import subprocess
+import sys
+import time
+import urllib.request
+from pathlib import Path
+
+PROBE = "1.1.1.1"
+ARPHRD_ETHER = 1  # Ethernet and Wi-Fi; tun, WireGuard and Tailscale differ.
+USER_AGENT = "dotfiles-auto-timezone"
+TIMEOUT, ATTEMPTS, RETRY_DELAY = 5, 3, 10  # DNS can lag right after connecting.
+PROVIDERS = (
+    ("ipinfo.io", "https://ipinfo.io/timezone", None),
+    ("ipapi.co", "https://ipapi.co/timezone/", None),
+    ("ipwho.is", "https://ipwho.is/?fields=timezone", lambda body: json.loads(body)["timezone"]["id"]),
+)
+ZONE = re.compile(r"[A-Za-z][A-Za-z0-9_+-]*(?:/[A-Za-z0-9_+-]+)*")
+
+
+def log(message, warning=False):
+    # journald reads the <4> prefix as warning priority.
+    print(f"<4>{message}" if warning else message, flush=True)
+
+
+def run(*args):
+    return subprocess.run(args, capture_output=True, text=True, check=True).stdout
+
+
+def route_device():
+    """The interface carrying internet traffic, or None when offline."""
+    try:
+        routes = json.loads(run("ip", "-j", "route", "get", PROBE))
+        return routes[0]["dev"]
+    except (subprocess.CalledProcessError, ValueError, LookupError):
+        return None
+
+
+def tunnelled(device):
+    try:
+        kind = int(Path("/sys/class/net", device, "type").read_text())
+    except (OSError, ValueError):
+        return True  # Unknown interface: do not guess a location.
+    return kind != ARPHRD_ETHER
+
+
+def lookup():
+    """Return (zone, provider) from the first provider that answers sensibly."""
+    for attempt in range(ATTEMPTS):
+        if attempt:
+            time.sleep(RETRY_DELAY)
+        for name, url, parse in PROVIDERS:
+            request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+            try:
+                with urllib.request.urlopen(request, timeout=TIMEOUT) as response:
+                    body = response.read(4096).decode()
+                zone = (parse(body) if parse else body).strip()
+            except (OSError, ValueError, LookupError, TypeError) as error:
+                log(f"{name}: {error}", warning=True)
+                continue
+            if ZONE.fullmatch(zone):
+                return zone, name
+            log(f"{name}: unexpected answer {zone[:60]!r}", warning=True)
+    return None, None
+
+
+def main():
+    device = route_device()
+    if device is None:
+        log("No route to the internet; time zone unchanged")
+        return
+    if tunnelled(device):
+        log(f"Internet traffic leaves through {device} (VPN/tunnel); time zone unchanged")
+        return
+    zone, source = lookup()
+    if zone is None:
+        log("No location provider answered; time zone unchanged", warning=True)
+        return
+    if zone not in run("timedatectl", "list-timezones").split():
+        log(f"{source} returned unknown zone {zone!r}; time zone unchanged", warning=True)
+        return
+    current = run("timedatectl", "show", "--property=Timezone", "--value").strip()
+    if zone == current:
+        log(f"Time zone {current} unchanged ({source})")
+        return
+    run("timedatectl", "set-timezone", zone)
+    log(f"Time zone {current} -> {zone} ({source})")
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except subprocess.CalledProcessError as error:
+        sys.exit(f"{' '.join(error.cmd)} failed: {(error.stderr or '').strip()}")
