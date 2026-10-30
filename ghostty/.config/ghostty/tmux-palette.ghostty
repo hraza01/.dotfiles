@@ -1,7 +1,7 @@
 # tmux window/pane controls plus Ghostty's terminal and outer-window controls.
-# The bare key is intentional: in Ghostty 1.3.1 an empty assignment restores
-# defaults, while a valueless option clears them. Verified with +show-config.
-command-palette-entry
+# `clear` drops Ghostty's default entries (1.4.0+; a bare or empty key no longer
+# does). Verified with +show-config.
+command-palette-entry = clear
 
 command-palette-entry = title:tmux - New window,action:text:\x13c
 command-palette-entry = title:tmux - Rename window,action:"text:\\x13,"
@@ -40,6 +40,6 @@ command-palette-entry = title:Toggle background opacity,action:toggle_background
 command-palette-entry = title:Toggle mouse reporting,action:toggle_mouse_reporting
 command-palette-entry = title:Clear screen,action:clear_screen
 command-palette-entry = title:Reset terminal,action:reset
-command-palette-entry = title:Open config,action:open_config
+command-palette-entry = title:Open config,action:open_config:os_open
 command-palette-entry = title:Reload config,action:reload_config
 command-palette-entry = title:Toggle inspector,action:inspector:toggle
