@@ -16,6 +16,7 @@ upstream sources. Breezy Desktop targets GNOME/KDE and is not used.
 | Build | `setup/xr/build.sh` compiles `~/.local/share/sway-xr/sway-xr-viewer` |
 | Stow | `~/.local/bin/sway-xr`, `~/.config/sway-xr/sway.conf` |
 | Service | Enables `xr-driver.service` for future logins without starting it |
+| uinput | Installs `/etc/udev/rules.d/70-uinput-xr.rules` so `/dev/uinput` stays root-only |
 
 `~/.config/sway-xr/` is created as a real directory so saved settings stay out
 of the checkout. The tracked Sway config includes `sway.conf` when present.
@@ -24,6 +25,17 @@ after the first driver install, reboot once so its udev rules and `uinput`
 module load. `xr-driver-git` builds from upstream Git and is not pinned.
 
 Rerun `./setup.sh xr` to rebuild the viewer after editing `setup/xr/`.
+
+### uinput and three-finger drag
+
+`xr-driver-git` ships a udev rule that gives the logged-in user write access to
+`/dev/uinput`. The [three-finger drag](../setup/three-finger-drag/README.md)
+service refuses to start unless uinput is `root:root 0600`. Setup installs a
+file with the same name under `/etc`, which replaces the package's rule; reboot
+to apply. sway-xr does not need uinput: `--opentrack-app` sets the driver's
+`output_mode` to `external_only` and sends tracking over UDP. The driver's
+mouse and joystick output modes do need it; to use them, delete the `/etc` file
+and reboot (three-finger drag then stops starting).
 
 ## Controls
 
@@ -87,4 +99,6 @@ systemctl --user disable xr-driver.service
 swaymsg reload
 ```
 
-Optionally remove the driver with `paru -Rns xr-driver-git`.
+Optionally remove the driver with `paru -Rns xr-driver-git`. The uinput
+override can stay; without the driver it changes nothing. To remove it anyway:
+`sudo rm /etc/udev/rules.d/70-uinput-xr.rules`.

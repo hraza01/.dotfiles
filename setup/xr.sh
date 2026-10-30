@@ -4,14 +4,23 @@
 XR_VIEWER_DIR="$HOME/.local/share/sway-xr"
 XR_CONFIG_DIR="$HOME/.config/sway-xr"
 
+# xr-driver-git opens /dev/uinput to the logged-in user, which stops the
+# three-finger drag service from starting. sway-xr does not need uinput.
+install_uinput_override() {
+  sudo python3 "$DOTFILES_DIR/setup/managed_desktop.py" uinput --install "$DOTFILES_DIR" ||
+    die "Cannot install the uinput rule override"
+  sudo udevadm control --reload-rules || die "Cannot reload udev rules"
+  ok "/dev/uinput stays root-only; reboot to apply"
+}
+
 group_xr() {
   require_regular_user
   [ "$DISTRO" = arch ] || die "The xr group is supported only on Arch"
   preflight_stow_config
   check_stow_packages xr
-  require_commands bash python3 systemctl
+  require_commands bash python3 systemctl udevadm sudo
   local source dir
-  for source in build.sh sway_xr.c sway_capture.c sway_capture.h wlr-screencopy-unstable-v1.xml; do
+  for source in build.sh sway_xr.c sway_capture.c sway_capture.h wlr-screencopy-unstable-v1.xml 70-uinput-xr.rules; do
     [ -f "$DOTFILES_DIR/setup/xr/$source" ] && [ -r "$DOTFILES_DIR/setup/xr/$source" ] && [ -s "$DOTFILES_DIR/setup/xr/$source" ] ||
       die "Required XR source is missing or unreadable: setup/xr/$source"
   done
@@ -20,10 +29,12 @@ group_xr() {
     require_plain_path "$dir"
     [ ! -e "$dir" ] || [ -d "$dir" ] || die "Conflicting $dir preserved"
   done
+  python3 "$DOTFILES_DIR/setup/managed_desktop.py" uinput --check "$DOTFILES_DIR" || die "uinput rule preflight failed"
   log "Installing xr group"
 
   pkg_group_install gcc pkgconf sdl2-compat libglvnd wayland
   aur_install xr-driver-git
+  install_uinput_override
 
   log "Building the XR viewer"
   bash "$DOTFILES_DIR/setup/xr/build.sh" "$XR_VIEWER_DIR" || die "XR viewer build failed"

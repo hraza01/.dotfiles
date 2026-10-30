@@ -1,0 +1,5 @@
+# Overrides xr-driver-git's /usr/lib/udev/rules.d/70-uinput-xr.rules, which
+# lets the logged-in user write /dev/uinput. With this file in place uinput stays
+# root:root 0600, as the three-finger drag service requires. sway-xr sends head
+# tracking over OpenTrack UDP and does not use uinput. Delete this file only to
+# use the driver's mouse or joystick output modes.

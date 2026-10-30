@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Preflight and publish the setup-managed greetd, logind and time zone files."""
+"""Preflight and publish the setup-managed greetd, logind, time zone and uinput files."""
 
 import os
 import shutil
@@ -12,7 +12,7 @@ from pathlib import Path
 
 LID_POLICY = "60-dotfiles-sway-lid.conf"
 # Components whose root-owned destinations other services trust or execute.
-SECURED_KINDS = ("greetd", "timezone")
+SECURED_KINDS = ("greetd", "timezone", "uinput")
 # Destinations NetworkManager or systemd execute; everything else is 0644.
 EXECUTABLES = ("dotfiles-auto-timezone", "90-dotfiles-auto-timezone")
 
@@ -151,6 +151,10 @@ def preflight(kind, repo, root=Path("/")):
             (source / "dotfiles-auto-timezone.service", root / "etc/systemd/system/dotfiles-auto-timezone.service"),
             (source / "90-dotfiles-auto-timezone", root / "etc/NetworkManager/dispatcher.d/90-dotfiles-auto-timezone"),
         ]
+    elif kind == "uinput":
+        # Same name as xr-driver-git's rule, so udev uses this file instead.
+        rule = "70-uinput-xr.rules"
+        pairs = [(repo / "setup/xr" / rule, root / "etc/udev/rules.d" / rule)]
     else:
         raise ValueError(f"Unknown managed desktop component: {kind}")
     snapshots = []
@@ -254,7 +258,7 @@ if __name__ == "__main__":
     signal.signal(signal.SIGHUP, interrupted)
     try:
         kind, action, repo = sys.argv[1:]
-        if kind not in ("greetd", "logind", "timezone"):
+        if kind not in ("greetd", "logind", "timezone", "uinput"):
             raise ValueError(f"Unknown managed desktop component: {kind}")
         if action == "--check":
             preflight(kind, repo)

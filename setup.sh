@@ -63,6 +63,7 @@ ${C_CYAN}Available groups:${C_RESET}
           xr-driver-git (AUR), viewer build tools, sway-xr controller
           Builds the viewer into ~/.local/share/sway-xr; Stows: xr
           Enables xr-driver.service for future logins without starting it.
+          Keeps /dev/uinput root-only for three-finger drag; reboot to apply.
           Run gui first. Read xr/README.md.
 
   ${C_BOLD}all${C_RESET}     shell + gui + dev + boot (excludes secure-boot and xr)

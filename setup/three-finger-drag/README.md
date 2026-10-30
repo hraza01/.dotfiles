@@ -109,6 +109,8 @@ digests, the receipt's source/target and the **actual in-memory artifact bytes**
 It never executes the submitted binary during publication. Device metadata must
 match and `/dev/uinput` must already be root:root 0600; if absent, separately review
 loading `uinput`, then retry. No input-group or world-writable-device workaround.
+`xr-driver-git` opens uinput to the logged-in user; the XR group overrides that
+rule (see [uinput and three-finger drag](../../xr/README.md#uinput-and-three-finger-drag)).
 
 It publishes a binary/checker/receipt under `/usr/local/lib/dotfiles-three-finger-drag`,
 the private profile and generated application config under `/etc/dotfiles-three-finger-drag`,
