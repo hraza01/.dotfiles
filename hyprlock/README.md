@@ -82,6 +82,12 @@ backgrounding. This check launches nothing, writes no files, and does not wait
 for the two-second startup handoff. Other sleep entry points do not launch
 Hyprlock through this hook. An unacknowledged native process may remain after
 adapter timeout; the lid handler aborts rather than killing or replacing it.
+The exception is a request Sway refuses because another locker already holds
+the session, such as a lid-close event handled after resuming from a pre-sleep
+lock. Hyprlock 0.9.6 logs `onLockFinished called` and then hangs instead of
+exiting, so the adapter terminates that process. It never held the lock, so
+this cannot unlock the session; left running, it would make Quickshell treat the
+session as locked and suppress the launcher, OSD and notes after unlocking.
 
 The ready marker records the reviewed version, native PID, inherited lifetime
 descriptor and Linux process start time. Both coordination files must be private,
@@ -98,9 +104,10 @@ This is a snapshot of the reviewed 0.9.6 acknowledgement contract, not a fresh
 compositor query or an authentication decision. Native exit/unlock, compositor
 loss, or output-topology changes can race a successful check and subsequent
 commands. Compositor abandonment relies on session-lock's fail-secure behavior;
-the adapter never unlocks or kills the native locker. Same-UID code able to alter
-the private coordination files is within the trusted session boundary. Linux
-`/proc` access is required; inability to validate it fails closed.
+the adapter never unlocks the native locker or kills one the compositor
+accepted. Same-UID code able to alter the private coordination files is within
+the trusted session boundary. Linux `/proc` access is required; inability to
+validate it fails closed.
 
 GTKlock configuration is no longer bundled; recovering a previous locker requires externally saved
 configuration and installed packages. Former sources remain in Git history for

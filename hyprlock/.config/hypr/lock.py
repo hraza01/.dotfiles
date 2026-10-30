@@ -4,8 +4,11 @@
 This release has no ready-fd/daemon flag. Its reviewed INFO callback message is
 emitted only on ext-session-lock's locked event. Consume that message, discard
 all other logs, and keep the pipe drained for the native locker's lifetime.
-Fingerprint status is presentation only, derived from its own verification
-lifecycle; this helper never claims the reader or decides to unlock.
+When the compositor refuses the lock (another locker already holds it), 0.9.6
+logs its finished callback and then hangs instead of exiting; that process never
+locked, so it is ended. Fingerprint status is presentation only, derived from
+its own verification lifecycle; this helper never claims the reader or decides
+to unlock.
 """
 import fcntl
 import json
@@ -23,6 +26,7 @@ import time
 THEME = Path(__file__).resolve().parent
 ANSI = re.compile(r'\x1b\[[0-9;]*m')
 READY_TIMEOUT = 2.0
+REFUSED = 'onLockFinished called. Seems we got yeeten. Is another lockscreen running?'
 
 
 def message(raw):
@@ -178,6 +182,7 @@ def supervise(args, root, lifetime, guard, acknowledgement):
         os.set_blocking(fd, False)
         pending = b''
         code, refresh, last_write = 'unavailable', True, 0.0
+        locked = False
         while True:
             if select.select([fd], [], [], .1 if refresh else .5)[0]:
                 try:
@@ -190,7 +195,14 @@ def supervise(args, root, lifetime, guard, acknowledgement):
                 while b'\n' in pending:
                     raw, pending = pending.split(b'\n', 1)
                     body = message(raw)
+                    if body == REFUSED and not locked:
+                        # Sway refused this lock request, so the process holds
+                        # no lock and ending it cannot unlock the session. Left
+                        # running, it hangs and Quickshell treats the session as
+                        # locked indefinitely.
+                        process.terminate()
                     if body == 'onLockLocked called':
+                        locked = True
                         if process.poll() is not None:
                             continue
                         try:
