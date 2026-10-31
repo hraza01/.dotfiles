@@ -6,9 +6,12 @@ emitted only on ext-session-lock's locked event. Consume that message, discard
 all other logs, and keep the pipe drained for the native locker's lifetime.
 When the compositor refuses the lock (another locker already holds it), 0.9.6
 logs its finished callback and then hangs instead of exiting; that process never
-locked, so it is ended. Fingerprint status is presentation only, derived from
-its own verification lifecycle; this helper never claims the reader or decides
-to unlock.
+locked, so it is ended. A locker that the compositor accepted and that then
+exits without logging its unlock has died (0.9.6 aborts on some resumes and
+output changes); Sway keeps the session locked behind a solid red screen with
+no prompt, so swaylock is started to replace the abandoned lock. Fingerprint
+status is presentation only, derived from its own verification lifecycle; this
+helper never claims the reader or decides to unlock.
 """
 import fcntl
 import json
@@ -27,6 +30,8 @@ THEME = Path(__file__).resolve().parent
 ANSI = re.compile(r'\x1b\[[0-9;]*m')
 READY_TIMEOUT = 2.0
 REFUSED = 'onLockFinished called. Seems we got yeeten. Is another lockscreen running?'
+UNLOCKING = 'Unlocking session'  # Logged before ext_session_lock_v1.unlock_and_destroy.
+FALLBACK = ['/usr/bin/swaylock', '-f', '-c', '000000']
 
 
 def message(raw):
@@ -182,7 +187,7 @@ def supervise(args, root, lifetime, guard, acknowledgement):
         os.set_blocking(fd, False)
         pending = b''
         code, refresh, last_write = 'unavailable', True, 0.0
-        locked = False
+        locked = unlocking = False
         while True:
             if select.select([fd], [], [], .1 if refresh else .5)[0]:
                 try:
@@ -190,11 +195,15 @@ def supervise(args, root, lifetime, guard, acknowledgement):
                 except (BlockingIOError, InterruptedError):
                     continue
                 if not chunk:
+                    if pending and message(pending) == UNLOCKING:
+                        unlocking = True
                     break
                 pending += chunk
                 while b'\n' in pending:
                     raw, pending = pending.split(b'\n', 1)
                     body = message(raw)
+                    if body == UNLOCKING:
+                        unlocking = True
                     if body == REFUSED and not locked:
                         # Sway refused this lock request, so the process holds
                         # no lock and ending it cannot unlock the session. Left
@@ -229,6 +238,12 @@ def supervise(args, root, lifetime, guard, acknowledgement):
                 last_write = now
             if refresh and request_refresh(process): refresh = False
         process.wait()
+        if locked and not unlocking:
+            try:
+                subprocess.run(FALLBACK, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                               stderr=subprocess.DEVNULL, timeout=10)
+            except (OSError, subprocess.SubprocessError):
+                pass  # Sway still holds the lock; Super+Shift+R or a VT can retry.
     finally:
         if cursor_policy:
             set_cursor_timeout(0)

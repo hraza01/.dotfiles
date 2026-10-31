@@ -36,7 +36,8 @@ it does not sleep. Lid-open re-enables and powers on the panel (a no-op when it
 is already on) and reloads kanshi.
 The pre-sleep hook skips swaylock only when `lock.py --check-ready` confirms an
 already acknowledged, live Hyprlock owner; otherwise it runs the existing direct
-`swaylock -f -c 000000`. Manual/idle launch fallback remains unchanged.
+`swaylock -f -c 000000`. Manual/idle launch fallback remains unchanged. A Hyprlock
+that dies while holding the lock is replaced by swaylock automatically.
 Output topology and native lifetime can change after the readiness snapshot;
 see [the native contract and limits](../hyprlock/README.md).
 

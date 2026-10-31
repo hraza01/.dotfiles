@@ -80,6 +80,13 @@ opening the lid. Lock/readiness failure does not request sleep.
 Docked lid-close still only disables the internal panel and stays awake.
 Output-query failure or malformed output data causes no lid-handler changes.
 
+If the accepted Hyprlock later exits without first logging `Unlocking session`
+(a crash, including 0.9.6's aborts on resume), the supervisor runs
+`swaylock -f -c 000000`. Sway keeps the session locked when its locker vanishes
+and shows a solid red screen that nothing can unlock; it does accept a
+replacement locker, so swaylock supplies the prompt. If Hyprlock aborts *after*
+unlocking, swaylock does not run.
+
 The finite pre-sleep inhibitor path uses `--check-ready` to recognize an already
 confirmed Hyprlock; otherwise it runs `swaylock -f -c 000000` directly, without
 backgrounding. This check launches nothing, writes no files, and does not wait
