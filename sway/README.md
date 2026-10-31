@@ -12,6 +12,8 @@ Quickshell, kanshi, applets, spiral tiling and swayidle once per session.
 - **Alt+Space:** Quickshell launcher.
 - **Super+Shift+C:** reload Sway and the existing Quickshell generation.
 - **Super+Shift+Q:** lock through the Hyprlock readiness adapter, with swaylock fallback.
+- **Super+Shift+R:** recover a black or unresponsive lock screen; works while locked
+  (see [below](#black-screen-after-resume-or-lid-open)).
 - **Super+Shift+E:** exit confirmation; **Super+R:** resize mode.
 - **Super+Ctrl+X:** start/stop XR glasses mode; **Super+Ctrl+R:** recenter;
   **Ctrl+Alt+Shift+1/2:** toggle the left/right virtual monitor. Present only
@@ -40,6 +42,27 @@ already acknowledged, live Hyprlock owner; otherwise it runs the existing direct
 that dies while holding the lock is replaced by swaylock automatically.
 Output topology and native lifetime can change after the readiness snapshot;
 see [the native contract and limits](../hyprlock/README.md).
+
+## Black screen after resume or lid open
+
+Sway keeps a session locked even if the locker crashes; it then paints solid red
+(or black while a live locker fails to draw) and nothing but a replacement locker
+can show a prompt. The machine is fine in that state, so avoid the power button.
+In order:
+
+1. **Super+Shift+R.** It works while locked. It re-enables and powers on all
+   outputs, ends the current locker and starts `swaylock` (plain black; the
+   indicator appears when you type). Enter the password.
+2. **A text VT.** Press Ctrl+Alt+F2, log in and run
+   `~/.config/sway/scripts/recover-display.sh`, then return with Ctrl+Alt+F1.
+   The script finds the Sway socket itself.
+3. **SSH** (Tailscale stays up): run the same script as your user. If Sway itself
+   no longer reacts, `journalctl -b -t dotfiles-sway -n 50` shows why; ending
+   the session with `loginctl terminate-session <id>` returns to the greeter and
+   loses only the graphical session, not the machine.
+4. Only then a short power-key press, which is a clean `poweroff`.
+
+Afterwards `coredumpctl list` shows whether Hyprlock or Sway crashed.
 
 The idle launcher keeps the default 5-minute lock / 10-minute screen-off policy.
 An optional battery-only 5-minute screen-off / 20-minute sleep policy is described

@@ -85,7 +85,8 @@ If the accepted Hyprlock later exits without first logging `Unlocking session`
 `swaylock -f -c 000000`. Sway keeps the session locked when its locker vanishes
 and shows a solid red screen that nothing can unlock; it does accept a
 replacement locker, so swaylock supplies the prompt. If Hyprlock aborts *after*
-unlocking, swaylock does not run.
+unlocking, swaylock does not run. **Super+Shift+R** (a `--locked` binding) runs
+the same replacement on demand; see [the Sway recovery steps](../sway/README.md#black-screen-after-resume-or-lid-open).
 
 The finite pre-sleep inhibitor path uses `--check-ready` to recognize an already
 confirmed Hyprlock; otherwise it runs `swaylock -f -c 000000` directly, without

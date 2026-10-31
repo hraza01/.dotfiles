@@ -7,7 +7,7 @@ default_floating_border pixel 2
 gaps inner 1
 gaps outer 1
 
-# Docked: move workspaces off the internal panel. Undocked: also sleep.
+# Docked: move workspaces off the internal panel. Undocked: lock, then sleep.
 # Requires HandleLidSwitch=ignore in logind; repeat in each binding mode.
 bindswitch --locked lid:on  exec ~/.config/sway/scripts/lid-close.sh
 bindswitch --locked lid:off exec python3 ~/.config/sway/scripts/lid-open.py
@@ -102,6 +102,8 @@ exec python3 -B "$HOME/.config/sway/scripts/idle.py"
 
     # Lock screen
     bindsym $mod+Shift+q exec 'python3 "$HOME/.config/hypr/lock.py" || /usr/bin/swaylock -f -c 000000'
+    # Black or unresponsive lock screen: re-enable outputs, replace the locker.
+    bindsym --locked $mod+Shift+r exec ~/.config/sway/scripts/recover-display.sh
 
     # Exit sway: enter confirm mode, then press e to exit or Esc to cancel
     bindsym $mod+Shift+e mode "exit"
