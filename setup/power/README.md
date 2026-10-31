@@ -11,6 +11,14 @@ daemon over it. Hardware policy changes should follow comparable measurements.
   it can use suspend when hibernation is unavailable (including kernel lockdown).
   Lock/readiness and docked-display behavior are retained. This script is read
   on each lid event, so the fix applies on the next lid close without a reload.
+- **Critical battery:** UPower's default `CriticalPowerAction=Auto` tries
+  hybrid-sleep and hibernation first; `lockdown=integrity` refuses both, so at
+  2% it falls back to a plain suspend (`suspend requested from client
+  ... ('upowerd')` in the journal). The battery then dies in suspend, which looks
+  like a machine that never wakes and ends the boot without a clean shutdown.
+  Set `CriticalPowerAction=PowerOff` in `/etc/UPower/UPower.conf` (no drop-in
+  directory exists; `systemctl restart upower` applies it) and prefer the
+  battery idle policy below so an unattended laptop sleeps long before 2%.
 - **Panel:** brightness reconciliation is every 30 seconds while content is
   allowed, with immediate refresh on keys, scrolling and hover. Network changes
   trigger snapshots through `nmcli monitor`; a 30-second fallback updates signal
