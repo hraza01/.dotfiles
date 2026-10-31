@@ -70,9 +70,13 @@ The Sway manual shortcut and 300-second idle timeout use this adapter. If Hyprlo
 cannot acknowledge the compositor lock within its single bounded two-second
 handoff, fails startup or has an unreviewed version, they invoke an installed
 plain-black swaylock fallback. Undocked lid-close first runs the adapter and its
-read-only `--check-ready` check; only success permits panel disable followed by
+read-only `--check-ready` check; only success permits
 `systemctl --check-inhibitors=yes sleep`, allowing logind to select a supported
-operation. Lock/readiness failure does not disable the panel or request sleep.
+operation. The internal panel stays enabled across that sleep: disabling the
+only output destroys Hyprlock's lock surface and recreates the output on resume,
+and 0.9.6 handles a recreated output unreliably (upstream issues #953 and
+#1064), which showed up here as a locked black screen with no prompt after
+opening the lid. Lock/readiness failure does not request sleep.
 Docked lid-close still only disables the internal panel and stays awake.
 Output-query failure or malformed output data causes no lid-handler changes.
 

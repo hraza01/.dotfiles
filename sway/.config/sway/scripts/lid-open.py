@@ -25,6 +25,15 @@ def sway(*args):
     return json.loads(result.stdout)
 
 
+def command(*args):
+    replies = sway(*args)
+    if not isinstance(replies, list) or not replies or any(
+        not isinstance(reply, dict) or reply.get("success") is not True
+        for reply in replies
+    ):
+        raise RuntimeError("Sway rejected: " + " ".join(args))
+
+
 def output_active():
     outputs = sway("-t", "get_outputs")
     if not isinstance(outputs, list):
@@ -73,13 +82,11 @@ def wait_for_output():
 
 
 def main():
-    replies = sway("output", OUTPUT, "enable")
-    if not isinstance(replies, list) or not replies or any(
-        not isinstance(reply, dict) or reply.get("success") is not True
-        for reply in replies
-    ):
-        raise RuntimeError("Sway rejected enabling the internal panel")
+    command("output", OUTPUT, "enable")
     wait_for_output()
+    # An open lid means someone is present; swayidle's resume event does not
+    # fire for a lid switch, so a panel it powered off would otherwise stay dark.
+    command("output", OUTPUT, "power", "on")
     subprocess.run(["kanshictl", "reload"], check=True, timeout=IPC_TIMEOUT)
 
 

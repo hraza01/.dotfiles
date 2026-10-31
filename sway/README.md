@@ -28,10 +28,12 @@ or a normal new login for startup changes. See [locking](../hyprlock/README.md),
 
 Lid-close queries and validates outputs before making changes. Docked, it disables
 the internal panel and leaves the desktop awake. Undocked, it runs the Hyprlock
-adapter and read-only readiness check before disabling the panel and requesting
-`systemctl --check-inhibitors=yes sleep`. Systemd selects a supported operation,
-including suspend when hibernation is unavailable. If readiness or the output
-query fails, it does neither.
+adapter and read-only readiness check and then requests
+`systemctl --check-inhibitors=yes sleep`, leaving the panel enabled so the lock
+surface survives the suspend. Systemd selects a supported operation, including
+suspend when hibernation is unavailable. If readiness or the output query fails,
+it does not sleep. Lid-open re-enables and powers on the panel (a no-op when it
+is already on) and reloads kanshi.
 The pre-sleep hook skips swaylock only when `lock.py --check-ready` confirms an
 already acknowledged, live Hyprlock owner; otherwise it runs the existing direct
 `swaylock -f -c 000000`. Manual/idle launch fallback remains unchanged.
