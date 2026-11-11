@@ -23,13 +23,13 @@ preflight_auth_packages() {
   local name version extra found=0
   while read -r name version extra; do
     [ "$name" = hyprlock ] || continue
-    [ "$found" = 0 ] && [ -z "$extra" ] && [[ "$version" =~ ^0\.9\.6-[0-9]+(\.[0-9]+)*$ ]] ||
-      die "Review the Hyprlock repository candidate before installation; expected upstream 0.9.6"
+    [ "$found" = 0 ] && [ -z "$extra" ] && [[ "$version" =~ ^0\.9\.7-[0-9]+(\.[0-9]+)*$ ]] ||
+      die "Review the Hyprlock repository candidate before installation; expected upstream 0.9.7"
     found=1
   done <<< "$candidate"
   [ "$found" = 1 ] || die "Cannot identify one reviewed Hyprlock repository candidate"
   if pkg_is_installed hyprlock; then
-    [ "$(hyprlock --version 2>/dev/null)" = 'Hyprlock version v0.9.6' ] ||
+    [ "$(hyprlock --version 2>/dev/null)" = 'Hyprlock version v0.9.7' ] ||
       die "Review the installed Hyprlock version before changing authentication packages"
   fi
 }
@@ -79,7 +79,7 @@ group_auth() {
   validate_auth_pam
   local version
   version="$(hyprlock --version)" || die "Cannot inspect Hyprlock version"
-  [ "$version" = 'Hyprlock version v0.9.6' ] ||
+  [ "$version" = 'Hyprlock version v0.9.7' ] ||
     die "Review the installed Hyprlock version before activating this configuration"
   install_console_tuigreet
   sudo python3 "$DOTFILES_DIR/setup/managed_desktop.py" greetd --install "$DOTFILES_DIR" ||

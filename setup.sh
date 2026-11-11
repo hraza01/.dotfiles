@@ -25,7 +25,7 @@ ${C_CYAN}Available groups:${C_RESET}
           Stows: zsh, starship
 
   ${C_BOLD}auth${C_RESET}    Prepare greetd, Cage, Foot, patched tuigreet and
-          Hyprlock 0.9.6 (Arch); Stows hyprlock. Activation remains manual.
+          Hyprlock 0.9.7 (Arch); Stows hyprlock. Activation remains manual.
 
   ${C_BOLD}gui${C_RESET}     sway, quickshell, kanshi, nwg-displays (Arch only),
           Hyprlock, ghostty, tmux (Alt+Shift+F session picker),
@@ -71,7 +71,7 @@ ${C_CYAN}Available groups:${C_RESET}
 Prerequisites: installing user's own login session, sudo, working Arch,
   Bash, Python 3.11+, curl and GNU coreutils; paru for GUI/Arch dev.
   Stow groups require the default XDG configuration location. Run shell before
-  auth/gui. Auth checks the Hyprlock 0.9.6 repository candidate before changes.
+  auth/gui. Auth checks the Hyprlock 0.9.7 repository candidate before changes.
   Arch dev needs at least 65536 subordinate IDs in each of subuid and subgid.
 
 GUI ownership preflight (also required by all):

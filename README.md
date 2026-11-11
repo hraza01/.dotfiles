@@ -41,7 +41,7 @@ incomplete tool installations are preserved for explicit reconciliation.
 | `all` | `shell + gui + dev + boot`, in that order; excludes `secure-boot` and `xr`. |
 
 Run `shell` before `auth` or `gui`. Auth requires the Hyprlock repository candidate
-and any installed Hyprlock to be upstream **0.9.6**; setup checks this before package
+and any installed Hyprlock to be upstream **0.9.7**; setup checks this before package
 changes. GUI additionally requires the canonical systemd user bus and explicit
 [notification ownership](quickshell/README.md#installation-and-ownership-handoff).
 For an existing Quickshell owner, also supply its verified `DOTFILES_QUICKSHELL_PID`.

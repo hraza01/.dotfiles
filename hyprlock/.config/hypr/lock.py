@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Hyprlock 0.9.6 readiness/presentation adapter; native authentication only.
+"""Hyprlock 0.9.7 readiness/presentation adapter; native authentication only.
 
-This release has no ready-fd/daemon flag. Its reviewed INFO callback message is
+This release has no ready-fd/daemon flag. Its reviewed callback log message is
 emitted only on ext-session-lock's locked event. Consume that message, discard
 all other logs, and keep the pipe drained for the native locker's lifetime.
 When the compositor refuses the lock (another locker already holds it), 0.9.6
@@ -92,7 +92,7 @@ def native_identity(pid, inherited_fd, lifetime):
 def marker_ready(lifetime):
     try:
         marker = os.pread(lifetime, 256, 0)
-        match = re.fullmatch(rb'ready 0\.9\.6 ([1-9][0-9]*) ([0-9]+) ([0-9]+)\n', marker)
+        match = re.fullmatch(rb'ready 0\.9\.7 ([1-9][0-9]*) ([0-9]+) ([0-9]+)\n', marker)
         if match is None:
             return False
         pid, inherited_fd, started = map(int, match.groups())
@@ -216,7 +216,7 @@ def supervise(args, root, lifetime, guard, acknowledgement):
                             continue
                         try:
                             started = native_identity(process.pid, lifetime, lifetime)
-                            marker = f'ready 0.9.6 {process.pid} {lifetime} {started}\n'.encode()
+                            marker = f'ready 0.9.7 {process.pid} {lifetime} {started}\n'.encode()
                             if os.pwrite(lifetime, marker, 0) != len(marker):
                                 continue
                         except (OSError, ValueError, IndexError):
@@ -263,7 +263,7 @@ def main():
         return 1
     version = subprocess.check_output(
         ['/usr/bin/hyprlock', '--version'], text=True, timeout=min(.5, remaining))
-    if version.strip() != 'Hyprlock version v0.9.6':
+    if version.strip() != 'Hyprlock version v0.9.7':
         print('Review Hyprlock readiness for this version; refusing an unverified handoff', file=sys.stderr)
         return 1
     runtime = Path(os.environ['XDG_RUNTIME_DIR'])

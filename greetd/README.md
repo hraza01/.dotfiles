@@ -15,7 +15,7 @@ default XDG configuration location. Run as the installing user:
 ```
 
 Setup checks the Hyprlock repository candidate and any installed binary for
-upstream **0.9.6** before package changes. It checks the passwd login shell and
+upstream **0.9.7** before package changes. It checks the passwd login shell and
 readable `.zprofile`, installs the authentication packages, validates PAM includes
 and rejects unmerged PAM `.pacnew` files. It publishes root-owned copies of
 `config.toml`, `foot.ini`, `launch.py` and `sway-session.sh` under `/etc/greetd`,

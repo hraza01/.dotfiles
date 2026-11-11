@@ -2,7 +2,7 @@
 
 The Stow package provides `.config/hypr/hyprlock.conf`, a readiness adapter and
 presentation-data helper. It uses Sway's standard session-lock protocol;
-Hyprland is not required. Setup and the adapter require Hyprlock **0.9.6**.
+Hyprland is not required. Setup and the adapter require Hyprlock **0.9.7**.
 Kernel/account metadata is obtained at runtime and escaped for Pango;
 the footer uses the current local timezone and English date names.
 
@@ -50,7 +50,7 @@ checked before package changes. Launch through the adapter:
 python3 "$HOME/.config/hypr/lock.py"
 ```
 
-The adapter is reviewed for Hyprlock 0.9.6, whose `onLockLocked called` INFO event
+The adapter is reviewed for Hyprlock 0.9.7, whose `onLockLocked called` log event
 comes from the compositor's session-lock acknowledgement. It consumes that event
 without storing native logs, keeps the output pipe drained, and coordinates
 concurrent requests using a private guard/lifetime flock. Success is never based
@@ -112,7 +112,7 @@ policy. The same validation now rejects stale readiness on repeated manual/idle
 requests; their launch/fallback commands and shared two-second deadline are unchanged.
 No native logs or credentials are persisted; the marker is coordination metadata.
 
-This is a snapshot of the reviewed 0.9.6 acknowledgement contract, not a fresh
+This is a snapshot of the reviewed 0.9.7 acknowledgement contract, not a fresh
 compositor query or an authentication decision. Native exit/unlock, compositor
 loss, or output-topology changes can race a successful check and subsequent
 commands. Compositor abandonment relies on session-lock's fail-secure behavior;
